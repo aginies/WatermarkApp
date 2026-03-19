@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -89,6 +90,48 @@ class _WatermarkPageState extends State<WatermarkPage> {
   List<_ProcessedFile> _processedFiles = <_ProcessedFile>[];
   int _previewIndex = 0;
   CancellationToken? _cancellationToken;
+  static const MethodChannel _platform = MethodChannel('watermark_app/sharing');
+
+  @override
+  void initState() {
+    super.initState();
+    _handleSharedContent();
+  }
+
+  Future<void> _handleSharedContent() async {
+    try {
+      final List<dynamic>? sharedFiles = await _platform.invokeMethod('getSharedFiles');
+      if (sharedFiles != null && sharedFiles.isNotEmpty) {
+        final List<String> validFiles = sharedFiles
+            .where((file) => file is String && File(file).existsSync())
+            .map((file) => file as String)
+            .where((path) {
+          final extension = p.extension(path).toLowerCase();
+          return ['.jpg', '.jpeg', '.png', '.pdf'].contains(extension);
+        }).toList();
+
+        if (validFiles.isNotEmpty) {
+          setState(() {
+            _selectedPaths = validFiles;
+            _processedFiles.clear();
+            _previewIndex = 0;
+          });
+
+          if (mounted) {
+            final l10n = AppLocalizations.of(context)!;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(l10n.selectedFiles(validFiles.length)),
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      print('Error handling shared content: $e');
+    }
+  }
 
   bool get _supportsDesktopDrop =>
       !kIsWeb && (Platform.isMacOS || Platform.isLinux || Platform.isWindows);
