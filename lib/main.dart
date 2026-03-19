@@ -303,11 +303,22 @@ class _WatermarkPageState extends State<WatermarkPage> {
                                 panEnabled: true,
                                 scaleEnabled: true,
                                 clipBehavior: Clip.none,
+                                constrained: false, // Allow image to fill available space
                                 child: Container(
                                   width: double.infinity,
                                   height: double.infinity,
                                   alignment: Alignment.center,
-                                  child: Image.memory(previewBytes, fit: BoxFit.contain),
+                                  // Add padding on mobile for better touch targets
+                                  padding: (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) 
+                                      ? const EdgeInsets.all(8.0)
+                                      : EdgeInsets.zero,
+                                  child: Image.memory(
+                                    previewBytes, 
+                                    fit: BoxFit.contain,
+                                    // Ensure image is large enough for good touch interaction
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                  ),
                                 ),
                               ),
                             ),
@@ -317,29 +328,44 @@ class _WatermarkPageState extends State<WatermarkPage> {
                               builder: (context, matrix, child) {
                                 final scale = matrix.getMaxScaleOnAxis();
                                 final isZoomed = scale > 1.0;
+                                final isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
                                 
                                 return Positioned(
-                                  top: 8,
+                                  top: isMobile ? 12 : 8,
                                   left: 8,
                                   right: 8,
                                   child: AnimatedOpacity(
-                                    opacity: isZoomed ? 0.0 : 0.7,
+                                    opacity: isZoomed ? 0.0 : (isMobile ? 0.8 : 0.7),
                                     duration: const Duration(milliseconds: 300),
                                     child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: isMobile ? 16 : 12,
+                                        vertical: isMobile ? 12 : 8,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: Colors.black54,
-                                        borderRadius: BorderRadius.circular(16),
+                                        borderRadius: BorderRadius.circular(isMobile ? 20 : 16),
                                       ),
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
-                                          const Icon(Icons.pinch, color: Colors.white, size: 16),
-                                          const SizedBox(width: 4),
+                                          Icon(
+                                            Icons.pinch, 
+                                            color: Colors.white, 
+                                            size: isMobile ? 20 : 16,
+                                          ),
+                                          const SizedBox(width: 8),
                                           Text(
-                                            'Pinch to zoom • Double-tap to zoom',
-                                            style: theme.textTheme.bodySmall?.copyWith(color: Colors.white),
+                                            isMobile 
+                                                ? 'Pinch or double-tap to zoom'
+                                                : 'Pinch to zoom • Double-tap to zoom',
+                                            style: (isMobile 
+                                                ? theme.textTheme.bodyMedium 
+                                                : theme.textTheme.bodySmall)?.copyWith(
+                                              color: Colors.white,
+                                              fontWeight: isMobile ? FontWeight.w500 : FontWeight.normal,
+                                            ),
                                           ),
                                         ],
                                       ),
