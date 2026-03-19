@@ -271,10 +271,13 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
         ),
         if (_processedFiles.isNotEmpty) ...[
           const SizedBox(height: 8),
-          Text(
-            l10n.readyToSaveFiles(_processedFiles.length),
-            style: theme.textTheme.bodySmall,
-          ),
+          // Only show "Ready to save" message on desktop platforms where Save button is visible
+          if (!kIsWeb && (Platform.isMacOS || Platform.isLinux || Platform.isWindows)) ...[
+            Text(
+              l10n.readyToSaveFiles(_processedFiles.length),
+              style: theme.textTheme.bodySmall,
+            ),
+          ],
           // Only show save location info on desktop platforms where Save button is visible
           if (!kIsWeb && (Platform.isMacOS || Platform.isLinux || Platform.isWindows)) ...[
             const SizedBox(height: 4),
@@ -1109,10 +1112,16 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
         }
 
         final path = paths[i];
+        final fileName = p.basename(path);
 
         if (!mounted) {
           return;
         }
+
+        // Update status to show current file being processed (1-indexed)
+        setState(() {
+          _statusMessage = l10n.processingNamedFile(i + 1, paths.length, fileName);
+        });
 
         try {
           final result = await WatermarkProcessor.processFile(
@@ -1172,7 +1181,9 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
       final successMessage = processedFiles.isEmpty
           ? l10n.processingFailed
           : failedFiles.isEmpty
-              ? l10n.previewReady(processedFiles.length)
+              ? (!kIsWeb && (Platform.isAndroid || Platform.isIOS))
+                  ? l10n.previewReadyMobile(processedFiles.length)
+                  : l10n.previewReady(processedFiles.length)
               : 'Processed ${processedFiles.length} files successfully. ${failedFiles.length} files failed.';
 
       setState(() {

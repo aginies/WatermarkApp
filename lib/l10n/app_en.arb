@@ -86,7 +86,7 @@
       }
     }
   },
-  "processingCount": "Processing 0/{count} files...",
+  "processingCount": "Processing 1/{count} files...",
   "@processingCount": {
     "placeholders": {
       "count": {
