@@ -188,6 +188,7 @@
   },
   "resizeNone": "None (Original)",
   "includeTimestampFilename": "Include Date & Hour in Filename",
+  "preserveExifData": "Preserve Image Metadata (EXIF)",
   "fontStyleLabel": "Font Style",
   "fontSelectionNote": "Note: Using optimized bitmap fonts for fast cross-platform rendering.",
   "fontSelectionNoteGoogle": "Note: Using Google Fonts for enhanced typography. Requires internet for first use.",

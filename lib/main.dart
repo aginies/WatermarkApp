@@ -83,6 +83,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
   int _jpegQuality = 75;
   int? _targetSize = 1280;
   bool _includeTimestamp = true;
+  bool _preserveExif = false;
   bool _useRandomColor = true;
   Color _selectedColor = Colors.red;
   bool _dragging = false;
@@ -416,6 +417,19 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                       });
                       setState(() {
                         _includeTimestamp = value ?? false;
+                      });
+                    },
+                  ),
+                  CheckboxListTile(
+                    title: Text(l10n.preserveExifData),
+                    value: _preserveExif,
+                    contentPadding: EdgeInsets.zero,
+                    onChanged: (value) {
+                      setDialogState(() {
+                        _preserveExif = value ?? false;
+                      });
+                      setState(() {
+                        _preserveExif = value ?? false;
                       });
                     },
                   ),
@@ -1113,6 +1127,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
             jpegQuality: _jpegQuality,
             targetSize: _targetSize,
             includeTimestamp: _includeTimestamp,
+            preserveExifData: _preserveExif,
             onProgress: (progress, message) {
               if (mounted) {
                 setState(() {

@@ -374,6 +374,12 @@ abstract class AppLocalizations {
   /// **'Include Date & Hour in Filename'**
   String get includeTimestampFilename;
 
+  /// No description provided for @preserveExifData.
+  ///
+  /// In en, this message translates to:
+  /// **'Preserve Image Metadata (EXIF)'**
+  String get preserveExifData;
+
   /// No description provided for @fontStyleLabel.
   ///
   /// In en, this message translates to:

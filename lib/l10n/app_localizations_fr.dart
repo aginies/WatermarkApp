@@ -228,6 +228,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'Inclure Date & Heure dans le nom du fichier';
 
   @override
+  String get preserveExifData => 'Préserver les métadonnées de l\'image (EXIF)';
+
+  @override
   String get fontStyleLabel => 'Style de police';
 
   @override

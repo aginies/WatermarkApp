@@ -225,6 +225,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get includeTimestampFilename => 'Include Date & Hour in Filename';
 
   @override
+  String get preserveExifData => 'Preserve Image Metadata (EXIF)';
+
+  @override
   String get fontStyleLabel => 'Font Style';
 
   @override

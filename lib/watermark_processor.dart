@@ -172,6 +172,7 @@ class WatermarkProcessor {
     int jpegQuality = 75,
     int? targetSize = 1280,
     bool includeTimestamp = false,
+    bool preserveExifData = false,
     ProgressCallback? onProgress,
     CancellationToken? cancellationToken,
   }) async {
@@ -204,6 +205,7 @@ class WatermarkProcessor {
       jpegQuality,
       targetSize,
       includeTimestamp,
+      preserveExifData,
     );
 
     if (_resultCache.containsKey(cacheKey)) {
@@ -246,6 +248,7 @@ class WatermarkProcessor {
           jpegQuality: jpegQuality,
           targetSize: targetSize,
           includeTimestamp: includeTimestamp,
+          preserveExifData: preserveExifData,
           onProgress: onProgress,
           cancellationToken: cancellationToken,
         );
@@ -370,8 +373,9 @@ class WatermarkProcessor {
     int jpegQuality,
     int? targetSize,
     bool includeTimestamp,
+    bool preserveExifData,
   ) {
-    return '$filePath-$transparency-$density-$watermarkText-$useRandomColor-$selectedColorValue-$fontSize-${font.fontFamily}-$jpegQuality-$targetSize-$includeTimestamp';
+    return '$filePath-$transparency-$density-$watermarkText-$useRandomColor-$selectedColorValue-$fontSize-${font.fontFamily}-$jpegQuality-$targetSize-$includeTimestamp-$preserveExifData';
   }
 
   /// Add result to cache with size management
@@ -396,6 +400,7 @@ class WatermarkProcessor {
     int jpegQuality = 75,
     int? targetSize = 1280,
     bool includeTimestamp = false,
+    bool preserveExifData = false,
     ProgressCallback? onProgress,
     CancellationToken? cancellationToken,
   }) async {
@@ -432,6 +437,7 @@ class WatermarkProcessor {
           jpegQuality: jpegQuality,
           targetSize: targetSize,
           includeTimestamp: includeTimestamp,
+          preserveExifData: preserveExifData,
           onProgress: (progress, message) {
             final totalProgress = fileProgress + (progress / totalFiles);
             onProgress?.call(totalProgress, message);
@@ -468,6 +474,7 @@ class WatermarkProcessor {
     required int jpegQuality,
     int? targetSize,
     bool includeTimestamp = false,
+    bool preserveExifData = false,
     ProgressCallback? onProgress,
     CancellationToken? cancellationToken,
   }) async {
@@ -500,6 +507,7 @@ class WatermarkProcessor {
           targetSize: targetSize,
           filePath: file.path,
           originalExtension: extension,
+          preserveExifData: preserveExifData,
         ),
       );
 
@@ -667,6 +675,7 @@ class WatermarkProcessor {
     int? targetSize,
     required String filePath,
     required String originalExtension,
+    bool preserveExifData = false,
   }) {
     try {
       final decoded = img.decodeImage(inputBytes);
@@ -680,6 +689,10 @@ class WatermarkProcessor {
 
       final resized = _resizeToTarget(decoded, targetSize);
       final outputImage = img.Image.from(resized);
+
+      if (preserveExifData && !decoded.exif.isEmpty) {
+        outputImage.exif = decoded.exif.clone();
+      }
 
       _applyWatermarkField(
         outputImage,
