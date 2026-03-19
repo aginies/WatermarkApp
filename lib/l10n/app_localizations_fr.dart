@@ -190,4 +190,39 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get saveLocationInfo =>
       'Les fichiers seront sauvés dans le même dossier que les originaux avec le préfixe \'watermarked-\'';
+
+  @override
+  String get expertOptions => 'Options d\'expert';
+
+  @override
+  String fontSizeValue(int value) {
+    return 'Taille de police : ${value}px';
+  }
+
+  @override
+  String jpegQualityValue(int value) {
+    return 'Qualité JPEG : $value%';
+  }
+
+  @override
+  String imageResizingLabel(String size) {
+    return 'Redimensionnement : $size';
+  }
+
+  @override
+  String get resizeNone => 'Aucun (Original)';
+
+  @override
+  String get includeTimestampFilename =>
+      'Inclure Date & Heure dans le nom du fichier';
+
+  @override
+  String get fontStyleLabel => 'Style de police : Arial (Haute Performance)';
+
+  @override
+  String get fontSelectionNote =>
+      'Note : Utilisation de polices bitmap optimisées pour un rendu rapide multi-plateforme.';
+
+  @override
+  String get close => 'Fermer';
 }

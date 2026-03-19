@@ -331,6 +331,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Files will be saved in the same folder as originals with \'watermarked-\' prefix'**
   String get saveLocationInfo;
+
+  /// No description provided for @expertOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Expert Options'**
+  String get expertOptions;
+
+  /// No description provided for @fontSizeValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Font Size: {value}px'**
+  String fontSizeValue(int value);
+
+  /// No description provided for @jpegQualityValue.
+  ///
+  /// In en, this message translates to:
+  /// **'JPEG Quality: {value}%'**
+  String jpegQualityValue(int value);
+
+  /// No description provided for @imageResizingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Image Resizing: {size}'**
+  String imageResizingLabel(String size);
+
+  /// No description provided for @resizeNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None (Original)'**
+  String get resizeNone;
+
+  /// No description provided for @includeTimestampFilename.
+  ///
+  /// In en, this message translates to:
+  /// **'Include Date & Hour in Filename'**
+  String get includeTimestampFilename;
+
+  /// No description provided for @fontStyleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Font Style: Arial (High Performance)'**
+  String get fontStyleLabel;
+
+  /// No description provided for @fontSelectionNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note: Using optimized bitmap fonts for fast cross-platform rendering.'**
+  String get fontSelectionNote;
+
+  /// No description provided for @close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
 }
 
 class _AppLocalizationsDelegate
