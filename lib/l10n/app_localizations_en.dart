@@ -214,11 +214,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get includeTimestampFilename => 'Include Date & Hour in Filename';
 
   @override
-  String get fontStyleLabel => 'Font Style: Arial (High Performance)';
+  String get fontStyleLabel => 'Font Style';
 
   @override
   String get fontSelectionNote =>
       'Note: Using optimized bitmap fonts for fast cross-platform rendering.';
+
+  @override
+  String get fontSelectionNoteGoogle =>
+      'Note: Using Google Fonts for enhanced typography. Requires internet for first use.';
 
   @override
   String get close => 'Close';

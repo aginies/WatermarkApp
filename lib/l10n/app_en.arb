@@ -180,7 +180,8 @@
   },
   "resizeNone": "None (Original)",
   "includeTimestampFilename": "Include Date & Hour in Filename",
-  "fontStyleLabel": "Font Style: Arial (High Performance)",
+  "fontStyleLabel": "Font Style",
   "fontSelectionNote": "Note: Using optimized bitmap fonts for fast cross-platform rendering.",
+  "fontSelectionNoteGoogle": "Note: Using Google Fonts for enhanced typography. Requires internet for first use.",
   "close": "Close"
 }

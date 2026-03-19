@@ -180,7 +180,8 @@
   },
   "resizeNone": "Aucun (Original)",
   "includeTimestampFilename": "Inclure Date & Heure dans le nom du fichier",
-  "fontStyleLabel": "Style de police : Arial (Haute Performance)",
+  "fontStyleLabel": "Style de police",
   "fontSelectionNote": "Note : Utilisation de polices bitmap optimisées pour un rendu rapide multi-plateforme.",
+  "fontSelectionNoteGoogle": "Note : Utilisation de Google Fonts pour une typographie améliorée. Internet requis pour la première utilisation.",
   "close": "Fermer"
 }

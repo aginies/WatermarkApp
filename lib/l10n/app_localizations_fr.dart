@@ -217,11 +217,15 @@ class AppLocalizationsFr extends AppLocalizations {
       'Inclure Date & Heure dans le nom du fichier';
 
   @override
-  String get fontStyleLabel => 'Style de police : Arial (Haute Performance)';
+  String get fontStyleLabel => 'Style de police';
 
   @override
   String get fontSelectionNote =>
       'Note : Utilisation de polices bitmap optimisées pour un rendu rapide multi-plateforme.';
+
+  @override
+  String get fontSelectionNoteGoogle =>
+      'Note : Utilisation de Google Fonts pour une typographie améliorée. Internet requis pour la première utilisation.';
 
   @override
   String get close => 'Fermer';

@@ -371,7 +371,7 @@ abstract class AppLocalizations {
   /// No description provided for @fontStyleLabel.
   ///
   /// In en, this message translates to:
-  /// **'Font Style: Arial (High Performance)'**
+  /// **'Font Style'**
   String get fontStyleLabel;
 
   /// No description provided for @fontSelectionNote.
@@ -379,6 +379,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Note: Using optimized bitmap fonts for fast cross-platform rendering.'**
   String get fontSelectionNote;
+
+  /// No description provided for @fontSelectionNoteGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Note: Using Google Fonts for enhanced typography. Requires internet for first use.'**
+  String get fontSelectionNoteGoogle;
 
   /// No description provided for @close.
   ///
