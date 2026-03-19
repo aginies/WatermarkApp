@@ -71,6 +71,7 @@ class WatermarkPage extends StatefulWidget {
 class _WatermarkPageState extends State<WatermarkPage> {
   final TextEditingController _textController = TextEditingController();
   final TransformationController _transformationController = TransformationController();
+  final PageController _previewController = PageController();
   double _transparency = 90;
   double _density = 35;
   double _fontSize = 24;
@@ -104,6 +105,7 @@ class _WatermarkPageState extends State<WatermarkPage> {
   void dispose() {
     _textController.dispose();
     _transformationController.dispose();
+    _previewController.dispose();
     super.dispose();
   }
 
@@ -400,6 +402,7 @@ class _WatermarkPageState extends State<WatermarkPage> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(18),
                     child: PageView.builder(
+                      controller: _previewController,
                       itemCount: _processedFiles.length,
                       onPageChanged: (index) {
                         setState(() {
@@ -446,6 +449,35 @@ class _WatermarkPageState extends State<WatermarkPage> {
                                 ),
                               ),
                             ),
+                            // Navigation arrows for Desktop
+                            if (!kIsWeb && (Platform.isLinux || Platform.isWindows || Platform.isMacOS) && _processedFiles.length > 1) ...[
+                              Positioned(
+                                left: 8,
+                                top: 0,
+                                bottom: 0,
+                                child: Center(
+                                  child: IconButton.filledTonal(
+                                    onPressed: _previewIndex > 0 
+                                        ? () => _previewController.previousPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut)
+                                        : null,
+                                    icon: const Icon(Icons.chevron_left),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                right: 8,
+                                top: 0,
+                                bottom: 0,
+                                child: Center(
+                                  child: IconButton.filledTonal(
+                                    onPressed: _previewIndex < _processedFiles.length - 1
+                                        ? () => _previewController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut)
+                                        : null,
+                                    icon: const Icon(Icons.chevron_right),
+                                  ),
+                                ),
+                              ),
+                            ],
                             // Zoom instructions overlay (shows when not zoomed)
                             ValueListenableBuilder<Matrix4>(
                               valueListenable: _transformationController,
@@ -1058,8 +1090,11 @@ class _WatermarkPageState extends State<WatermarkPage> {
         _progress = 1.0;
         _progressMessage = '';
       });
-    } catch (error) {
-      if (!mounted) {
+
+      if (_previewController.hasClients) {
+        _previewController.jumpToPage(0);
+      }
+    } catch (error) {      if (!mounted) {
         return;
       }
 
@@ -1091,6 +1126,9 @@ class _WatermarkPageState extends State<WatermarkPage> {
 
   void _reset() {
     _cancellationToken?.cancel();
+    if (_previewController.hasClients) {
+      _previewController.jumpToPage(0);
+    }
     setState(() {
       _dragging = false;
       _processing = false;
