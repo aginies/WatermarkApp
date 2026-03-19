@@ -152,5 +152,35 @@
     }
   },
   "cancel": "Cancel",
-  "saveLocationInfo": "Files will be saved in the same folder as originals with 'watermarked-' prefix"
+  "saveLocationInfo": "Files will be saved in the same folder as originals with 'watermarked-' prefix",
+  "expertOptions": "Expert Options",
+  "fontSizeValue": "Font Size: {value}px",
+  "@fontSizeValue": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "jpegQualityValue": "JPEG Quality: {value}%",
+  "@jpegQualityValue": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "imageResizingLabel": "Image Resizing: {size}",
+  "@imageResizingLabel": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "resizeNone": "None (Original)",
+  "includeTimestampFilename": "Include Date & Hour in Filename",
+  "fontStyleLabel": "Font Style: Arial (High Performance)",
+  "fontSelectionNote": "Note: Using optimized bitmap fonts for fast cross-platform rendering.",
+  "close": "Close"
 }
