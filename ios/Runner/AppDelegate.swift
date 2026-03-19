@@ -16,7 +16,7 @@ import UIKit
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
     
-    let methodChannel = FlutterMethodChannel(name: CHANNEL, binaryMessenger: engineBridge.binaryMessenger)
+    let methodChannel = FlutterMethodChannel(name: CHANNEL, binaryMessenger: engineBridge.applicationRegistrar.messenger())
     
     methodChannel.setMethodCallHandler { [weak self] (call: FlutterMethodCall, result: @escaping FlutterResult) in
       switch call.method {
