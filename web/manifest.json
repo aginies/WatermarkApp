@@ -1,11 +1,11 @@
 {
-    "name": "watermark_app",
-    "short_name": "watermark_app",
+    "name": "WaterMarkApp",
+    "short_name": "WaterMarkApp",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#126A5A",
+    "theme_color": "#126A5A",
+    "description": "WaterMarkApp - Professional watermarking for images and PDFs",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
