@@ -263,7 +263,7 @@ abstract class AppLocalizations {
   /// No description provided for @processingCount.
   ///
   /// In en, this message translates to:
-  /// **'Processing 0/{count} files...'**
+  /// **'Processing 1/{count} files...'**
   String processingCount(int count);
 
   /// No description provided for @processingNamedFile.

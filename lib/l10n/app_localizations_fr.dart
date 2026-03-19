@@ -117,7 +117,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String processingCount(int count) {
-    return 'Traitement de 0/$count fichiers...';
+    return 'Traitement de 1/$count fichiers...';
   }
 
   @override
