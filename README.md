@@ -62,7 +62,7 @@ Add your own fonts by placing TTF files in the `assets/fonts/` directory. Pre-co
 2. Pick one or more image or PDF files (drag & drop supported)
 3. Choose your preferred font style and color
 4. Adjust watermark transparency (75% default), density, and other settings in Expert Options
-5. Click `Apply Watermark`
+5. Click `Apply SecureMark`
 6. Swipe through previews to review results
 7. Save or share the generated files
 
