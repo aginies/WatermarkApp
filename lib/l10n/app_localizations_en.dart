@@ -143,7 +143,7 @@ class AppLocalizationsEn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count files',
+      other: '$count fichiers',
       one: '1 file',
     );
     return 'Preview ready for $_temp0. You can share them.';
@@ -222,10 +222,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get resizeNone => 'None (Original)';
 
   @override
+  String pixelUnit(int value) {
+    return '$value px';
+  }
+
+  @override
   String get includeTimestampFilename => 'Include Date & Hour in Filename';
 
   @override
-  String get preserveExifData => 'Preserve Image Metadata (EXIF)';
+  String get preserveExifData => 'Preserve File Metadata (EXIF/PDF Info)';
 
   @override
   String get fontStyleLabel => 'Font Style';
@@ -237,6 +242,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get fontSelectionNoteGoogle =>
       'Note: Using Google Fonts for enhanced typography. Requires internet for first use.';
+
+  @override
+  String get fontSelectionNoteAsset =>
+      'Note: Using custom TTF font for enhanced typography. Requires font files in assets/fonts/.';
 
   @override
   String outputDirectoryLabel(String path) {
@@ -253,5 +262,94 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appLogs => 'App Logs';
 
   @override
+  String get noLogsYet => 'No logs yet';
+
+  @override
   String get close => 'Close';
+
+  @override
+  String get processingCancelled => 'Processing cancelled';
+
+  @override
+  String processingStatusMultiple(int successCount, int failedCount) {
+    return 'Processed $successCount files successfully. $failedCount files failed.';
+  }
+
+  @override
+  String get processingFailedSingle =>
+      'Failed to process file. Please check the file format and try again.';
+
+  @override
+  String processingFailedMultiple(int count) {
+    return 'Failed to process $count files. Please check the file formats and try again.';
+  }
+
+  @override
+  String fileSavedTo(String path) {
+    return 'File saved to: $path';
+  }
+
+  @override
+  String get saveFailedGeneral =>
+      'Failed to save files. Please check permissions and storage space.';
+
+  @override
+  String saveStatusMultiple(int successCount, int failedCount) {
+    return 'Saved $successCount files. $failedCount files failed.';
+  }
+
+  @override
+  String get filesSavedTitle => 'Files Saved';
+
+  @override
+  String successfullySavedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files',
+      one: '1 file',
+    );
+    return 'Successfully saved $_temp0:';
+  }
+
+  @override
+  String failedSavedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files',
+      one: '1 file',
+    );
+    return 'Failed to save $_temp0:';
+  }
+
+  @override
+  String willSaveAsIn(String name, String path) {
+    return 'Will save as: $name in $path/';
+  }
+
+  @override
+  String willSaveMultipleIn(int count, String path) {
+    return 'Will save $count files to: $path/';
+  }
+
+  @override
+  String get savingFiles => 'Saving files...';
+
+  @override
+  String errorSavingFiles(String error) {
+    return 'Error saving files: $error';
+  }
+
+  @override
+  String get foregroundTaskTitle => 'SecureMark Processing';
+
+  @override
+  String get foregroundTaskDescription =>
+      'Showing progress of document watermarking';
+
+  @override
+  String foregroundTaskUpdate(int current, int total, String name) {
+    return 'Processing file $current of $total: $name';
+  }
 }

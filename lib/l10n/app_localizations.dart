@@ -287,7 +287,7 @@ abstract class AppLocalizations {
   /// No description provided for @previewReadyMobile.
   ///
   /// In en, this message translates to:
-  /// **'Preview ready for {count, plural, one {1 file} other {{count} files}}. You can share them.'**
+  /// **'Preview ready for {count, plural, one {1 file} other {{count} fichiers}}. You can share them.'**
   String previewReadyMobile(int count);
 
   /// No description provided for @errorPrefix.
@@ -368,6 +368,12 @@ abstract class AppLocalizations {
   /// **'None (Original)'**
   String get resizeNone;
 
+  /// No description provided for @pixelUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} px'**
+  String pixelUnit(int value);
+
   /// No description provided for @includeTimestampFilename.
   ///
   /// In en, this message translates to:
@@ -377,7 +383,7 @@ abstract class AppLocalizations {
   /// No description provided for @preserveExifData.
   ///
   /// In en, this message translates to:
-  /// **'Preserve Image Metadata (EXIF)'**
+  /// **'Preserve File Metadata (EXIF/PDF Info)'**
   String get preserveExifData;
 
   /// No description provided for @fontStyleLabel.
@@ -397,6 +403,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Note: Using Google Fonts for enhanced typography. Requires internet for first use.'**
   String get fontSelectionNoteGoogle;
+
+  /// No description provided for @fontSelectionNoteAsset.
+  ///
+  /// In en, this message translates to:
+  /// **'Note: Using custom TTF font for enhanced typography. Requires font files in assets/fonts/.'**
+  String get fontSelectionNoteAsset;
 
   /// No description provided for @outputDirectoryLabel.
   ///
@@ -422,11 +434,119 @@ abstract class AppLocalizations {
   /// **'App Logs'**
   String get appLogs;
 
+  /// No description provided for @noLogsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No logs yet'**
+  String get noLogsYet;
+
   /// No description provided for @close.
   ///
   /// In en, this message translates to:
   /// **'Close'**
   String get close;
+
+  /// No description provided for @processingCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing cancelled'**
+  String get processingCancelled;
+
+  /// No description provided for @processingStatusMultiple.
+  ///
+  /// In en, this message translates to:
+  /// **'Processed {successCount} files successfully. {failedCount} files failed.'**
+  String processingStatusMultiple(int successCount, int failedCount);
+
+  /// No description provided for @processingFailedSingle.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to process file. Please check the file format and try again.'**
+  String get processingFailedSingle;
+
+  /// No description provided for @processingFailedMultiple.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to process {count} files. Please check the file formats and try again.'**
+  String processingFailedMultiple(int count);
+
+  /// No description provided for @fileSavedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'File saved to: {path}'**
+  String fileSavedTo(String path);
+
+  /// No description provided for @saveFailedGeneral.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save files. Please check permissions and storage space.'**
+  String get saveFailedGeneral;
+
+  /// No description provided for @saveStatusMultiple.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {successCount} files. {failedCount} files failed.'**
+  String saveStatusMultiple(int successCount, int failedCount);
+
+  /// No description provided for @filesSavedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Files Saved'**
+  String get filesSavedTitle;
+
+  /// No description provided for @successfullySavedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Successfully saved {count, plural, one {1 file} other {{count} files}}:'**
+  String successfullySavedCount(int count);
+
+  /// No description provided for @failedSavedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save {count, plural, one {1 file} other {{count} files}}:'**
+  String failedSavedCount(int count);
+
+  /// No description provided for @willSaveAsIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Will save as: {name} in {path}/'**
+  String willSaveAsIn(String name, String path);
+
+  /// No description provided for @willSaveMultipleIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Will save {count} files to: {path}/'**
+  String willSaveMultipleIn(int count, String path);
+
+  /// No description provided for @savingFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving files...'**
+  String get savingFiles;
+
+  /// No description provided for @errorSavingFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Error saving files: {error}'**
+  String errorSavingFiles(String error);
+
+  /// No description provided for @foregroundTaskTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SecureMark Processing'**
+  String get foregroundTaskTitle;
+
+  /// No description provided for @foregroundTaskDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing progress of document watermarking'**
+  String get foregroundTaskDescription;
+
+  /// No description provided for @foregroundTaskUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing file {current} of {total}: {name}'**
+  String foregroundTaskUpdate(int current, int total, String name);
 }
 
 class _AppLocalizationsDelegate

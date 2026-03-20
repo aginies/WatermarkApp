@@ -117,7 +117,7 @@
       }
     }
   },
-  "previewReadyMobile": "Preview ready for {count, plural, one {1 file} other {{count} files}}. You can share them.",
+  "previewReadyMobile": "Preview ready for {count, plural, one {1 file} other {{count} fichiers}}. You can share them.",
   "@previewReadyMobile": {
     "placeholders": {
       "count": {
@@ -187,11 +187,20 @@
     }
   },
   "resizeNone": "None (Original)",
+  "pixelUnit": "{value} px",
+  "@pixelUnit": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
   "includeTimestampFilename": "Include Date & Hour in Filename",
-  "preserveExifData": "Preserve Image Metadata (EXIF)",
+  "preserveExifData": "Preserve File Metadata (EXIF/PDF Info)",
   "fontStyleLabel": "Font Style",
   "fontSelectionNote": "Note: Using optimized bitmap fonts for fast cross-platform rendering.",
   "fontSelectionNoteGoogle": "Note: Using Google Fonts for enhanced typography. Requires internet for first use.",
+  "fontSelectionNoteAsset": "Note: Using custom TTF font for enhanced typography. Requires font files in assets/fonts/.",
   "outputDirectoryLabel": "Output Directory: {path}",
   "@outputDirectoryLabel": {
     "placeholders": {
@@ -203,5 +212,111 @@
   "selectOutputDirectory": "Select Output Directory",
   "viewLogs": "View Logs",
   "appLogs": "App Logs",
-  "close": "Close"
+  "noLogsYet": "No logs yet",
+  "close": "Close",
+  "processingCancelled": "Processing cancelled",
+  "processingStatusMultiple": "Processed {successCount} files successfully. {failedCount} files failed.",
+  "@processingStatusMultiple": {
+    "placeholders": {
+      "successCount": {
+        "type": "int"
+      },
+      "failedCount": {
+        "type": "int"
+      }
+    }
+  },
+  "processingFailedSingle": "Failed to process file. Please check the file format and try again.",
+  "processingFailedMultiple": "Failed to process {count} files. Please check the file formats and try again.",
+  "@processingFailedMultiple": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "fileSavedTo": "File saved to: {path}",
+  "@fileSavedTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "saveFailedGeneral": "Failed to save files. Please check permissions and storage space.",
+  "saveStatusMultiple": "Saved {successCount} files. {failedCount} files failed.",
+  "@saveStatusMultiple": {
+    "placeholders": {
+      "successCount": {
+        "type": "int"
+      },
+      "failedCount": {
+        "type": "int"
+      }
+    }
+  },
+  "filesSavedTitle": "Files Saved",
+  "successfullySavedCount": "Successfully saved {count, plural, one {1 file} other {{count} files}}:",
+  "@successfullySavedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "failedSavedCount": "Failed to save {count, plural, one {1 file} other {{count} files}}:",
+  "@failedSavedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "willSaveAsIn": "Will save as: {name} in {path}/",
+  "@willSaveAsIn": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "willSaveMultipleIn": "Will save {count} files to: {path}/",
+  "@willSaveMultipleIn": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "savingFiles": "Saving files...",
+  "errorSavingFiles": "Error saving files: {error}",
+  "@errorSavingFiles": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "foregroundTaskTitle": "SecureMark Processing",
+  "foregroundTaskDescription": "Showing progress of document watermarking",
+  "foregroundTaskUpdate": "Processing file {current} of {total}: {name}",
+  "@foregroundTaskUpdate": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  }
 }

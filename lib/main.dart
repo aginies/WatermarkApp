@@ -11,6 +11,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 
 import 'l10n/app_localizations.dart';
 import 'watermark_processor.dart';
@@ -82,7 +83,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
   int _jpegQuality = 75;
   int? _targetSize = 1280;
   bool _includeTimestamp = true;
-  bool _preserveExif = false;
+  bool _preserveMetadata = false;
   bool _useRandomColor = true;
   Color _selectedColor = Colors.red;
   bool _dragging = false;
@@ -134,6 +135,34 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
     _handleSharedContent();
     _initPackageInfo();
     _initOutputDirectory();
+    _initForegroundTask();
+  }
+
+  void _initForegroundTask() {
+    if (!kIsWeb && Platform.isAndroid) {
+      final l10n = AppLocalizations.of(context)!;
+      FlutterForegroundTask.init(
+        androidNotificationOptions: AndroidNotificationOptions(
+          channelId: 'secure_mark_processing',
+          channelName: l10n.foregroundTaskTitle,
+          channelDescription: l10n.foregroundTaskDescription,
+          channelImportance: NotificationChannelImportance.LOW,
+          priority: NotificationPriority.LOW,
+          isSticky: true,
+        ),
+        iosNotificationOptions: const IOSNotificationOptions(
+          showNotification: true,
+          playSound: false,
+        ),
+        foregroundTaskOptions: const ForegroundTaskOptions(
+          interval: 5000,
+          isOnceEvent: false,
+          autoRunOnBoot: false,
+          allowWakeLock: true,
+          allowWifiLock: true,
+        ),
+      );
+    }
   }
 
   Future<void> _initOutputDirectory() async {
@@ -381,7 +410,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
             width: double.maxFinite,
             height: 400,
             child: _logs.isEmpty
-                ? const Center(child: Text('No logs yet'))
+                ? Center(child: Text(l10n.noLogsYet))
                 : ListView.separated(
                     itemCount: _logs.length,
                     separatorBuilder: (context, index) => const Divider(),
@@ -469,11 +498,11 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                       isExpanded: true,
                       items: [
                         DropdownMenuItem<int?>(value: null, child: Text(l10n.resizeNone)),
-                        const DropdownMenuItem<int?>(value: 2048, child: Text('2048 px')),
-                        const DropdownMenuItem<int?>(value: 1600, child: Text('1600 px')),
-                        const DropdownMenuItem<int?>(value: 1280, child: Text('1280 px')),
-                        const DropdownMenuItem<int?>(value: 1024, child: Text('1024 px')),
-                        const DropdownMenuItem<int?>(value: 800, child: Text('800 px')),
+                        DropdownMenuItem<int?>(value: 2048, child: Text(l10n.pixelUnit(2048))),
+                        DropdownMenuItem<int?>(value: 1600, child: Text(l10n.pixelUnit(1600))),
+                        DropdownMenuItem<int?>(value: 1280, child: Text(l10n.pixelUnit(1280))),
+                        DropdownMenuItem<int?>(value: 1024, child: Text(l10n.pixelUnit(1024))),
+                        DropdownMenuItem<int?>(value: 800, child: Text(l10n.pixelUnit(800))),
                       ],
                       onChanged: (value) {
                         setDialogState(() {
@@ -500,14 +529,14 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                     ),
                     CheckboxListTile(
                       title: Text(l10n.preserveExifData),
-                      value: _preserveExif,
+                      value: _preserveMetadata,
                       contentPadding: EdgeInsets.zero,
                       onChanged: (value) {
                         setDialogState(() {
-                          _preserveExif = value ?? false;
+                          _preserveMetadata = value ?? false;
                         });
                         setState(() {
-                          _preserveExif = value ?? false;
+                          _preserveMetadata = value ?? false;
                         });
                       },
                     ),
@@ -804,7 +833,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                 if (_progress > 0) ...[
                   const SizedBox(height: 8),
                   Text(
-                    '${(_progress * 100).round()}%',
+                    '${(_progress * 100).round()}${Localizations.localeOf(context).languageCode == 'fr' ? ' %' : '%'}',
                     style: theme.textTheme.bodySmall,
                   ),
                 ],
@@ -1191,6 +1220,13 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
 
     _cancellationToken = CancellationToken();
 
+    if (!kIsWeb && Platform.isAndroid) {
+      await FlutterForegroundTask.startService(
+        notificationTitle: l10n.foregroundTaskTitle,
+        notificationText: l10n.processingCount(paths.length),
+      );
+    }
+
     setState(() {
       _processing = true;
       _processedFiles = <_ProcessedFile>[];
@@ -1225,6 +1261,12 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
 
         _addLog('Starting file $i: $fileName');
         // Update status to show current file being processed (1-indexed)
+        if (!kIsWeb && Platform.isAndroid) {
+          FlutterForegroundTask.updateService(
+            notificationTitle: l10n.foregroundTaskTitle,
+            notificationText: l10n.foregroundTaskUpdate(i + 1, paths.length, fileName),
+          );
+        }
         setState(() {
           _statusMessage = l10n.processingNamedFile(i + 1, paths.length, fileName);
         });
@@ -1242,7 +1284,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
             jpegQuality: _jpegQuality,
             targetSize: _targetSize,
             includeTimestamp: _includeTimestamp,
-            preserveExifData: _preserveExif,
+            preserveMetadata: _preserveMetadata,
             onProgress: (progress, message) {
               if (mounted) {
                 setState(() {
@@ -1277,8 +1319,8 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
       if (processedFiles.isEmpty && failedFiles.isNotEmpty) {
         setState(() {
           _statusMessage = failedFiles.length == 1 
-              ? 'Failed to process file. Please check the file format and try again.'
-              : 'Failed to process ${failedFiles.length} files. Please check the file formats and try again.';
+              ? l10n.processingFailedSingle
+              : l10n.processingFailedMultiple(failedFiles.length);
           _processing = false;
           _progress = 0.0;
           _progressMessage = '';
@@ -1292,7 +1334,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
               ? (!kIsWeb && (Platform.isAndroid || Platform.isIOS))
                   ? l10n.previewReadyMobile(processedFiles.length)
                   : l10n.previewReady(processedFiles.length)
-              : 'Processed ${processedFiles.length} files successfully. ${failedFiles.length} files failed.';
+              : l10n.processingStatusMultiple(processedFiles.length, failedFiles.length);
 
       setState(() {
         _processedFiles = processedFiles;
@@ -1306,7 +1348,8 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
       if (_previewController.hasClients) {
         _previewController.jumpToPage(0);
       }
-    } catch (error) {      if (!mounted) {
+    } catch (error) {
+      if (!mounted) {
         return;
       }
 
@@ -1323,16 +1366,24 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
         _progress = 0.0;
         _progressMessage = '';
       });
+    } finally {
+      if (!kIsWeb && Platform.isAndroid) {
+        FlutterForegroundTask.stopService();
+      }
     }
   }
 
   void _cancelProcessing() {
+    final l10n = AppLocalizations.of(context)!;
     _cancellationToken?.cancel();
+    if (!kIsWeb && Platform.isAndroid) {
+      FlutterForegroundTask.stopService();
+    }
     setState(() {
       _processing = false;
       _progress = 0.0;
       _progressMessage = '';
-      _statusMessage = 'Processing cancelled';
+      _statusMessage = l10n.processingCancelled;
     });
   }
 
@@ -1369,7 +1420,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
     }
 
     setState(() {
-      _statusMessage = 'Saving files...';
+      _statusMessage = l10n.savingFiles;
     });
 
     final savedFiles = <String>[];
@@ -1410,12 +1461,12 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
       String statusMessage;
       if (failedFiles.isEmpty) {
         statusMessage = savedFiles.length == 1
-            ? 'File saved to: ${_getDisplayPath(savedFiles.first)}'
+            ? l10n.fileSavedTo(_getDisplayPath(savedFiles.first))
             : l10n.savedFiles(savedFiles.length);
       } else if (savedFiles.isEmpty) {
-        statusMessage = 'Failed to save files. Please check permissions and storage space.';
+        statusMessage = l10n.saveFailedGeneral;
       } else {
-        statusMessage = 'Saved ${savedFiles.length} files. ${failedFiles.length} files failed.';
+        statusMessage = l10n.saveStatusMultiple(savedFiles.length, failedFiles.length);
       }
 
       setState(() {
@@ -1430,13 +1481,14 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
       if (!mounted) return;
       
       setState(() {
-        _statusMessage = 'Error saving files: ${e.toString()}';
+        _statusMessage = l10n.errorSavingFiles(e.toString());
       });
     }
   }
 
   /// Get save location information for display
   String _getSaveLocationInfo() {
+    final l10n = AppLocalizations.of(context)!;
     if (_processedFiles.isEmpty) return '';
     
     final firstFile = _processedFiles.first;
@@ -1450,9 +1502,9 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
     
     if (_processedFiles.length == 1) {
       final fileName = p.basenameWithoutExtension(firstFile.result.outputPath);
-      return 'Will save as: $fileName in $displayPath/';
+      return l10n.willSaveAsIn(fileName, displayPath);
     } else {
-      return 'Will save ${_processedFiles.length} files to: $displayPath/';
+      return l10n.willSaveMultipleIn(_processedFiles.length, displayPath);
     }
   }
 
@@ -1468,17 +1520,18 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
 
   /// Show detailed save results dialog
   void _showSaveResultDialog(List<String> savedFiles, List<String> failedFiles) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Files Saved'),
+        title: Text(l10n.filesSavedTitle),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (savedFiles.isNotEmpty) ...[
-                Text('✅ Successfully saved ${savedFiles.length} files:'),
+                Text('✅ ${l10n.successfullySavedCount(savedFiles.length)}'),
                 const SizedBox(height: 8),
                 ...savedFiles.map((path) => Padding(
                   padding: const EdgeInsets.only(left: 16, bottom: 4),
@@ -1490,7 +1543,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
               ],
               if (failedFiles.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                Text('❌ Failed to save ${failedFiles.length} files:'),
+                Text('❌ ${l10n.failedSavedCount(failedFiles.length)}'),
                 const SizedBox(height: 8),
                 ...failedFiles.map((path) => Padding(
                   padding: const EdgeInsets.only(left: 16, bottom: 4),
@@ -1506,7 +1559,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
+            child: Text(l10n.close),
           ),
         ],
       ),
@@ -1641,7 +1694,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
       case FontSource.google:
         return l10n.fontSelectionNoteGoogle;
       case FontSource.asset:
-        return 'Note: Using custom TTF font for enhanced typography. Requires font files in assets/fonts/.';
+        return l10n.fontSelectionNoteAsset;
     }
   }
 }

@@ -170,7 +170,7 @@ class WatermarkProcessor {
     int jpegQuality = 75,
     int? targetSize = 1280,
     bool includeTimestamp = false,
-    bool preserveExifData = false,
+    bool preserveMetadata = false,
     ProgressCallback? onProgress,
     CancellationToken? cancellationToken,
   }) async {
@@ -203,7 +203,7 @@ class WatermarkProcessor {
       jpegQuality,
       targetSize,
       includeTimestamp,
-      preserveExifData,
+      preserveMetadata,
     );
 
     if (_resultCache.containsKey(cacheKey)) {
@@ -230,6 +230,7 @@ class WatermarkProcessor {
           font: font,
           jpegQuality: jpegQuality,
           includeTimestamp: includeTimestamp,
+          preserveMetadata: preserveMetadata,
           onProgress: onProgress,
           cancellationToken: cancellationToken,
         );
@@ -246,7 +247,7 @@ class WatermarkProcessor {
           jpegQuality: jpegQuality,
           targetSize: targetSize,
           includeTimestamp: includeTimestamp,
-          preserveExifData: preserveExifData,
+          preserveMetadata: preserveMetadata,
           onProgress: onProgress,
           cancellationToken: cancellationToken,
         );
@@ -371,9 +372,9 @@ class WatermarkProcessor {
     int jpegQuality,
     int? targetSize,
     bool includeTimestamp,
-    bool preserveExifData,
+    bool preserveMetadata,
   ) {
-    return '$filePath-$transparency-$density-$watermarkText-$useRandomColor-$selectedColorValue-$fontSize-${font.fontFamily}-$jpegQuality-$targetSize-$includeTimestamp-$preserveExifData';
+    return '$filePath-$transparency-$density-$watermarkText-$useRandomColor-$selectedColorValue-$fontSize-${font.fontFamily}-$jpegQuality-$targetSize-$includeTimestamp-$preserveMetadata';
   }
 
   /// Add result to cache with size management
@@ -398,7 +399,7 @@ class WatermarkProcessor {
     int jpegQuality = 75,
     int? targetSize = 1280,
     bool includeTimestamp = false,
-    bool preserveExifData = false,
+    bool preserveMetadata = false,
     ProgressCallback? onProgress,
     CancellationToken? cancellationToken,
   }) async {
@@ -435,7 +436,7 @@ class WatermarkProcessor {
           jpegQuality: jpegQuality,
           targetSize: targetSize,
           includeTimestamp: includeTimestamp,
-          preserveExifData: preserveExifData,
+          preserveMetadata: preserveMetadata,
           onProgress: (progress, message) {
             final totalProgress = fileProgress + (progress / totalFiles);
             onProgress?.call(totalProgress, message);
@@ -472,7 +473,7 @@ class WatermarkProcessor {
     required int jpegQuality,
     int? targetSize,
     bool includeTimestamp = false,
-    bool preserveExifData = false,
+    bool preserveMetadata = false,
     ProgressCallback? onProgress,
     CancellationToken? cancellationToken,
   }) async {
@@ -505,7 +506,7 @@ class WatermarkProcessor {
           targetSize: targetSize,
           filePath: file.path,
           originalExtension: extension,
-          preserveExifData: preserveExifData,
+          preserveMetadata: preserveMetadata,
         ),
       );
 
@@ -556,6 +557,7 @@ class WatermarkProcessor {
     required WatermarkFont font,
     required int jpegQuality,
     bool includeTimestamp = false,
+    bool preserveMetadata = false,
     ProgressCallback? onProgress,
     CancellationToken? cancellationToken,
   }) async {
@@ -592,10 +594,13 @@ class WatermarkProcessor {
             useRandomColor: useRandomColor,
             selectedColorValue: selectedColorValue,
             fontSize: fontSize,
+            preserveMetadata: preserveMetadata,
           ),
         );
       } catch (e) {
         onProgress?.call(0.3, 'Vector engine failed, falling back to raster engine...');
+        // Log the error to help debug why vector engine failed
+        print('Vector engine error: $e');
         // Fallback to raster engine for malformed PDFs
         return await _processPdfRasterFallback(
           inputBytes: inputBytes,
@@ -654,6 +659,7 @@ class WatermarkProcessor {
     required bool useRandomColor,
     required int selectedColorValue,
     required double fontSize,
+    bool preserveMetadata = false,
   }) {
     sync.PdfDocument document;
     try {
@@ -665,6 +671,17 @@ class WatermarkProcessor {
         message: 'The PDF file appears to be malformed or corrupted. Error: $e',
         originalError: e,
       );
+    }
+
+    // Sanitize metadata if requested
+    if (!preserveMetadata) {
+      document.documentInformation.author = '';
+      document.documentInformation.creator = '';
+      document.documentInformation.keywords = '';
+      document.documentInformation.producer = '';
+      document.documentInformation.subject = '';
+      document.documentInformation.title = '';
+      // We can also clear creation/modification dates if needed, but Syncfusion might reset them on save
     }
     
     final pageCount = document.pages.count;
@@ -757,7 +774,7 @@ class WatermarkProcessor {
     int? targetSize,
     required String filePath,
     required String originalExtension,
-    bool preserveExifData = false,
+    bool preserveMetadata = false,
   }) {
     try {
       final decoded = img.decodeImage(inputBytes);
@@ -772,7 +789,7 @@ class WatermarkProcessor {
       final resized = _resizeToTarget(decoded, targetSize);
       final outputImage = img.Image.from(resized);
 
-      if (preserveExifData && !decoded.exif.isEmpty) {
+      if (preserveMetadata && !decoded.exif.isEmpty) {
         outputImage.exif = decoded.exif.clone();
       }
 

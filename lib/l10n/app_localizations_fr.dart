@@ -224,11 +224,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get resizeNone => 'Aucun (Original)';
 
   @override
+  String pixelUnit(int value) {
+    return '$value px';
+  }
+
+  @override
   String get includeTimestampFilename =>
       'Inclure Date & Heure dans le nom du fichier';
 
   @override
-  String get preserveExifData => 'Préserver les métadonnées de l\'image (EXIF)';
+  String get preserveExifData => 'Préserver les métadonnées (EXIF/Infos PDF)';
 
   @override
   String get fontStyleLabel => 'Style de police';
@@ -240,6 +245,10 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get fontSelectionNoteGoogle =>
       'Note : Utilisation de Google Fonts pour une typographie améliorée. Internet requis pour la première utilisation.';
+
+  @override
+  String get fontSelectionNoteAsset =>
+      'Note : Utilisation d\'une police TTF personnalisée pour une typographie améliorée. Nécessite des fichiers de police dans assets/fonts/.';
 
   @override
   String outputDirectoryLabel(String path) {
@@ -256,5 +265,94 @@ class AppLocalizationsFr extends AppLocalizations {
   String get appLogs => 'Logs de l\'application';
 
   @override
+  String get noLogsYet => 'Aucun log pour le moment';
+
+  @override
   String get close => 'Fermer';
+
+  @override
+  String get processingCancelled => 'Traitement annulé';
+
+  @override
+  String processingStatusMultiple(int successCount, int failedCount) {
+    return '$successCount fichiers traités avec succès. $failedCount fichiers ont échoué.';
+  }
+
+  @override
+  String get processingFailedSingle =>
+      'Échec du traitement du fichier. Veuillez vérifier le format du fichier et réessayer.';
+
+  @override
+  String processingFailedMultiple(int count) {
+    return 'Échec du traitement de $count fichiers. Veuillez vérifier les formats de fichiers et réessayer.';
+  }
+
+  @override
+  String fileSavedTo(String path) {
+    return 'Fichier enregistré dans : $path';
+  }
+
+  @override
+  String get saveFailedGeneral =>
+      'Échec de l\'enregistrement des fichiers. Veuillez vérifier les permissions et l\'espace de stockage.';
+
+  @override
+  String saveStatusMultiple(int successCount, int failedCount) {
+    return '$successCount fichiers enregistrés. $failedCount fichiers ont échoué.';
+  }
+
+  @override
+  String get filesSavedTitle => 'Fichiers Enregistrés';
+
+  @override
+  String successfullySavedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fichiers enregistrés',
+      one: '1 fichier enregistré',
+    );
+    return '$_temp0 avec succès :';
+  }
+
+  @override
+  String failedSavedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fichiers',
+      one: '1 fichier',
+    );
+    return 'Échec de l\'enregistrement de $_temp0 :';
+  }
+
+  @override
+  String willSaveAsIn(String name, String path) {
+    return 'Sera enregistré sous : $name dans $path/';
+  }
+
+  @override
+  String willSaveMultipleIn(int count, String path) {
+    return 'Sera enregistré $count fichiers dans : $path/';
+  }
+
+  @override
+  String get savingFiles => 'Enregistrement des fichiers...';
+
+  @override
+  String errorSavingFiles(String error) {
+    return 'Erreur lors de l\'enregistrement des fichiers : $error';
+  }
+
+  @override
+  String get foregroundTaskTitle => 'Traitement SecureMark';
+
+  @override
+  String get foregroundTaskDescription =>
+      'Affichage de la progression du filigranage des documents';
+
+  @override
+  String foregroundTaskUpdate(int current, int total, String name) {
+    return 'Traitement du fichier $current sur $total : $name';
+  }
 }

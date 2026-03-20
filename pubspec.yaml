@@ -23,6 +23,7 @@ dependencies:
   google_fonts: ^8.0.2
   package_info_plus: ^8.0.0
   syncfusion_flutter_pdf: ^28.1.33
+  flutter_foreground_task: ^6.1.0
 
 dev_dependencies:
   flutter_test:
