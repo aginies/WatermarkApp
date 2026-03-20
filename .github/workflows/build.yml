@@ -78,33 +78,36 @@ jobs:
           wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
           chmod +x linuxdeploy-x86_64.AppImage
           
-          # Create a minimal desktop file
-          cat > secure-mark.desktop <<EOF
+          # Prepare AppDir structure
+          mkdir -p AppDir/usr/bin
+          
+          # Copy binary and bundle assets
+          cp -r build/linux/x64/release/bundle/* AppDir/usr/bin/
+          
+          # Create the desktop file with name matching binary
+          cat > SecureMark.desktop <<EOF
           [Desktop Entry]
           Type=Application
           Name=SecureMark
-          Icon=secure-mark
+          Icon=SecureMark
           Exec=SecureMark
           Categories=Utility;
           EOF
           
-          # Prepare AppDir
-          mkdir -p AppDir/usr/bin
-          cp -r build/linux/x64/release/bundle/* AppDir/usr/bin/
-          cp web/icons/Icon-512.png secure-mark.png
+          # Prepare the icon with name matching Icon entry
+          cp web/icons/Icon-512.png SecureMark.png
           
           # Use linuxdeploy to create the AppImage
-          # We use --appimage-extract-and-run because FUSE might not be available in CI
           export ARCH=x86_64
           ./linuxdeploy-x86_64.AppImage --appimage-extract-and-run \
             --executable AppDir/usr/bin/SecureMark \
-            --desktop-file secure-mark.desktop \
-            --icon-file secure-mark.png \
+            --desktop-file SecureMark.desktop \
+            --icon-file SecureMark.png \
             --appdir AppDir \
             --output appimage
           
           # Move result to a predictable name
-          mv SecureMark-x86_64.AppImage SecureMark-Linux.AppImage
+          find . -maxdepth 1 -name "SecureMark*.AppImage" -exec mv {} SecureMark-Linux.AppImage \;
       - name: Upload Linux Artifact
         uses: actions/upload-artifact@v4
         with:
