@@ -160,7 +160,7 @@
     }
   },
   "cancel": "Annuler",
-  "saveLocationInfo": "Les fichiers seront sauvés dans le même dossier que les originaux avec le préfixe 'watermarked-'",
+  "saveLocationInfo": "Les fichiers seront sauvés dans le même dossier que les originaux avec le préfixe 'securemark-'",
   "expertOptions": "Options d'expert",
   "fontSizeValue": "Taille de police : {value}px",
   "@fontSizeValue": {
