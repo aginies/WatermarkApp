@@ -45,6 +45,21 @@ class AppLocalizationsFr extends AppLocalizations {
   String get applyingWatermark => 'Application du filigrane...';
 
   @override
+  String get processingValidating => 'Validation du fichier...';
+
+  @override
+  String get processingProcessing => 'Traitement du fichier...';
+
+  @override
+  String get processingCached => 'Récupéré du cache';
+
+  @override
+  String get processingComplete => 'Traitement terminé';
+
+  @override
+  String get processingFlattening => 'Rasterisation du PDF (aplatissement)...';
+
+  @override
   String get authorFooter => 'Auteur : guibo';
 
   @override
@@ -79,10 +94,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get watermarkTextHint => 'Saisissez le texte à tamponner';
 
   @override
-  String get randomColor => 'Couleurs aléatoires';
+  String get randomColor => 'Couleur aléatoire';
 
   @override
-  String get selectedColor => 'Choix couleur';
+  String get selectedColor => 'Couleur choisie';
 
   @override
   String transparencyValue(int value) {
@@ -191,7 +206,7 @@ class AppLocalizationsFr extends AppLocalizations {
       other: '$count fichiers',
       one: '1 fichier',
     );
-    return 'Le partage est ouvert pour $_temp0.';
+    return 'La feuille de partage est ouverte pour $_temp0.';
   }
 
   @override
@@ -233,6 +248,19 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get preserveExifData => 'Préserver les métadonnées (EXIF/Infos PDF)';
+
+  @override
+  String get rasterizePdfTitle => 'Rasteriser le PDF (Aplatir)';
+
+  @override
+  String get rasterizePdfSubtitle =>
+      'Convertir les pages PDF en images pour une sécurité maximale (plus lourd et plus lent)';
+
+  @override
+  String get filePrefixLabel => 'Préfixe de fichier';
+
+  @override
+  String get filePrefixHint => 'ex: filigrane-';
 
   @override
   String get fontStyleLabel => 'Style de police';

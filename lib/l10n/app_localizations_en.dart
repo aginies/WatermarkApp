@@ -45,6 +45,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get applyingWatermark => 'Applying watermark...';
 
   @override
+  String get processingValidating => 'Validating file...';
+
+  @override
+  String get processingProcessing => 'Processing file...';
+
+  @override
+  String get processingCached => 'Retrieved from cache';
+
+  @override
+  String get processingComplete => 'Processing complete';
+
+  @override
+  String get processingFlattening => 'Rasterizing PDF (flattening)...';
+
+  @override
   String get authorFooter => 'Author: guibo';
 
   @override
@@ -231,6 +246,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get preserveExifData => 'Preserve File Metadata (EXIF/PDF Info)';
+
+  @override
+  String get rasterizePdfTitle => 'Rasterize PDF (Flatten)';
+
+  @override
+  String get rasterizePdfSubtitle =>
+      'Convert PDF pages to images for maximum security (bigger size and slower)';
+
+  @override
+  String get filePrefixLabel => 'File Prefix';
+
+  @override
+  String get filePrefixHint => 'e.g., watermark-';
 
   @override
   String get fontStyleLabel => 'Font Style';

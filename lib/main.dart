@@ -35,10 +35,10 @@ class WatermarkShaderPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     shader.setFloat(0, size.width);
     shader.setFloat(1, size.height);
-    shader.setFloat(2, color.red / 255);
-    shader.setFloat(3, color.green / 255);
-    shader.setFloat(4, color.blue / 255);
-    shader.setFloat(5, color.opacity);
+    shader.setFloat(2, color.r);
+    shader.setFloat(3, color.g);
+    shader.setFloat(4, color.b);
+    shader.setFloat(5, color.a);
     shader.setFloat(6, transparency / 100);
     shader.setImageSampler(0, image);
 
@@ -577,8 +577,8 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                       },
                     ),
                     CheckboxListTile(
-                      title: Text(l10n.rasterizePdfTitle),
-                      subtitle: Text(l10n.rasterizePdfSubtitle),
+                      title: const Text('Rasterize PDF (Flatten)'),
+                      subtitle: const Text('Convert PDF pages to images for maximum security (bigger size and slower)'),
                       value: _rasterizePdf,
                       contentPadding: EdgeInsets.zero,
                       onChanged: (value) {
@@ -589,6 +589,20 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                           _rasterizePdf = value ?? false;
                         });
                       },
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      decoration: const InputDecoration(
+                        labelText: 'File Prefix',
+                        hintText: 'e.g., watermark-',
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          _filePrefix = value;
+                        });
+                      },
+                      controller: TextEditingController(text: _filePrefix),
                     ),
                     const SizedBox(height: 16),
                     Text(l10n.fontStyleLabel),
@@ -1255,6 +1269,8 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
 
     await _cleanupTempFiles();
 
+    if (!mounted) return;
+
     final processedFiles = <_ProcessedFile>[];
     final failedFiles = <String>[];
     bool dialogOpened = false;
@@ -1358,6 +1374,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
             includeTimestamp: _includeTimestamp,
             preserveMetadata: _preserveMetadata,
             rasterizePdf: _rasterizePdf,
+            filePrefix: _filePrefix,
             onProgress: (progress, message) {
               if (mounted) {
                 setState(() {

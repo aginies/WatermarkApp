@@ -172,6 +172,7 @@ class WatermarkProcessor {
     bool includeTimestamp = false,
     bool preserveMetadata = false,
     bool rasterizePdf = false,
+    String filePrefix = 'securemark-',
     ProgressCallback? onProgress,
     CancellationToken? cancellationToken,
   }) async {
@@ -206,6 +207,7 @@ class WatermarkProcessor {
       includeTimestamp,
       preserveMetadata,
       rasterizePdf,
+      filePrefix,
     );
 
     if (_resultCache.containsKey(cacheKey)) {
@@ -234,6 +236,7 @@ class WatermarkProcessor {
           includeTimestamp: includeTimestamp,
           preserveMetadata: preserveMetadata,
           rasterizePdf: rasterizePdf,
+          filePrefix: filePrefix,
           onProgress: onProgress,
           cancellationToken: cancellationToken,
         );
@@ -251,6 +254,7 @@ class WatermarkProcessor {
           targetSize: targetSize,
           includeTimestamp: includeTimestamp,
           preserveMetadata: preserveMetadata,
+          filePrefix: filePrefix,
           onProgress: onProgress,
           cancellationToken: cancellationToken,
         );
@@ -377,8 +381,9 @@ class WatermarkProcessor {
     bool includeTimestamp,
     bool preserveMetadata,
     bool rasterizePdf,
+    String filePrefix,
   ) {
-    return '$filePath-$transparency-$density-$watermarkText-$useRandomColor-$selectedColorValue-$fontSize-${font.fontFamily}-$jpegQuality-$targetSize-$includeTimestamp-$preserveMetadata-$rasterizePdf';
+    return '$filePath-$transparency-$density-$watermarkText-$useRandomColor-$selectedColorValue-$fontSize-${font.fontFamily}-$jpegQuality-$targetSize-$includeTimestamp-$preserveMetadata-$rasterizePdf-$filePrefix';
   }
 
   /// Add result to cache with size management
@@ -478,6 +483,7 @@ class WatermarkProcessor {
     int? targetSize,
     bool includeTimestamp = false,
     bool preserveMetadata = false,
+    String filePrefix = 'securemark-',
     ProgressCallback? onProgress,
     CancellationToken? cancellationToken,
   }) async {
@@ -530,7 +536,7 @@ class WatermarkProcessor {
         outputExtension = '.jpg';
       }
       
-      final outputPath = _outputPath(file.path, outputExtension, includeTimestamp);
+      final outputPath = _outputPath(file.path, outputExtension, includeTimestamp, filePrefix);
 
       return ProcessResult(
         outputPath: outputPath,
@@ -563,6 +569,7 @@ class WatermarkProcessor {
     bool includeTimestamp = false,
     bool preserveMetadata = false,
     bool rasterizePdf = false,
+    String filePrefix = 'securemark-',
     ProgressCallback? onProgress,
     CancellationToken? cancellationToken,
   }) async {
@@ -583,6 +590,7 @@ class WatermarkProcessor {
           font: font,
           jpegQuality: jpegQuality,
           includeTimestamp: includeTimestamp,
+          filePrefix: filePrefix,
           onProgress: onProgress,
           cancellationToken: cancellationToken,
         );
@@ -631,6 +639,7 @@ class WatermarkProcessor {
           font: font,
           jpegQuality: jpegQuality,
           includeTimestamp: includeTimestamp,
+          filePrefix: filePrefix,
           onProgress: onProgress,
           cancellationToken: cancellationToken,
         );
@@ -645,7 +654,7 @@ class WatermarkProcessor {
 
       onProgress?.call(0.9, 'Finalizing PDF...');
       
-      final outputPath = _outputPath(file.path, '.pdf', includeTimestamp);
+      final outputPath = _outputPath(file.path, '.pdf', includeTimestamp, filePrefix);
 
       // Generate a preview of the first page using the existing Printing logic
       // Note: Printing.raster must be called on the main isolate as it uses platform channels
@@ -1283,6 +1292,7 @@ class WatermarkProcessor {
     required WatermarkFont font,
     required int jpegQuality,
     bool includeTimestamp = false,
+    String filePrefix = 'securemark-',
     ProgressCallback? onProgress,
     CancellationToken? cancellationToken,
   }) async {
@@ -1354,7 +1364,7 @@ class WatermarkProcessor {
       }
 
       final outputBytes = await doc.save();
-      final outputPath = _outputPath(file.path, '.pdf', includeTimestamp);
+      final outputPath = _outputPath(file.path, '.pdf', includeTimestamp, filePrefix);
 
       return ProcessResult(
         outputPath: outputPath,
@@ -1371,7 +1381,7 @@ class WatermarkProcessor {
     }
   }
 
-  static String _outputPath(String originalPath, String targetExtension, [bool includeTimestamp = false]) {
+  static String _outputPath(String originalPath, String targetExtension, [bool includeTimestamp = false, String filePrefix = 'securemark-']) {
     final directory = p.dirname(originalPath);
     final baseName = p.basenameWithoutExtension(originalPath);
 
@@ -1382,7 +1392,7 @@ class WatermarkProcessor {
                '-${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
     }
 
-    return p.join(directory, 'securemark-$baseName$suffix$targetExtension');
+    return p.join(directory, '$filePrefix$baseName$suffix$targetExtension');
   }
 
   static String _resolvedWatermarkText(String userText) {

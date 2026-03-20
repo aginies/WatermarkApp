@@ -204,6 +204,8 @@
   "preserveExifData": "Preserve File Metadata (EXIF/PDF Info)",
   "rasterizePdfTitle": "Rasterize PDF (Flatten)",
   "rasterizePdfSubtitle": "Convert PDF pages to images for maximum security (bigger size and slower)",
+  "filePrefixLabel": "File Prefix",
+  "filePrefixHint": "e.g., watermark-",
   "fontStyleLabel": "Font Style",
   "fontSelectionNote": "Note: Using optimized bitmap fonts for fast cross-platform rendering.",
   "fontSelectionNoteGoogle": "Note: Using Google Fonts for enhanced typography. Requires internet for first use.",

@@ -146,6 +146,36 @@ abstract class AppLocalizations {
   /// **'Applying watermark...'**
   String get applyingWatermark;
 
+  /// No description provided for @processingValidating.
+  ///
+  /// In en, this message translates to:
+  /// **'Validating file...'**
+  String get processingValidating;
+
+  /// No description provided for @processingProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing file...'**
+  String get processingProcessing;
+
+  /// No description provided for @processingCached.
+  ///
+  /// In en, this message translates to:
+  /// **'Retrieved from cache'**
+  String get processingCached;
+
+  /// No description provided for @processingComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing complete'**
+  String get processingComplete;
+
+  /// No description provided for @processingFlattening.
+  ///
+  /// In en, this message translates to:
+  /// **'Rasterizing PDF (flattening)...'**
+  String get processingFlattening;
+
   /// No description provided for @authorFooter.
   ///
   /// In en, this message translates to:
@@ -385,6 +415,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Preserve File Metadata (EXIF/PDF Info)'**
   String get preserveExifData;
+
+  /// No description provided for @rasterizePdfTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rasterize PDF (Flatten)'**
+  String get rasterizePdfTitle;
+
+  /// No description provided for @rasterizePdfSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Convert PDF pages to images for maximum security (bigger size and slower)'**
+  String get rasterizePdfSubtitle;
+
+  /// No description provided for @filePrefixLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'File Prefix'**
+  String get filePrefixLabel;
+
+  /// No description provided for @filePrefixHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., watermark-'**
+  String get filePrefixHint;
 
   /// No description provided for @fontStyleLabel.
   ///

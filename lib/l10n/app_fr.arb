@@ -204,6 +204,8 @@
   "preserveExifData": "Préserver les métadonnées (EXIF/Infos PDF)",
   "rasterizePdfTitle": "Rasteriser le PDF (Aplatir)",
   "rasterizePdfSubtitle": "Convertir les pages PDF en images pour une sécurité maximale (plus lourd et plus lent)",
+  "filePrefixLabel": "Préfixe de fichier",
+  "filePrefixHint": "ex: filigrane-",
   "fontStyleLabel": "Style de police",
   "fontSelectionNote": "Note : Utilisation de polices bitmap optimisées pour un rendu rapide multi-plateforme.",
   "fontSelectionNoteGoogle": "Note : Utilisation de Google Fonts pour une typographie améliorée. Internet requis pour la première utilisation.",
