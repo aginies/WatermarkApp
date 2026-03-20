@@ -7,7 +7,6 @@ The project is designed for lightweight document distribution workflows: choose 
 ![App Screenshot](app.jpg)
 
 Author: Antoine Ginies
-Version: 1.0.5
 
 ## Features
 
