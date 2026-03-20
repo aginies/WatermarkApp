@@ -1462,6 +1462,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
 
   void _reset() {
     _cancellationToken?.cancel();
+    _textController.clear();
     if (_previewController.hasClients) {
       _previewController.jumpToPage(0);
     }
@@ -1470,6 +1471,8 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
       _processing = false;
       _progress = 0.0;
       _progressMessage = '';
+      _transparency = 75;
+      _density = 35;
       _selectedPaths = <String>[];
       _processedFiles = <_ProcessedFile>[];
       _previewIndex = 0;
