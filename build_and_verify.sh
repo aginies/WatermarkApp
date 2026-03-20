@@ -7,6 +7,15 @@ AAB_PATH="build/app/outputs/bundle/release/app-release.aab"
 APKSIGNER_PATH="$HOME/Android/Sdk/build-tools/36.1.0/apksigner"
 KEYSTORE_PATH="android/upload-keystore.jks"
 
+# OS Detection
+IS_MACOS=false
+IS_WINDOWS=false
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    IS_MACOS=true
+elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+    IS_WINDOWS=true
+fi
+
 function show_help() {
     echo "SecureMark Build & Verify Script"
     echo "Usage: ./build_and_verify.sh [command1] [command2] ..."
@@ -20,10 +29,13 @@ function show_help() {
     echo "  increment_version - Increment build number in pubspec.yaml"
     echo "  build_apk         - Build signed release APK"
     echo "  build_aab         - Build signed release App Bundle"
+    echo "  build_ios         - Build release iOS (macOS only)"
+    echo "  build_macos       - Build release macOS (macOS only)"
+    echo "  build_windows     - Build release Windows (Windows only)"
     echo "  verify_apk        - Verify APK signature with apksigner"
     echo "  verify_aab        - Verify AAB signature with jarsigner"
     echo "  collect_artifacts - Move and rename artifacts to releases/ folder"
-    echo "  all               - Run full pipeline in sequence"
+    echo "  all               - Run full pipeline in sequence (OS dependent)"
     echo "  help              - Show this help message"
 }
 
@@ -54,7 +66,6 @@ function generate_assets() {
 
 function increment_version() {
     echo "[INFO] Incrementing build number..."
-    # Extracts version: 1.0.8+1 -> 1.0.8 and 1
     VERSION_LINE=$(grep "version: " pubspec.yaml)
     VERSION_NAME=$(echo $VERSION_LINE | cut -d' ' -f2 | cut -d'+' -f1)
     BUILD_NUMBER=$(echo $VERSION_LINE | cut -d'+' -f2)
@@ -76,6 +87,55 @@ function build_aab() {
     $FLUTTER_PATH build appbundle --release
 }
 
+function build_ios() {
+    if [ "$IS_MACOS" = false ]; then
+        echo "[SKIP] iOS build requires macOS."
+        return
+    fi
+    echo "[INFO] Building Release iOS (No Codesign)..."
+    $FLUTTER_PATH build ios --release --no-codesign
+    
+    if [ -d "build/ios/iphoneos/Runner.app" ]; then
+        echo "[INFO] Packaging iOS Runner.app into ZIP..."
+        cd build/ios/iphoneos
+        zip -r ../../../secure-mark-ios.zip Runner.app > /dev/null
+        cd ../../..
+        echo "[SUCCESS] iOS build packaged at secure-mark-ios.zip"
+    fi
+}
+
+function build_macos() {
+    if [ "$IS_MACOS" = false ]; then
+        echo "[SKIP] macOS build requires macOS."
+        return
+    fi
+    echo "[INFO] Building Release macOS..."
+    $FLUTTER_PATH build macos --release
+    
+    if [ -d "build/macos/Build/Products/Release/SecureMark.app" ]; then
+        echo "[INFO] Packaging macOS SecureMark.app into ZIP..."
+        cd build/macos/Build/Products/Release
+        zip -r ../../../../../secure-mark-macos.zip SecureMark.app > /dev/null
+        cd ../../../../..
+        echo "[SUCCESS] macOS build packaged at secure-mark-macos.zip"
+    fi
+}
+
+function build_windows() {
+    if [ "$IS_WINDOWS" = false ]; then
+        echo "[SKIP] Windows build requires Windows environment."
+        return
+    fi
+    echo "[INFO] Building Release Windows..."
+    $FLUTTER_PATH build windows --release
+    
+    if [ -d "build/windows/x64/runner/Release" ]; then
+        echo "[INFO] Packaging Windows build into ZIP..."
+        powershell.exe -Command "Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath secure-mark-windows.zip -Force"
+        echo "[SUCCESS] Windows build packaged at secure-mark-windows.zip"
+    fi
+}
+
 function verify_apk() {
     if [ -f "$APK_PATH" ]; then
         echo "[INFO] Verifying APK signature..."
@@ -94,12 +154,11 @@ function verify_aab() {
     if [ -f "$AAB_PATH" ]; then
         echo "[INFO] Verifying AAB signature..."
         jarsigner -verify "$AAB_PATH" | head -n 1
-        # Check if it's using the production key by looking for the alias
         jarsigner -verify -verbose -certs "$AAB_PATH" | grep "upload" > /dev/null
         if [ $? -eq 0 ]; then
             echo "[SUCCESS] AAB production signature (upload alias) confirmed."
         else
-            echo "[WARNING] AAB verified but 'upload' alias not found. Check if it's a debug signature."
+            echo "[WARNING] AAB verified but 'upload' alias not found."
         fi
     else
         echo "[WARNING] AAB file not found at $AAB_PATH"
@@ -114,15 +173,11 @@ function collect_artifacts() {
     echo "[INFO] Collecting artifacts into $RELEASE_DIR..."
     mkdir -p "$RELEASE_DIR"
     
-    if [ -f "$APK_PATH" ]; then
-        cp "$APK_PATH" "$RELEASE_DIR/SecureMark-$VERSION_NAME.apk"
-        echo "[SUCCESS] APK copied."
-    fi
-    
-    if [ -f "$AAB_PATH" ]; then
-        cp "$AAB_PATH" "$RELEASE_DIR/SecureMark-$VERSION_NAME.aab"
-        echo "[SUCCESS] AAB copied."
-    fi
+    [ -f "$APK_PATH" ] && cp "$APK_PATH" "$RELEASE_DIR/SecureMark-$VERSION_NAME.apk" && echo "[SUCCESS] APK collected."
+    [ -f "$AAB_PATH" ] && cp "$AAB_PATH" "$RELEASE_DIR/SecureMark-$VERSION_NAME.aab" && echo "[SUCCESS] AAB collected."
+    [ -f "secure-mark-ios.zip" ] && mv "secure-mark-ios.zip" "$RELEASE_DIR/SecureMark-$VERSION_NAME-iOS.zip" && echo "[SUCCESS] iOS ZIP collected."
+    [ -f "secure-mark-macos.zip" ] && mv "secure-mark-macos.zip" "$RELEASE_DIR/SecureMark-$VERSION_NAME-macOS.zip" && echo "[SUCCESS] macOS ZIP collected."
+    [ -f "secure-mark-windows.zip" ] && mv "secure-mark-windows.zip" "$RELEASE_DIR/SecureMark-$VERSION_NAME-Windows.zip" && echo "[SUCCESS] Windows ZIP collected."
 }
 
 function create_keystore() {
@@ -150,6 +205,9 @@ function all() {
     increment_version
     build_apk
     build_aab
+    build_ios
+    build_macos
+    build_windows
     echo ""
     echo "------------------------------------------------------------"
     echo "[INFO] Build Complete. Starting Verification..."
@@ -173,7 +231,6 @@ else
             "$func"
         else
             echo "[ERROR] Function '$func' not found."
-            echo "Run ./build_and_verify.sh without arguments to see available commands."
             exit 1
         fi
     done
