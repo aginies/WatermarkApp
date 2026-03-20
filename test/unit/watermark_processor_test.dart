@@ -1,8 +1,6 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:secure_mark/watermark_processor.dart';
-import 'package:secure_mark/font_manager.dart';
-import 'package:path/path.dart' as p;
 
 void main() {
   group('WatermarkProcessor Logic Tests', () {

@@ -175,6 +175,7 @@ class WatermarkProcessor {
     bool preserveMetadata = false,
     bool rasterizePdf = false,
     String filePrefix = 'securemark-',
+    double antiAiLevel = 0.0,
     ProgressCallback? onProgress,
     CancellationToken? cancellationToken,
   }) async {
@@ -210,6 +211,7 @@ class WatermarkProcessor {
       preserveMetadata,
       rasterizePdf,
       filePrefix,
+      antiAiLevel,
     );
 
     if (_resultCache.containsKey(cacheKey)) {
@@ -239,6 +241,7 @@ class WatermarkProcessor {
           preserveMetadata: preserveMetadata,
           rasterizePdf: rasterizePdf,
           filePrefix: filePrefix,
+          antiAiLevel: antiAiLevel,
           onProgress: onProgress,
           cancellationToken: cancellationToken,
         );
@@ -257,6 +260,7 @@ class WatermarkProcessor {
           includeTimestamp: includeTimestamp,
           preserveMetadata: preserveMetadata,
           filePrefix: filePrefix,
+          antiAiLevel: antiAiLevel,
           onProgress: onProgress,
           cancellationToken: cancellationToken,
         );
@@ -384,8 +388,9 @@ class WatermarkProcessor {
     bool preserveMetadata,
     bool rasterizePdf,
     String filePrefix,
+    double antiAiLevel,
   ) {
-    return '$filePath-$transparency-$density-$watermarkText-$useRandomColor-$selectedColorValue-$fontSize-${font.fontFamily}-$jpegQuality-$targetSize-$includeTimestamp-$preserveMetadata-$rasterizePdf-$filePrefix';
+    return '$filePath-$transparency-$density-$watermarkText-$useRandomColor-$selectedColorValue-$fontSize-${font.fontFamily}-$jpegQuality-$targetSize-$includeTimestamp-$preserveMetadata-$rasterizePdf-$filePrefix-$antiAiLevel';
   }
 
   /// Add result to cache with size management
@@ -486,6 +491,7 @@ class WatermarkProcessor {
     bool includeTimestamp = false,
     bool preserveMetadata = false,
     String filePrefix = 'securemark-',
+    double antiAiLevel = 0.0,
     ProgressCallback? onProgress,
     CancellationToken? cancellationToken,
   }) async {
@@ -538,6 +544,7 @@ class WatermarkProcessor {
           filePath: file.path,
           originalExtension: extension,
           preserveMetadata: preserveMetadata,
+          antiAiLevel: antiAiLevel,
           preRenderedStamps: preRenderedStamps,
         ),
       );
@@ -592,6 +599,7 @@ class WatermarkProcessor {
     bool preserveMetadata = false,
     bool rasterizePdf = false,
     String filePrefix = 'securemark-',
+    double antiAiLevel = 0.0,
     ProgressCallback? onProgress,
     CancellationToken? cancellationToken,
   }) async {
@@ -613,6 +621,7 @@ class WatermarkProcessor {
           jpegQuality: jpegQuality,
           includeTimestamp: includeTimestamp,
           filePrefix: filePrefix,
+          antiAiLevel: antiAiLevel,
           onProgress: onProgress,
           cancellationToken: cancellationToken,
         );
@@ -642,6 +651,7 @@ class WatermarkProcessor {
             selectedColorValue: selectedColorValue,
             fontSize: fontSize,
             preserveMetadata: preserveMetadata,
+            antiAiLevel: antiAiLevel,
           ),
         );
       } catch (e, stackTrace) {
@@ -662,6 +672,7 @@ class WatermarkProcessor {
           jpegQuality: jpegQuality,
           includeTimestamp: includeTimestamp,
           filePrefix: filePrefix,
+          antiAiLevel: antiAiLevel,
           onProgress: onProgress,
           cancellationToken: cancellationToken,
         );
@@ -708,6 +719,7 @@ class WatermarkProcessor {
     required int selectedColorValue,
     required double fontSize,
     bool preserveMetadata = false,
+    double antiAiLevel = 0.0,
   }) {
     sync.PdfDocument document;
     try {
@@ -763,10 +775,15 @@ class WatermarkProcessor {
           final color = _resolveSyncfusionColor(useRandomColor, selectedColorValue);
           final brush = sync.PdfSolidBrush(color);
 
-          // Randomize position within cell slightly
-          final x = (col * cellWidth) + (_random.nextDouble() * (cellWidth * 0.3));
-          final y = (row * cellHeight) + (_random.nextDouble() * (cellHeight * 0.3));
-          final angle = _randomAngle();
+          // Anti-AI Jitter: Randomize position and rotation further based on antiAiLevel
+          final jitterX = (antiAiLevel / 100.0) * (cellWidth * 0.2) * (_random.nextDouble() - 0.5);
+          final jitterY = (antiAiLevel / 100.0) * (cellHeight * 0.2) * (_random.nextDouble() - 0.5);
+          final jitterAngle = (antiAiLevel / 100.0) * 15.0 * (_random.nextDouble() - 0.5);
+
+          // Randomize position within cell slightly + jitter
+          final x = (col * cellWidth) + (_random.nextDouble() * (cellWidth * 0.3)) + jitterX;
+          final y = (row * cellHeight) + (_random.nextDouble() * (cellHeight * 0.3)) + jitterY;
+          final angle = _randomAngle() + jitterAngle;
 
           graphics.translateTransform(x, y);
           graphics.rotateTransform(angle);
@@ -827,6 +844,7 @@ class WatermarkProcessor {
     required String filePath,
     required String originalExtension,
     bool preserveMetadata = false,
+    double antiAiLevel = 0.0,
     Map<String, Uint8List>? preRenderedStamps,
   }) {
     try {
@@ -861,6 +879,7 @@ class WatermarkProcessor {
         fontSize,
         font,
         preRenderedStamps,
+        antiAiLevel: antiAiLevel,
       );
 
       // Encode in the original format
@@ -1034,8 +1053,9 @@ class WatermarkProcessor {
     int selectedColorValue,
     double fontSize,
     WatermarkFont font,
-    Map<String, Uint8List>? preRenderedStamps,
-  ) {
+    Map<String, Uint8List>? preRenderedStamps, {
+    double antiAiLevel = 0.0,
+  }) {
     final placements = _buildPlacements(
       width: image.width,
       height: image.height,
@@ -1051,16 +1071,34 @@ class WatermarkProcessor {
     final stampCache = <String, img.Image>{};
 
     for (final placement in placements) {
+      // Apply Anti-AI Jitter to each placement
+      final jitterX = ((antiAiLevel / 100.0) * 10 * (_random.nextDouble() - 0.5)).round();
+      final jitterY = ((antiAiLevel / 100.0) * 10 * (_random.nextDouble() - 0.5)).round();
+
       final stampKey = '${placement.angle.round()}-${placement.colorKey}';
-      final stamp = stampCache.putIfAbsent(
+      var stamp = stampCache.putIfAbsent(
         stampKey,
         () => _buildWatermarkStamp(watermarkText, placement, preRenderedStamps),
       );
+
+      // Apply Anti-AI pixel noise to the stamp if level > 0
+      if (antiAiLevel > 0) {
+        stamp = stamp.clone();
+        for (final pixel in stamp) {
+          if (pixel.a > 0) {
+            // Randomly vary alpha and color slightly to confuse AI boundary detection
+            final noise = (antiAiLevel / 100.0) * 40 * (_random.nextDouble() - 0.5);
+            final newAlpha = (pixel.a + noise).clamp(0, 255).toInt();
+            pixel.a = newAlpha;
+          }
+        }
+      }
+
       img.compositeImage(
         image,
         stamp,
-        dstX: placement.x,
-        dstY: placement.y,
+        dstX: placement.x + jitterX,
+        dstY: placement.y + jitterY,
         blend: img.BlendMode.alpha,
       );
     }
@@ -1411,6 +1449,7 @@ class WatermarkProcessor {
     required int jpegQuality,
     bool includeTimestamp = false,
     String filePrefix = 'securemark-',
+    double antiAiLevel = 0.0,
     ProgressCallback? onProgress,
     CancellationToken? cancellationToken,
   }) async {
@@ -1463,6 +1502,7 @@ class WatermarkProcessor {
           fontSize,
           font,
           pdfStamps,
+          antiAiLevel: antiAiLevel,
         );
 
         final encoded = _encodePngForSharing(watermarked);

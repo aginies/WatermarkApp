@@ -18,7 +18,7 @@ void main() {
     });
 
     test('Verify all user-friendly error messages', () {
-      final types = WatermarkErrorType.values;
+      const types = WatermarkErrorType.values;
       for (final type in types) {
         final error = WatermarkError(type: type, message: 'test');
         expect(error.userMessage, isNotEmpty, reason: 'Type $type should have a user message');

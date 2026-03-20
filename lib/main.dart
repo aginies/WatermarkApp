@@ -127,6 +127,8 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
   bool _preserveMetadata = false;
   bool _rasterizePdf = false;
   String _filePrefix = 'securemark-';
+  double _antiAiLevel = 50.0;
+  bool _useSteganography = false;
   bool _useRandomColor = true;
   Color _selectedColor = Colors.red;
   bool _dragging = false;
@@ -220,6 +222,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
           _preserveMetadata = prefs.getBool('preserveMetadata') ?? false;
           _rasterizePdf = prefs.getBool('rasterizePdf') ?? false;
           _filePrefix = prefs.getString('filePrefix') ?? 'securemark-';
+          _antiAiLevel = prefs.getDouble('antiAiLevel') ?? 50.0;
           _useRandomColor = prefs.getBool('useRandomColor') ?? true;
           final colorValue = prefs.getInt('selectedColor');
           if (colorValue != null) {
@@ -840,6 +843,23 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                         _savePreference('filePrefix', value);
                       },
                       controller: TextEditingController(text: _filePrefix),
+                    ),
+                    const SizedBox(height: 16),
+                    Text('Anti-AI Protection: ${_antiAiLevel.round()}%', style: theme.textTheme.titleSmall),
+                    Slider(
+                      value: _antiAiLevel,
+                      min: 0,
+                      max: 100,
+                      divisions: 10,
+                      onChanged: (value) {
+                        setDialogState(() {
+                          _antiAiLevel = value;
+                        });
+                        setState(() {
+                          _antiAiLevel = value;
+                        });
+                        _savePreference('antiAiLevel', value);
+                      },
                     ),
                     const SizedBox(height: 16),
                     Text(l10n.fontStyleLabel),
@@ -1647,6 +1667,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
             preserveMetadata: _preserveMetadata,
             rasterizePdf: _rasterizePdf,
             filePrefix: _filePrefix,
+            antiAiLevel: _antiAiLevel,
             onProgress: (progress, message) {
               if (mounted) {
                 setState(() {
@@ -1768,6 +1789,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
       _preserveMetadata = false;
       _rasterizePdf = false;
       _filePrefix = 'securemark-';
+      _antiAiLevel = 50.0;
       _useRandomColor = true;
       _selectedColor = Colors.deepPurple;
       _selectedFont = WatermarkFont.arial;

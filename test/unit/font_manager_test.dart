@@ -33,7 +33,7 @@ void main() {
     });
 
     test('getBitmapFont size selection logic', () {
-      final arial = WatermarkFont.arial;
+      const arial = WatermarkFont.arial;
       expect(arial.isBitmap, isTrue);
       
       // Small

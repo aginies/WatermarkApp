@@ -54,7 +54,7 @@ function quality_checks() {
     $FLUTTER_PATH analyze || { echo "[ERROR] Analysis failed. Fix issues before building."; exit 1; }
     
     echo "[INFO] Running tests..."
-    $FLUTTER_PATH test || { echo "[ERROR] Tests failed. Fix issues before building."; exit 1; }
+    $FLUTTER_PATH test test/ || { echo "[ERROR] Tests failed. Fix issues before building."; exit 1; }
     
     echo "[SUCCESS] Quality checks passed."
 }
