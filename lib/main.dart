@@ -1844,7 +1844,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
     setState(() {
       _selectedColor = color;
     });
-    _savePreference('selectedColor', color.value);
+    _savePreference('selectedColor', color.toARGB32());
   }
 
   List<DropdownMenuItem<WatermarkFont>> _buildFontDropdownItems() {

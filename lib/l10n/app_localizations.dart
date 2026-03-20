@@ -440,6 +440,12 @@ abstract class AppLocalizations {
   /// **'e.g., watermark-'**
   String get filePrefixHint;
 
+  /// No description provided for @resetExpertHint.
+  ///
+  /// In en, this message translates to:
+  /// **'This will reset all expert settings and file prefix to defaults.'**
+  String get resetExpertHint;
+
   /// No description provided for @fontStyleLabel.
   ///
   /// In en, this message translates to:
@@ -463,6 +469,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Note: Using custom TTF font for enhanced typography. Requires font files in assets/fonts/.'**
   String get fontSelectionNoteAsset;
+
+  /// No description provided for @resetToDefaults.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to Defaults'**
+  String get resetToDefaults;
 
   /// No description provided for @outputDirectoryLabel.
   ///

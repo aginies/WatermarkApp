@@ -263,6 +263,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get filePrefixHint => 'ex: filigrane-';
 
   @override
+  String get resetExpertHint =>
+      'Cela réinitialisera tous les réglages experts et le préfixe de fichier aux valeurs par défaut.';
+
+  @override
   String get fontStyleLabel => 'Style de police';
 
   @override
@@ -276,6 +280,9 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get fontSelectionNoteAsset =>
       'Note : Utilisation d\'une police TTF personnalisée pour une typographie améliorée. Nécessite des fichiers de police dans assets/fonts/.';
+
+  @override
+  String get resetToDefaults => 'Réinitialiser par défaut';
 
   @override
   String outputDirectoryLabel(String path) {

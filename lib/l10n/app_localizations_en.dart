@@ -261,6 +261,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filePrefixHint => 'e.g., watermark-';
 
   @override
+  String get resetExpertHint =>
+      'This will reset all expert settings and file prefix to defaults.';
+
+  @override
   String get fontStyleLabel => 'Font Style';
 
   @override
@@ -274,6 +278,9 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get fontSelectionNoteAsset =>
       'Note: Using custom TTF font for enhanced typography. Requires font files in assets/fonts/.';
+
+  @override
+  String get resetToDefaults => 'Reset to Defaults';
 
   @override
   String outputDirectoryLabel(String path) {
