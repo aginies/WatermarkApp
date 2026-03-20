@@ -11,7 +11,6 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'l10n/app_localizations.dart';
@@ -153,34 +152,6 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
     _handleSharedContent();
     _initPackageInfo();
     _initOutputDirectory();
-    _initForegroundTask();
-  }
-
-  void _initForegroundTask() {
-    if (!kIsWeb && Platform.isAndroid) {
-      final l10n = AppLocalizations.of(context)!;
-      FlutterForegroundTask.init(
-        androidNotificationOptions: AndroidNotificationOptions(
-          channelId: 'secure_mark_processing',
-          channelName: l10n.foregroundTaskTitle,
-          channelDescription: l10n.foregroundTaskDescription,
-          channelImportance: NotificationChannelImportance.LOW,
-          priority: NotificationPriority.LOW,
-          isSticky: true,
-        ),
-        iosNotificationOptions: const IOSNotificationOptions(
-          showNotification: true,
-          playSound: false,
-        ),
-        foregroundTaskOptions: const ForegroundTaskOptions(
-          interval: 5000,
-          isOnceEvent: false,
-          autoRunOnBoot: false,
-          allowWakeLock: true,
-          allowWifiLock: true,
-        ),
-      );
-    }
   }
 
   Future<void> _initOutputDirectory() async {
@@ -297,57 +268,52 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
         ],
       ),
       body: SafeArea(
-        child: Stack(
-          children: [
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final isWide = constraints.maxWidth >= 900;
-                final isMobile = !kIsWeb && (Platform.isIOS || Platform.isAndroid);
-                final controls = _buildControlsPanel(theme);
-                final preview = _buildPreviewPanel(theme);
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 900;
+            final isMobile = !kIsWeb && (Platform.isIOS || Platform.isAndroid);
+            final controls = _buildControlsPanel(theme);
+            final preview = _buildPreviewPanel(theme);
 
-                if (isWide) {
-                  return Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          width: 360,
-                          child: SingleChildScrollView(child: controls),
-                        ),
-                        const SizedBox(width: 20),
-                        Expanded(child: preview),
-                      ],
+            if (isWide) {
+              return Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 360,
+                      child: SingleChildScrollView(child: controls),
                     ),
-                  );
-                }
+                    const SizedBox(width: 20),
+                    Expanded(child: preview),
+                  ],
+                ),
+              );
+            }
 
-                // Mobile layout with larger preview area
-                final screenHeight = constraints.maxHeight;
-                
-                // Use more conservative sizing for better compatibility
-                final previewHeight = isMobile 
-                    ? (screenHeight * 0.5).clamp(350.0, 500.0) // 50% of screen height, min 350px, max 500px
-                    : 420.0; // Default height for web/desktop narrow screens
+            // Mobile layout with larger preview area
+            final screenHeight = constraints.maxHeight;
+            
+            // Use more conservative sizing for better compatibility
+            final previewHeight = isMobile 
+                ? (screenHeight * 0.5).clamp(350.0, 500.0) // 50% of screen height, min 350px, max 500px
+                : 420.0; // Default height for web/desktop narrow screens
 
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      controls,
-                      const SizedBox(height: 16),
-                      SizedBox(height: previewHeight, child: preview),
-                      const SizedBox(height: 16),
-                      _buildAuthorFooter(theme),
-                    ],
-                  ),
-                );
-              },
-            ),
-            if (_processing) _buildLoadingOverlay(theme),
-          ],
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  controls,
+                  const SizedBox(height: 16),
+                  SizedBox(height: previewHeight, child: preview),
+                  const SizedBox(height: 16),
+                  _buildAuthorFooter(theme),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
@@ -810,70 +776,6 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
     );
   }
 
-  Widget _buildLoadingOverlay(ThemeData theme) {
-    final l10n = AppLocalizations.of(context)!;
-    final message = _progressMessage.isEmpty 
-        ? (_statusMessage.isEmpty ? l10n.processingFile : _statusMessage)
-        : _progressMessage;
-
-    return Positioned.fill(
-      child: ColoredBox(
-        color: Colors.black.withValues(alpha: 0.18),
-        child: Center(
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 320),
-            margin: const EdgeInsets.all(24),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x26000000),
-                  blurRadius: 24,
-                  offset: Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: 36,
-                  height: 36,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 3,
-                    value: _progress > 0 ? _progress : null,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(l10n.applyingWatermark, style: theme.textTheme.titleMedium),
-                const SizedBox(height: 8),
-                Text(
-                  message,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyMedium,
-                ),
-                if (_progress > 0) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    '${(_progress * 100).round()}${Localizations.localeOf(context).languageCode == 'fr' ? ' %' : '%'}',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                ],
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: _cancelProcessing,
-                  child: Text(l10n.cancel),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildAuthorFooter(ThemeData theme) {
     final l10n = AppLocalizations.of(context)!;
 
@@ -1227,16 +1129,10 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
   Future<void> _processPaths(List<String> paths) async {
     _addLog('Processing ${paths.length} paths');
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
     await _cleanupTempFiles();
 
     _cancellationToken = CancellationToken();
-
-    if (!kIsWeb && Platform.isAndroid) {
-      await FlutterForegroundTask.startService(
-        notificationTitle: l10n.foregroundTaskTitle,
-        notificationText: l10n.processingCount(paths.length),
-      );
-    }
 
     setState(() {
       _processing = true;
@@ -1250,37 +1146,88 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
     final processedFiles = <_ProcessedFile>[];
     final failedFiles = <String>[];
 
+    // Show progress dialog
+    final dialogFuture = showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            // Internal progress listener to trigger dialog rebuilds
+            _progressListener = () {
+              if (context.mounted) setDialogState(() {});
+            };
+            
+            final message = _progressMessage.isEmpty 
+                ? (_statusMessage.isEmpty ? l10n.processingFile : _statusMessage)
+                : _progressMessage;
+
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 4,
+                      value: _progress > 0 ? _progress : null,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(l10n.applyingWatermark, style: theme.textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  if (_progress > 0) ...[
+                    const SizedBox(height: 12),
+                    LinearProgressIndicator(
+                      value: _progress,
+                      backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${(_progress * 100).round()}${Localizations.localeOf(context).languageCode == 'fr' ? ' %' : '%'}',
+                      style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                  const SizedBox(height: 24),
+                  TextButton(
+                    onPressed: _cancelProcessing,
+                    child: Text(l10n.cancel),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+
     try {
       for (var i = 0; i < paths.length; i++) {
         if (_cancellationToken?.isCancelled == true) {
           _addLog('Processing cancelled by user');
-          setState(() {
-            _processing = false;
-            _progress = 0.0;
-            _progressMessage = '';
-            _statusMessage = 'Processing cancelled';
-          });
-          return;
+          break;
         }
 
         final path = paths[i];
         final fileName = p.basename(path);
 
-        if (!mounted) {
-          return;
-        }
+        if (!mounted) break;
 
         _addLog('Starting file $i: $fileName');
-        // Update status to show current file being processed (1-indexed)
-        if (!kIsWeb && Platform.isAndroid) {
-          FlutterForegroundTask.updateService(
-            notificationTitle: l10n.foregroundTaskTitle,
-            notificationText: l10n.foregroundTaskUpdate(i + 1, paths.length, fileName),
-          );
-        }
+        
         setState(() {
           _statusMessage = l10n.processingNamedFile(i + 1, paths.length, fileName);
         });
+        _progressListener?.call();
 
         try {
           final result = await WatermarkProcessor.processFile(
@@ -1303,6 +1250,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                   _progress = fileProgress + (progress / paths.length);
                   _progressMessage = message;
                 });
+                _progressListener?.call();
               }
             },
             cancellationToken: _cancellationToken,
@@ -1314,16 +1262,30 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
           _addLog('Failed to process $fileName: $e');
           failedFiles.add(path);
           
-          // Show user-friendly error message if it's a WatermarkError
           if (e is WatermarkError && mounted) {
             setState(() {
               _statusMessage = e.userMessage;
             });
+            _progressListener?.call();
           }
         }
       }
 
-      if (!mounted) {
+      // Close dialog when done or cancelled
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.of(context).pop();
+      }
+      _progressListener = null;
+
+      if (!mounted) return;
+
+      if (_cancellationToken?.isCancelled == true) {
+        setState(() {
+          _processing = false;
+          _progress = 0.0;
+          _progressMessage = '';
+          _statusMessage = l10n.processingCancelled;
+        });
         return;
       }
 
@@ -1360,9 +1322,12 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
         _previewController.jumpToPage(0);
       }
     } catch (error) {
-      if (!mounted) {
-        return;
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.of(context).pop();
       }
+      _progressListener = null;
+
+      if (!mounted) return;
 
       String errorMessage;
       if (error is WatermarkError) {
@@ -1377,25 +1342,23 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
         _progress = 0.0;
         _progressMessage = '';
       });
-    } finally {
-      if (!kIsWeb && Platform.isAndroid) {
-        FlutterForegroundTask.stopService();
-      }
     }
   }
+
+  VoidCallback? _progressListener;
 
   void _cancelProcessing() {
     final l10n = AppLocalizations.of(context)!;
     _cancellationToken?.cancel();
-    if (!kIsWeb && Platform.isAndroid) {
-      FlutterForegroundTask.stopService();
-    }
     setState(() {
       _processing = false;
       _progress = 0.0;
       _progressMessage = '';
       _statusMessage = l10n.processingCancelled;
     });
+    if (mounted && Navigator.canPop(context)) {
+      Navigator.of(context).pop();
+    }
   }
 
   void _reset() {
