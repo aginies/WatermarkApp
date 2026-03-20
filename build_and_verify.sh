@@ -25,7 +25,7 @@ function show_help() {
     echo "  cleanup           - Remove build artifacts (flutter clean)"
     echo "  update_deps       - Update flutter dependencies (pub get)"
     echo "  quality_checks    - Run analyze and tests"
-    echo "  generate_assets   - Regenerate icons and splash screens"
+    echo "  generate_assets   - Regenerate icons, splash screens and localizations"
     echo "  increment_version - Increment build number in pubspec.yaml"
     echo "  build_apk         - Build signed release APK"
     echo "  build_aab         - Build signed release App Bundle"
@@ -62,6 +62,9 @@ function quality_checks() {
 function generate_assets() {
     echo "[INFO] Regenerating launcher icons..."
     $FLUTTER_PATH pub run flutter_launcher_icons || echo "[WARNING] Icon generation failed, continuing..."
+    
+    echo "[INFO] Generating localization files..."
+    $FLUTTER_PATH gen-l10n || echo "[WARNING] Localization generation failed, continuing..."
 }
 
 function increment_version() {
