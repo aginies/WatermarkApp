@@ -54,6 +54,63 @@ jobs:
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
 
+  build-linux:
+    name: Build Linux (AppImage)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Build Linux
+        run: flutter build linux --release
+      - name: Package AppImage
+        run: |
+          # Download linuxdeploy
+          wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          chmod +x linuxdeploy-x86_64.AppImage
+          
+          # Create a minimal desktop file
+          cat > secure-mark.desktop <<EOF
+          [Desktop Entry]
+          Type=Application
+          Name=SecureMark
+          Icon=secure-mark
+          Exec=secure_mark
+          Categories=Utility;
+          EOF
+          
+          # Prepare AppDir
+          mkdir -p AppDir/usr/bin
+          cp -r build/linux/x64/release/bundle/* AppDir/usr/bin/
+          
+          # Use linuxdeploy to create the AppImage
+          # We use --appimage-extract-and-run because FUSE might not be available in CI
+          export ARCH=x86_64
+          ./linuxdeploy-x86_64.AppImage --appimage-extract-and-run \
+            --executable AppDir/usr/bin/secure_mark \
+            --desktop-file secure-mark.desktop \
+            --icon-file assets/icon/app_icon.png \
+            --appdir AppDir \
+            --output appimage
+          
+          # Move result to a predictable name
+          mv SecureMark-x86_64.AppImage SecureMark-Linux.AppImage
+      - name: Upload Linux Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-release-appimage
+          path: SecureMark-Linux.AppImage
+          if-no-files-found: error
+
   build-ios:
     name: Build iOS/iPad
     runs-on: macos-latest
@@ -161,7 +218,7 @@ jobs:
 
   create-release:
     name: Create GitHub Release
-    needs: [build-android, build-ios, build-windows, build-macos]
+    needs: [build-android, build-linux, build-ios, build-windows, build-macos]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -172,6 +229,12 @@ jobs:
           name: android-release-apk
           path: ./artifacts/android
           
+      - name: Download Linux Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-release-appimage
+          path: ./artifacts/linux
+
       - name: Download iOS Artifact
         uses: actions/download-artifact@v4
         with:
@@ -206,36 +269,30 @@ jobs:
           if [ -f "./artifacts/android/app-release.apk" ]; then
             cp "./artifacts/android/app-release.apk" "./release/SecureMark-Android.apk"
             echo "✅ Android APK copied successfully"
-          else
-            echo "❌ Android APK not found"
-            find ./artifacts/android -name "*.apk" -exec ls -la {} \;
           fi
           
+          # Copy and rename Linux AppImage
+          if [ -f "./artifacts/linux/SecureMark-Linux.AppImage" ]; then
+            cp "./artifacts/linux/SecureMark-Linux.AppImage" "./release/SecureMark-Linux.AppImage"
+            echo "✅ Linux AppImage copied successfully"
+          fi
+
           # Copy and rename iOS ZIP
           if [ -f "./artifacts/ios/secure-mark-ios.zip" ]; then
             cp "./artifacts/ios/secure-mark-ios.zip" "./release/SecureMark-iOS.zip"
             echo "✅ iOS ZIP copied successfully"
-          else
-            echo "❌ iOS ZIP not found"
-            find ./artifacts/ios -name "*.zip" -exec ls -la {} \;
           fi
           
           # Copy and rename Windows ZIP
           if [ -f "./artifacts/windows/secure-mark-windows.zip" ]; then
             cp "./artifacts/windows/secure-mark-windows.zip" "./release/SecureMark-Windows.zip"
             echo "✅ Windows ZIP copied successfully"
-          else
-            echo "❌ Windows ZIP not found"
-            find ./artifacts/windows -name "*.zip" -exec ls -la {} \;
           fi
 
           # Copy and rename macOS ZIP
           if [ -f "./artifacts/macos/secure-mark-macos.zip" ]; then
             cp "./artifacts/macos/secure-mark-macos.zip" "./release/SecureMark-macOS.zip"
             echo "✅ macOS ZIP copied successfully"
-          else
-            echo "❌ macOS ZIP not found"
-            find ./artifacts/macos -name "*.zip" -exec ls -la {} \;
           fi
           
           echo "=== Final release files ==="
@@ -246,33 +303,14 @@ jobs:
           echo "=== Checking for required release files ==="
           MISSING_FILES=0
           
-          if [ ! -f "./release/SecureMark-Android.apk" ]; then
-            echo "❌ Android APK missing"
-            MISSING_FILES=$((MISSING_FILES + 1))
-          else
-            echo "✅ Android APK present"
-          fi
-          
-          if [ ! -f "./release/SecureMark-iOS.zip" ]; then
-            echo "❌ iOS ZIP missing"
-            MISSING_FILES=$((MISSING_FILES + 1))
-          else
-            echo "✅ iOS ZIP present"
-          fi
-          
-          if [ ! -f "./release/SecureMark-Windows.zip" ]; then
-            echo "❌ Windows ZIP missing"
-            MISSING_FILES=$((MISSING_FILES + 1))
-          else
-            echo "✅ Windows ZIP present"
-          fi
-
-          if [ ! -f "./release/SecureMark-macOS.zip" ]; then
-            echo "❌ macOS ZIP missing"
-            MISSING_FILES=$((MISSING_FILES + 1))
-          else
-            echo "✅ macOS ZIP present"
-          fi
+          for file in "SecureMark-Android.apk" "SecureMark-Linux.AppImage" "SecureMark-iOS.zip" "SecureMark-Windows.zip" "SecureMark-macOS.zip"; do
+            if [ ! -f "./release/$file" ]; then
+              echo "❌ $file missing"
+              MISSING_FILES=$((MISSING_FILES + 1))
+            else
+              echo "✅ $file present"
+            fi
+          done
           
           if [ $MISSING_FILES -gt 0 ]; then
             echo "❌ $MISSING_FILES file(s) missing. Release will proceed with available files."
@@ -304,15 +342,14 @@ jobs:
           echo "- Support for PNG, JPG, HEIC, and PDF files" >> release_notes.md
           echo "- High-quality vector PDF watermarking" >> release_notes.md
           echo "- Privacy-focused: strip EXIF data and other data by default" >> release_notes.md
+          echo "- **Linux Support**: Now available as a portable AppImage!" >> release_notes.md
           echo "" >> release_notes.md
           echo "## Downloads" >> release_notes.md
           echo "- **Android**: Install the APK file on your Android device" >> release_notes.md
-          echo "- **iOS**: For development/verification purposes only (requires Xcode)" >> release_notes.md
-          echo "- **macOS**: Extract and run the application. you also needs to do :
-https://wiki.hacks.guide/wiki/Open_unsigned_applications_on_macOS_Sequoia_and_newer" >> release_notes.md
-          echo "- **Windows**: Extract and run the executable If there is an issue about DLL this means you need to download and install Visual C++ Redistributable from this page:
-https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170
-Direct link: https://aka.ms/vc14/vc_redist.x64.exe" >> release_notes.md
+          echo "- **Linux**: Download and run the `.AppImage` (make it executable with `chmod +x`)" >> release_notes.md
+          echo "- **macOS**: Extract and run the application. you also needs to do: https://wiki.hacks.guide/wiki/Open_unsigned_applications_on_macOS_Sequoia_and_newer" >> release_notes.md
+          echo "- **Windows**: Extract and run the executable. If you see a DLL error, install the [Visual C++ Redistributable](https://aka.ms/vc14/vc_redist.x64.exe)" >> release_notes.md
+          echo "- **iOS**: For development/verification only (requires Xcode)" >> release_notes.md
 
       - name: Release
         uses: softprops/action-gh-release@v2
