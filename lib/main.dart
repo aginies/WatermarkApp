@@ -477,9 +477,39 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
         const SizedBox(height: 16),
         _buildActionButtons(),
         const SizedBox(height: 16),
-        Text(
-          _statusMessage,
-          style: theme.textTheme.bodyMedium,
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                _statusMessage,
+                style: theme.textTheme.bodyMedium,
+              ),
+            ),
+            if (_processing) ...[
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.secondaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.timer_outlined, size: 14, color: theme.colorScheme.onSecondaryContainer),
+                    const SizedBox(width: 4),
+                    Text(
+                      _elapsedTime,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSecondaryContainer,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
         ),
         if (_processedFiles.isNotEmpty) ...[
           const SizedBox(height: 8),
@@ -1716,6 +1746,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
     final theme = Theme.of(context);
 
     _cancellationToken = CancellationToken();
+    _startStopwatch();
 
     setState(() {
       _processing = true;
@@ -1723,6 +1754,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
       _previewIndex = 0;
       _progress = 0.0;
       _progressMessage = '';
+      _elapsedTime = '00:00';
       _statusMessage = l10n.processingCount(paths.length);
     });
 
@@ -1757,13 +1789,23 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const SizedBox(height: 16),
-                  SizedBox(
-                    width: 48,
-                    height: 48,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 4,
-                      value: _progress > 0 ? _progress : null,
-                    ),
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SizedBox(
+                        width: 80,
+                        height: 80,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 6,
+                          value: _progress > 0 ? _progress : null,
+                          backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                        ),
+                      ),
+                      Text(
+                        _elapsedTime,
+                        style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 24),
                   Text(l10n.applyingWatermark, style: theme.textTheme.titleMedium),
@@ -1864,6 +1906,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
         }
       }
     } finally {
+      _stopStopwatch();
       // Close dialog when done or cancelled
       if (mounted && dialogOpened) {
         // Use the root navigator to be sure we're popping the dialog
@@ -1910,6 +1953,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
   void _cancelProcessing() {
     final l10n = AppLocalizations.of(context)!;
     _cancellationToken?.cancel();
+    _stopStopwatch();
     setState(() {
       _processing = false;
       _progress = 0.0;
@@ -1937,6 +1981,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
         setState(() {
           _elapsedTime = '$minutes:$seconds';
         });
+        _progressListener?.call();
       }
     });
   }
