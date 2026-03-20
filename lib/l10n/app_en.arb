@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "appTitle": "Watermark App",
+  "appTitle": "SecureMark",
   "readyToSaveFiles": "Ready to save {count, plural, one {1 file} other {{count} files}}",
   "@readyToSaveFiles": {
     "placeholders": {
@@ -142,7 +142,7 @@
     }
   },
   "shareSubject": "Watermarked files",
-  "shareText": "Shared from Watermark App",
+  "shareText": "Shared from SecureMark",
   "sharedFiles": "Shared {count, plural, one {1 file} other {{count} files}}.",
   "@sharedFiles": {
     "placeholders": {

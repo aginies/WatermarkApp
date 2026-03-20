@@ -28,11 +28,11 @@ class _ProcessedFile {
 }
 
 void main() {
-  runApp(const WatermarkApp());
+  runApp(const SecureMarkApp());
 }
 
-class WatermarkApp extends StatelessWidget {
-  const WatermarkApp({super.key});
+class SecureMarkApp extends StatelessWidget {
+  const SecureMarkApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -125,7 +125,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
   List<_ProcessedFile> _processedFiles = <_ProcessedFile>[];
   int _previewIndex = 0;
   CancellationToken? _cancellationToken;
-  static const MethodChannel _platform = MethodChannel('watermark_app/sharing');
+  static const MethodChannel _platform = MethodChannel('secure_mark/sharing');
 
   @override
   void initState() {

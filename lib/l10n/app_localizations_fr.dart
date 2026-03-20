@@ -9,7 +9,7 @@ class AppLocalizationsFr extends AppLocalizations {
   AppLocalizationsFr([String locale = 'fr']) : super(locale);
 
   @override
-  String get appTitle => 'Application de filigrane';
+  String get appTitle => 'SecureMark';
 
   @override
   String readyToSaveFiles(int count) {
@@ -171,7 +171,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get shareSubject => 'Fichiers filigranés';
 
   @override
-  String get shareText => 'Partage depuis Watermark App';
+  String get shareText => 'Partage depuis SecureMark';
 
   @override
   String sharedFiles(int count) {

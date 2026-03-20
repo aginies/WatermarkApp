@@ -2,11 +2,11 @@
 
 **Effective Date: March 19, 2026**
 
-This Privacy Policy describes how the **Watermark App** ("we", "our", or "the application") handles your information. Your privacy is our top priority.
+This Privacy Policy describes how the **SecureMark** ("we", "our", or "the application") handles your information. Your privacy is our top priority.
 
 ## 1. Information Collection and Use
 
-The Watermark App is designed as a **no-data-collection** utility. We do not collect, store, transmit, or share any personal information, usage statistics, or device identifiers.
+The SecureMark is designed as a **no-data-collection** utility. We do not collect, store, transmit, or share any personal information, usage statistics, or device identifiers.
 
 *   **No Account Required:** You do not need to create an account or provide any personal details to use the app.
 *   **No Analytics:** We do not use any third-party analytics or tracking tools.

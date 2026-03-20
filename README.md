@@ -1,6 +1,6 @@
-# Watermark App
+# SecureMark
 
-Watermark App is a Flutter application for adding visible watermarks to images and PDF documents before sharing them.
+SecureMark is a Flutter application for adding visible watermarks to images and PDF documents before sharing them, ensuring they are used only for their intended purpose.
 
 The project is designed for lightweight document distribution workflows: choose one or more files, preview the result, adjust watermark settings, then save or share the processed outputs.
 

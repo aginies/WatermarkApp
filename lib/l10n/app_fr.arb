@@ -1,6 +1,6 @@
 {
   "@@locale": "fr",
-  "appTitle": "Application de filigrane",
+  "appTitle": "SecureMark",
   "readyToSaveFiles": "Prêt à enregistrer {count, plural, one {1 fichier} other {{count} fichiers}}",
   "@readyToSaveFiles": {
     "placeholders": {
@@ -142,7 +142,7 @@
     }
   },
   "shareSubject": "Fichiers filigranés",
-  "shareText": "Partage depuis Watermark App",
+  "shareText": "Partage depuis SecureMark",
   "sharedFiles": "{count, plural, one {1 fichier partagé} other {{count} fichiers partagés}}.",
   "@sharedFiles": {
     "placeholders": {

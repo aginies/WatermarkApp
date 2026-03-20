@@ -11,7 +11,7 @@ import java.io.FileOutputStream
 import java.io.InputStream
 
 class MainActivity : FlutterActivity() {
-    private val CHANNEL = "watermark_app/sharing"
+    private val CHANNEL = "secure_mark/sharing"
     private var sharedFiles: List<String> = listOf()
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {

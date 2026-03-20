@@ -1,7 +1,7 @@
-name: watermark_app
-description: WaterMarkApp - A professional watermark application for images and PDFs
+name: secure_mark
+description: SecureMark - A professional application to secure documents with watermarks for safe sharing.
 publish_to: 'none'
-version: 1.0.7+1
+version: 1.0.8+1
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

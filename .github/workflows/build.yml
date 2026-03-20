@@ -1,4 +1,4 @@
-name: Build & Release Flutter App
+name: Build & Release SecureMark
 
 on:
   push:
@@ -72,9 +72,9 @@ jobs:
         run: |
           cd build/ios/iphoneos
           if [ -d "Runner.app" ]; then
-            zip -r ../../../watermark-app-ios.zip Runner.app
+            zip -r ../../../secure-mark-ios.zip Runner.app
             echo "✅ iOS app packaged successfully"
-            ls -la ../../../watermark-app-ios.zip
+            ls -la ../../../secure-mark-ios.zip
           else
             echo "❌ Runner.app not found"
             find . -name "*.app" -exec ls -la {} \;
@@ -83,7 +83,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ios-release-app
-          path: watermark-app-ios.zip
+          path: secure-mark-ios.zip
           if-no-files-found: error
 
   build-windows:
@@ -112,10 +112,10 @@ jobs:
         shell: powershell
       - name: Package Windows Build
         run: |
-          Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath watermark-app-windows.zip
-          if (Test-Path "watermark-app-windows.zip") {
+          Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath secure-mark-windows.zip
+          if (Test-Path "secure-mark-windows.zip") {
             Write-Host "✅ Windows ZIP created successfully"
-            Get-Item "watermark-app-windows.zip" | Format-List Name, Length
+            Get-Item "secure-mark-windows.zip" | Format-List Name, Length
           } else {
             Write-Host "❌ Windows ZIP creation failed"
           }
@@ -124,7 +124,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-release-exe
-          path: watermark-app-windows.zip
+          path: secure-mark-windows.zip
           if-no-files-found: error
 
   build-macos:
@@ -144,19 +144,19 @@ jobs:
       - name: Package macOS Build
         run: |
           cd build/macos/Build/Products/Release
-          if [ -d "watermark_app.app" ]; then
-            zip -r ../../../../../watermark-app-macos.zip watermark_app.app
+          if [ -d "SecureMark.app" ]; then
+            zip -r ../../../../../secure-mark-macos.zip SecureMark.app
             echo "✅ macOS app packaged successfully"
-            ls -la ../../../../../watermark-app-macos.zip
+            ls -la ../../../../../secure-mark-macos.zip
           else
-            echo "❌ watermark_app.app not found"
+            echo "❌ SecureMark.app not found"
             find . -name "*.app" -exec ls -la {} \;
           fi
       - name: Upload macOS Artifact
         uses: actions/upload-artifact@v4
         with:
           name: macos-release-app
-          path: watermark-app-macos.zip
+          path: secure-mark-macos.zip
           if-no-files-found: error
 
   create-release:
@@ -204,7 +204,7 @@ jobs:
           
           # Copy and rename Android APK
           if [ -f "./artifacts/android/app-release.apk" ]; then
-            cp "./artifacts/android/app-release.apk" "./release/WatermarkApp-Android.apk"
+            cp "./artifacts/android/app-release.apk" "./release/SecureMark-Android.apk"
             echo "✅ Android APK copied successfully"
           else
             echo "❌ Android APK not found"
@@ -212,8 +212,8 @@ jobs:
           fi
           
           # Copy and rename iOS ZIP
-          if [ -f "./artifacts/ios/watermark-app-ios.zip" ]; then
-            cp "./artifacts/ios/watermark-app-ios.zip" "./release/WatermarkApp-iOS.zip"
+          if [ -f "./artifacts/ios/secure-mark-ios.zip" ]; then
+            cp "./artifacts/ios/secure-mark-ios.zip" "./release/SecureMark-iOS.zip"
             echo "✅ iOS ZIP copied successfully"
           else
             echo "❌ iOS ZIP not found"
@@ -221,8 +221,8 @@ jobs:
           fi
           
           # Copy and rename Windows ZIP
-          if [ -f "./artifacts/windows/watermark-app-windows.zip" ]; then
-            cp "./artifacts/windows/watermark-app-windows.zip" "./release/WatermarkApp-Windows.zip"
+          if [ -f "./artifacts/windows/secure-mark-windows.zip" ]; then
+            cp "./artifacts/windows/secure-mark-windows.zip" "./release/SecureMark-Windows.zip"
             echo "✅ Windows ZIP copied successfully"
           else
             echo "❌ Windows ZIP not found"
@@ -230,8 +230,8 @@ jobs:
           fi
 
           # Copy and rename macOS ZIP
-          if [ -f "./artifacts/macos/watermark-app-macos.zip" ]; then
-            cp "./artifacts/macos/watermark-app-macos.zip" "./release/WatermarkApp-macOS.zip"
+          if [ -f "./artifacts/macos/secure-mark-macos.zip" ]; then
+            cp "./artifacts/macos/secure-mark-macos.zip" "./release/SecureMark-macOS.zip"
             echo "✅ macOS ZIP copied successfully"
           else
             echo "❌ macOS ZIP not found"
@@ -246,28 +246,28 @@ jobs:
           echo "=== Checking for required release files ==="
           MISSING_FILES=0
           
-          if [ ! -f "./release/WatermarkApp-Android.apk" ]; then
+          if [ ! -f "./release/SecureMark-Android.apk" ]; then
             echo "❌ Android APK missing"
             MISSING_FILES=$((MISSING_FILES + 1))
           else
             echo "✅ Android APK present"
           fi
           
-          if [ ! -f "./release/WatermarkApp-iOS.zip" ]; then
+          if [ ! -f "./release/SecureMark-iOS.zip" ]; then
             echo "❌ iOS ZIP missing"
             MISSING_FILES=$((MISSING_FILES + 1))
           else
             echo "✅ iOS ZIP present"
           fi
           
-          if [ ! -f "./release/WatermarkApp-Windows.zip" ]; then
+          if [ ! -f "./release/SecureMark-Windows.zip" ]; then
             echo "❌ Windows ZIP missing"
             MISSING_FILES=$((MISSING_FILES + 1))
           else
             echo "✅ Windows ZIP present"
           fi
 
-          if [ ! -f "./release/WatermarkApp-macOS.zip" ]; then
+          if [ ! -f "./release/SecureMark-macOS.zip" ]; then
             echo "❌ macOS ZIP missing"
             MISSING_FILES=$((MISSING_FILES + 1))
           else
@@ -293,16 +293,17 @@ jobs:
             VERSION="latest"
           fi
           
-          echo "# WatermarkApp Release ${VERSION}" > release_notes.md
+          echo "# SecureMark Release ${VERSION}" > release_notes.md
           echo "" >> release_notes.md
           echo "## Build Info" >> release_notes.md
           echo "- **Event**: ${{ github.event_name }}" >> release_notes.md
           echo "- **SHA**: ${GITHUB_SHA}" >> release_notes.md
           echo "" >> release_notes.md
           echo "## What's New" >> release_notes.md
-          echo "- Cross-platform watermark application for images and PDFs" >> release_notes.md
-          echo "- Support for PNG, JPG, and PDF files" >> release_notes.md
-          echo "- Customizable watermark text, transparency, and density" >> release_notes.md
+          echo "- Secure documents with customizable watermarks" >> release_notes.md
+          echo "- Support for PNG, JPG, HEIC, and PDF files" >> release_notes.md
+          echo "- High-quality vector PDF watermarking" >> release_notes.md
+          echo "- Privacy-focused: strip EXIF data by default" >> release_notes.md
           echo "" >> release_notes.md
           echo "## Downloads" >> release_notes.md
           echo "- **Android**: Install the APK file on your Android device" >> release_notes.md

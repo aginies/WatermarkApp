@@ -3,7 +3,7 @@ import UIKit
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
-  private let CHANNEL = "watermark_app/sharing"
+  private let CHANNEL = "secure_mark/sharing"
   private var sharedFiles: [String] = []
 
   override func application(

@@ -1,11 +1,11 @@
 {
-    "name": "WaterMarkApp",
-    "short_name": "WaterMarkApp",
+    "name": "SecureMark",
+    "short_name": "SecureMark",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#126A5A",
     "theme_color": "#126A5A",
-    "description": "WaterMarkApp - Professional watermarking for images and PDFs",
+    "description": "SecureMark - Professional watermarking for images and PDFs",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

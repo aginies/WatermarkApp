@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'Watermark App'**
+  /// **'SecureMark'**
   String get appTitle;
 
   /// No description provided for @readyToSaveFiles.
@@ -311,7 +311,7 @@ abstract class AppLocalizations {
   /// No description provided for @shareText.
   ///
   /// In en, this message translates to:
-  /// **'Shared from Watermark App'**
+  /// **'Shared from SecureMark'**
   String get shareText;
 
   /// No description provided for @sharedFiles.
