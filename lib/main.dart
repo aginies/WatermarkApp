@@ -92,7 +92,21 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
   String _statusMessage = '';
   String _progressMessage = '';
   String _appVersion = '';
+  final List<String> _logs = <String>[];
   List<String> _selectedPaths = <String>[];
+
+  void _addLog(String message) {
+    final timestamp = DateTime.now().toString().split('.').first;
+    final logEntry = '[$timestamp] $message';
+    print(logEntry);
+    setState(() {
+      _logs.insert(0, logEntry);
+      // Keep only last 100 logs
+      if (_logs.length > 100) {
+        _logs.removeLast();
+      }
+    });
+  }
   List<_ProcessedFile> _processedFiles = <_ProcessedFile>[];
   int _previewIndex = 0;
   CancellationToken? _cancellationToken;
@@ -134,47 +148,39 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
   }
 
   Future<void> _handleSharedContent() async {
+    _addLog('Checking for shared content...');
     try {
       final List<dynamic>? sharedFiles = await _platform.invokeMethod('getSharedFiles');
       if (sharedFiles != null && sharedFiles.isNotEmpty) {
+        _addLog('Received ${sharedFiles.length} shared files');
         final List<String> validFiles = sharedFiles
             .where((file) => file is String && File(file).existsSync())
             .map((file) => file as String)
             .where((path) {
           final extension = p.extension(path).toLowerCase();
-          return ['.jpg', '.jpeg', '.png', '.webp', '.pdf'].contains(extension);
+          final isValid = ['.jpg', '.jpeg', '.png', '.webp', '.pdf', '.heic', '.heif'].contains(extension);
+          if (!isValid) _addLog('Unsupported extension: $extension for file $path');
+          return isValid;
         }).toList();
 
         if (validFiles.isNotEmpty) {
-          // Only update if these are new files (different from current selection)
-          final currentPathsSet = Set<String>.from(_selectedPaths);
-          final newPathsSet = Set<String>.from(validFiles);
+          _addLog('Found ${validFiles.length} valid shared files');
+          // Reset the app state before processing new shared files
+          _reset();
           
-          if (!const SetEquality().equals(currentPathsSet, newPathsSet)) {
-            setState(() {
-              _selectedPaths = validFiles;
-              _processedFiles.clear();
-              _previewIndex = 0;
-            });
-
-            if (mounted) {
-              final l10n = AppLocalizations.of(context)!;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('📷 ${l10n.selectedFiles(validFiles.length)}'),
-                  duration: const Duration(seconds: 3),
-                  action: SnackBarAction(
-                    label: l10n.applyWatermark,
-                    onPressed: _applyWatermark,
-                  ),
-                ),
-              );
-            }
-          }
+          setState(() {
+            _selectedPaths = validFiles;
+            _processedFiles.clear();
+            _previewIndex = 0;
+          });
+        } else {
+          _addLog('No valid shared files found');
         }
+      } else {
+        _addLog('No shared content received');
       }
     } catch (e) {
-      print('Error handling shared content: $e');
+      _addLog('Error handling shared content: $e');
     }
   }
 
@@ -330,6 +336,44 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
     );
   }
 
+  void _showLogs() {
+    final l10n = AppLocalizations.of(context)!;
+    showDialog(
+      context: context,
+      builder: (context) {
+        final theme = Theme.of(context);
+        return AlertDialog(
+          title: Text(l10n.appLogs),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: 400,
+            child: _logs.isEmpty
+                ? const Center(child: Text('No logs yet'))
+                : ListView.separated(
+                    itemCount: _logs.length,
+                    separatorBuilder: (context, index) => const Divider(),
+                    itemBuilder: (context, index) {
+                      return Text(
+                        _logs[index],
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontFamily: 'monospace',
+                        ),
+                      );
+                    },
+                  ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l10n.close),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _showExpertOptions() {
     final l10n = AppLocalizations.of(context)!;
     showDialog(
@@ -346,123 +390,137 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                   Text(l10n.expertOptions),
                 ],
               ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(l10n.fontSizeValue(_fontSize.round()), style: theme.textTheme.titleSmall),
-                  Slider(
-                    value: _fontSize,
-                    min: 8,
-                    max: 48,
-                    divisions: 10,
-                    onChanged: (value) {
-                      setDialogState(() {
-                        _fontSize = value;
-                      });
-                      setState(() {
-                        _fontSize = value;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  Text(l10n.jpegQualityValue(_jpegQuality), style: theme.textTheme.titleSmall),
-                  Slider(
-                    value: _jpegQuality.toDouble(),
-                    min: 10,
-                    max: 100,
-                    divisions: 18,
-                    onChanged: (value) {
-                      setDialogState(() {
-                        _jpegQuality = value.round();
-                      });
-                      setState(() {
-                        _jpegQuality = value.round();
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    l10n.imageResizingLabel(_targetSize?.toString() ?? l10n.resizeNone), 
-                    style: theme.textTheme.titleSmall,
-                  ),
-                  DropdownButton<int?>(
-                    value: _targetSize,
-                    isExpanded: true,
-                    items: [
-                      DropdownMenuItem<int?>(value: null, child: Text(l10n.resizeNone)),
-                      const DropdownMenuItem<int?>(value: 2048, child: Text('2048 px')),
-                      const DropdownMenuItem<int?>(value: 1600, child: Text('1600 px')),
-                      const DropdownMenuItem<int?>(value: 1280, child: Text('1280 px')),
-                      const DropdownMenuItem<int?>(value: 1024, child: Text('1024 px')),
-                      const DropdownMenuItem<int?>(value: 800, child: Text('800 px')),
-                    ],
-                    onChanged: (value) {
-                      setDialogState(() {
-                        _targetSize = value;
-                      });
-                      setState(() {
-                        _targetSize = value;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  CheckboxListTile(
-                    title: Text(l10n.includeTimestampFilename),
-                    value: _includeTimestamp,
-                    contentPadding: EdgeInsets.zero,
-                    onChanged: (value) {
-                      setDialogState(() {
-                        _includeTimestamp = value ?? false;
-                      });
-                      setState(() {
-                        _includeTimestamp = value ?? false;
-                      });
-                    },
-                  ),
-                  CheckboxListTile(
-                    title: Text(l10n.preserveExifData),
-                    value: _preserveExif,
-                    contentPadding: EdgeInsets.zero,
-                    onChanged: (value) {
-                      setDialogState(() {
-                        _preserveExif = value ?? false;
-                      });
-                      setState(() {
-                        _preserveExif = value ?? false;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  Text(l10n.fontStyleLabel),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: theme.dividerColor),
-                      borderRadius: BorderRadius.circular(8),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(l10n.fontSizeValue(_fontSize.round()), style: theme.textTheme.titleSmall),
+                    Slider(
+                      value: _fontSize,
+                      min: 8,
+                      max: 48,
+                      divisions: 10,
+                      onChanged: (value) {
+                        setDialogState(() {
+                          _fontSize = value;
+                        });
+                        setState(() {
+                          _fontSize = value;
+                        });
+                      },
                     ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<WatermarkFont>(
-                        value: _selectedFont,
-                        isExpanded: true,
-                        onChanged: (WatermarkFont? newFont) {
-                          if (newFont != null) {
-                            setState(() {
-                              _selectedFont = newFont;
-                            });
-                          }
-                        },
-                        items: _buildFontDropdownItems(),
+                    const SizedBox(height: 16),
+                    Text(l10n.jpegQualityValue(_jpegQuality), style: theme.textTheme.titleSmall),
+                    Slider(
+                      value: _jpegQuality.toDouble(),
+                      min: 10,
+                      max: 100,
+                      divisions: 18,
+                      onChanged: (value) {
+                        setDialogState(() {
+                          _jpegQuality = value.round();
+                        });
+                        setState(() {
+                          _jpegQuality = value.round();
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      l10n.imageResizingLabel(_targetSize?.toString() ?? l10n.resizeNone), 
+                      style: theme.textTheme.titleSmall,
+                    ),
+                    DropdownButton<int?>(
+                      value: _targetSize,
+                      isExpanded: true,
+                      items: [
+                        DropdownMenuItem<int?>(value: null, child: Text(l10n.resizeNone)),
+                        const DropdownMenuItem<int?>(value: 2048, child: Text('2048 px')),
+                        const DropdownMenuItem<int?>(value: 1600, child: Text('1600 px')),
+                        const DropdownMenuItem<int?>(value: 1280, child: Text('1280 px')),
+                        const DropdownMenuItem<int?>(value: 1024, child: Text('1024 px')),
+                        const DropdownMenuItem<int?>(value: 800, child: Text('800 px')),
+                      ],
+                      onChanged: (value) {
+                        setDialogState(() {
+                          _targetSize = value;
+                        });
+                        setState(() {
+                          _targetSize = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    CheckboxListTile(
+                      title: Text(l10n.includeTimestampFilename),
+                      value: _includeTimestamp,
+                      contentPadding: EdgeInsets.zero,
+                      onChanged: (value) {
+                        setDialogState(() {
+                          _includeTimestamp = value ?? false;
+                        });
+                        setState(() {
+                          _includeTimestamp = value ?? false;
+                        });
+                      },
+                    ),
+                    CheckboxListTile(
+                      title: Text(l10n.preserveExifData),
+                      value: _preserveExif,
+                      contentPadding: EdgeInsets.zero,
+                      onChanged: (value) {
+                        setDialogState(() {
+                          _preserveExif = value ?? false;
+                        });
+                        setState(() {
+                          _preserveExif = value ?? false;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    Text(l10n.fontStyleLabel),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: theme.dividerColor),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<WatermarkFont>(
+                          value: _selectedFont,
+                          isExpanded: true,
+                          onChanged: (WatermarkFont? newFont) {
+                            if (newFont != null) {
+                              setState(() {
+                                _selectedFont = newFont;
+                              });
+                            }
+                          },
+                          items: _buildFontDropdownItems(),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _getFontSourceDescription(context),
-                    style: theme.textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Text(
+                      _getFontSourceDescription(context),
+                      style: theme.textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
+                    ),
+                    const SizedBox(height: 24),
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        _showLogs();
+                      },
+                      icon: const Icon(Icons.list_alt),
+                      label: Text(l10n.viewLogs),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 44),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               actions: [
                 TextButton(
@@ -1047,8 +1105,8 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
 
     final group = XTypeGroup(
       label: l10n.pickerLabel,
-      extensions: <String>['jpg', 'jpeg', 'png', 'webp', 'pdf'],
-      uniformTypeIdentifiers: <String>['public.jpeg', 'public.png', 'public.webp', 'com.adobe.pdf'],
+      extensions: <String>['jpg', 'jpeg', 'png', 'webp', 'pdf', 'heic', 'heif'],
+      uniformTypeIdentifiers: <String>['public.jpeg', 'public.png', 'public.webp', 'com.adobe.pdf', 'public.heic', 'public.heif'],
     );
 
     final files = await openFiles(acceptedTypeGroups: <XTypeGroup>[group]);
@@ -1074,6 +1132,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
   }
 
   Future<void> _processPaths(List<String> paths) async {
+    _addLog('Processing ${paths.length} paths');
     final l10n = AppLocalizations.of(context)!;
 
     _cancellationToken = CancellationToken();
@@ -1093,6 +1152,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
     try {
       for (var i = 0; i < paths.length; i++) {
         if (_cancellationToken?.isCancelled == true) {
+          _addLog('Processing cancelled by user');
           setState(() {
             _processing = false;
             _progress = 0.0;
@@ -1109,6 +1169,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
           return;
         }
 
+        _addLog('Starting file $i: $fileName');
         // Update status to show current file being processed (1-indexed)
         setState(() {
           _statusMessage = l10n.processingNamedFile(i + 1, paths.length, fileName);
@@ -1140,8 +1201,10 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
             cancellationToken: _cancellationToken,
           );
 
+          _addLog('Successfully processed $fileName');
           processedFiles.add(_ProcessedFile(sourcePath: path, result: result));
         } catch (e) {
+          _addLog('Failed to process $fileName: $e');
           failedFiles.add(path);
           print('Failed to process $path: $e');
           

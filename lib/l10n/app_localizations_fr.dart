@@ -242,5 +242,11 @@ class AppLocalizationsFr extends AppLocalizations {
       'Note : Utilisation de Google Fonts pour une typographie améliorée. Internet requis pour la première utilisation.';
 
   @override
+  String get viewLogs => 'Voir les logs';
+
+  @override
+  String get appLogs => 'Logs de l\'application';
+
+  @override
   String get close => 'Fermer';
 }

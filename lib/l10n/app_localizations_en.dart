@@ -239,5 +239,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Note: Using Google Fonts for enhanced typography. Requires internet for first use.';
 
   @override
+  String get viewLogs => 'View Logs';
+
+  @override
+  String get appLogs => 'App Logs';
+
+  @override
   String get close => 'Close';
 }

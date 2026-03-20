@@ -309,7 +309,7 @@ class WatermarkProcessor {
 
       // Check file extension
       final extension = p.extension(file.path).toLowerCase();
-      const supportedExtensions = {'.jpg', '.jpeg', '.png', '.webp', '.pdf'};
+      const supportedExtensions = {'.jpg', '.jpeg', '.png', '.webp', '.pdf', '.heic', '.heif'};
       if (!supportedExtensions.contains(extension)) {
         return _ValidationResult(
           isValid: false,
@@ -520,8 +520,14 @@ class WatermarkProcessor {
 
       onProgress?.call(0.9, 'Finalizing image...');
 
-      // Use original extension instead of always converting to PNG
-      final outputPath = _outputPath(file.path, extension, includeTimestamp);
+      // For HEIC/HEIF or other formats, we might want to default to .jpg for the output
+      // since our encoder handles them as such or as PNG.
+      var outputExtension = extension;
+      if (extension == '.heic' || extension == '.heif') {
+        outputExtension = '.jpg';
+      }
+      
+      final outputPath = _outputPath(file.path, outputExtension, includeTimestamp);
 
       return ProcessResult(
         outputPath: outputPath,

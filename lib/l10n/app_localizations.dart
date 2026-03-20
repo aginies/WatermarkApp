@@ -398,6 +398,18 @@ abstract class AppLocalizations {
   /// **'Note: Using Google Fonts for enhanced typography. Requires internet for first use.'**
   String get fontSelectionNoteGoogle;
 
+  /// No description provided for @viewLogs.
+  ///
+  /// In en, this message translates to:
+  /// **'View Logs'**
+  String get viewLogs;
+
+  /// No description provided for @appLogs.
+  ///
+  /// In en, this message translates to:
+  /// **'App Logs'**
+  String get appLogs;
+
   /// No description provided for @close.
   ///
   /// In en, this message translates to:

@@ -31,6 +31,7 @@ class MainActivity : FlutterActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        setIntent(intent)
         handleSharedIntent(intent)
     }
 
@@ -40,32 +41,39 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun handleSharedIntent(intent: Intent?) {
-        if (intent == null) return
+        if (intent == null || (intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0) return
         
+        val action = intent.action ?: return // Intent action may be null if we already handled it
+        if (action != Intent.ACTION_SEND && action != Intent.ACTION_SEND_MULTIPLE) return
+
         val files = mutableListOf<String>()
         
-        when (intent.action) {
-            Intent.ACTION_SEND -> {
-                val uri = intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
-                uri?.let { 
-                    val path = getRealPathFromUri(it)
-                    if (path != null) {
-                        files.add(path)
-                    }
+        // Ensure we have read permissions for the URIs from Google Photos
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+
+        if (Intent.ACTION_SEND == action) {
+            val uri = intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
+            uri?.let { 
+                val path = getRealPathFromUri(it)
+                if (path != null) {
+                    files.add(path)
                 }
             }
-            Intent.ACTION_SEND_MULTIPLE -> {
-                val uris = intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)
-                uris?.forEach { uri ->
-                    val path = getRealPathFromUri(uri)
-                    if (path != null) {
-                        files.add(path)
-                    }
+        } else if (Intent.ACTION_SEND_MULTIPLE == action) {
+            val uris = intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)
+            uris?.forEach { uri ->
+                val path = getRealPathFromUri(uri)
+                if (path != null) {
+                    files.add(path)
                 }
             }
         }
         
-        sharedFiles = files
+        if (files.isNotEmpty()) {
+            sharedFiles = files
+            // Clear the intent action so we don't process it again on next resume
+            intent.action = null
+        }
     }
 
     private fun getRealPathFromUri(uri: Uri): String? {
@@ -99,9 +107,20 @@ class MainActivity : FlutterActivity() {
 
     private fun copyUriToCache(uri: Uri): String? {
         return try {
+            val contentResolver = contentResolver
             val inputStream: InputStream? = contentResolver.openInputStream(uri)
             if (inputStream != null) {
-                val fileName = "shared_${System.currentTimeMillis()}.tmp"
+                // Try to get original file name to preserve extension
+                var fileName = "shared_${System.currentTimeMillis()}.tmp"
+                contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                        if (nameIndex != -1) {
+                            fileName = "shared_${System.currentTimeMillis()}_${cursor.getString(nameIndex)}"
+                        }
+                    }
+                }
+                
                 val cacheFile = File(cacheDir, fileName)
                 val outputStream = FileOutputStream(cacheFile)
                 
