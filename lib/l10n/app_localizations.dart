@@ -179,7 +179,7 @@ abstract class AppLocalizations {
   /// No description provided for @authorFooter.
   ///
   /// In en, this message translates to:
-  /// **'Author: guibo'**
+  /// **'Author: Antoine Giniès'**
   String get authorFooter;
 
   /// No description provided for @pickFiles.

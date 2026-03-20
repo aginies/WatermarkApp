@@ -60,7 +60,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get processingFlattening => 'Rasterisation du PDF (aplatissement)...';
 
   @override
-  String get authorFooter => 'Auteur : guibo';
+  String get authorFooter => 'Auteur : Antoine Giniès';
 
   @override
   String get pickFiles => 'Images ou PDF';
