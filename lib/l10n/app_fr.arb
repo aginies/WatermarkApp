@@ -226,6 +226,31 @@
   "noLogsYet": "Aucun log pour le moment",
   "openGitHub": "Voir le dépôt GitHub",
   "close": "Fermer",
+  "aboutApp": "À propos de SecureMark",
+  "appDescription": "Une application professionnelle pour sécuriser vos documents avec des filigranes pour un partage sûr.",
+  "authorLabel": "Auteur : {name}",
+  "@authorLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "checkForUpdates": "Vérifier les mises à jour",
+  "checkingForUpdates": "Vérification en cours...",
+  "upToDate": "Vous utilisez la dernière version.",
+  "updateAvailable": "Une nouvelle version ({version}) est disponible !",
+  "@updateAvailable": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateCheckError": "Impossible de vérifier les mises à jour.",
+  "githubRepository": "Dépôt GitHub",
+  "privacyPolicy": "Politique de confidentialité",
+  "viewUpdate": "Voir",
   "processingCancelled": "Traitement annulé",
   "processingStatusMultiple": "{successCount} fichiers traités avec succès. {failedCount} fichiers ont échoué.",
   "@processingStatusMultiple": {

@@ -308,6 +308,44 @@ class AppLocalizationsFr extends AppLocalizations {
   String get close => 'Fermer';
 
   @override
+  String get aboutApp => 'À propos de SecureMark';
+
+  @override
+  String get appDescription =>
+      'Une application professionnelle pour sécuriser vos documents avec des filigranes pour un partage sûr.';
+
+  @override
+  String authorLabel(String name) {
+    return 'Auteur : $name';
+  }
+
+  @override
+  String get checkForUpdates => 'Vérifier les mises à jour';
+
+  @override
+  String get checkingForUpdates => 'Vérification en cours...';
+
+  @override
+  String get upToDate => 'Vous utilisez la dernière version.';
+
+  @override
+  String updateAvailable(String version) {
+    return 'Une nouvelle version ($version) est disponible !';
+  }
+
+  @override
+  String get updateCheckError => 'Impossible de vérifier les mises à jour.';
+
+  @override
+  String get githubRepository => 'Dépôt GitHub';
+
+  @override
+  String get privacyPolicy => 'Politique de confidentialité';
+
+  @override
+  String get viewUpdate => 'Voir';
+
+  @override
   String get processingCancelled => 'Traitement annulé';
 
   @override

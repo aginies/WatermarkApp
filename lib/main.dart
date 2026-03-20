@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -8,8 +9,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:file_selector/file_selector.dart';
+import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:pub_semver/pub_semver.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -376,6 +379,11 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
         centerTitle: false,
         actions: [
           IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: _showAboutDialog,
+            tooltip: l10n.aboutApp,
+          ),
+          IconButton(
             icon: const Icon(Icons.settings_suggest_outlined),
             onPressed: _showExpertOptions,
             tooltip: l10n.expertOptions,
@@ -531,6 +539,167 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
         );
       },
     );
+  }
+
+  void _showAboutDialog() {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.asset(
+                    'web/icons/Icon-192.png',
+                    width: 48,
+                    height: 48,
+                    errorBuilder: (context, error, stackTrace) => const Icon(Icons.security, size: 48),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(l10n.appTitle, style: theme.textTheme.titleLarge),
+                      Text('v$_appVersion', style: theme.textTheme.bodySmall),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Divider(),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.appDescription,
+                  style: theme.textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 16),
+                Text(l10n.authorLabel('Antoine Giniès'), style: theme.textTheme.bodyMedium),
+                if (_updateMessage != null) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      _updateMessage!,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: _isCheckingForUpdates ? null : () => _checkForUpdates(setDialogState),
+                  icon: _isCheckingForUpdates 
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.system_update_alt),
+                  label: Text(l10n.checkForUpdates),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () => launchUrl(Uri.parse('https://github.com/aginies/SecureMark')),
+                  icon: const Icon(Icons.code),
+                  label: Text(l10n.githubRepository),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () => launchUrl(Uri.parse('https://github.com/aginies/SecureMark/blob/master/PRIVACY_POLICY.md')),
+                  icon: const Icon(Icons.privacy_tip_outlined),
+                  label: Text(l10n.privacyPolicy),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(l10n.close),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  bool _isCheckingForUpdates = false;
+  String? _updateMessage;
+
+  Future<void> _checkForUpdates(StateSetter setDialogState) async {
+    final l10n = AppLocalizations.of(context)!;
+    if (_isCheckingForUpdates) return;
+
+    setDialogState(() {
+      _isCheckingForUpdates = true;
+      _updateMessage = l10n.checkingForUpdates;
+    });
+
+    try {
+      final response = await http.get(
+        Uri.parse('https://api.github.com/repos/aginies/SecureMark/releases/latest'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final latestTag = data['tag_name'] as String; // e.g. "v1.1.3"
+        
+        // Remove 'v' prefix if present for parsing
+        final latestVersionStr = latestTag.startsWith('v') ? latestTag.substring(1) : latestTag;
+        
+        final latestVersion = Version.parse(latestVersionStr);
+        final currentVersion = Version.parse(_appVersion);
+
+        if (latestVersion > currentVersion) {
+          setDialogState(() {
+            _updateMessage = l10n.updateAvailable(latestTag);
+          });
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(l10n.updateAvailable(latestTag)),
+                action: SnackBarAction(
+                  label: l10n.viewUpdate,
+                  onPressed: () => launchUrl(Uri.parse('https://github.com/aginies/SecureMark/releases/latest')),
+                ),
+              ),
+            );
+          }
+        } else {
+          setDialogState(() {
+            _updateMessage = l10n.upToDate;
+          });
+        }
+      } else {
+        setDialogState(() {
+          _updateMessage = l10n.updateCheckError;
+        });
+      }
+    } catch (e) {
+      setDialogState(() {
+        _updateMessage = l10n.updateCheckError;
+      });
+    } finally {
+      setDialogState(() {
+        _isCheckingForUpdates = false;
+      });
+    }
   }
 
   void _showExpertOptions() {
@@ -770,15 +939,6 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                       },
                       icon: const Icon(Icons.list_alt),
                       label: Text(l10n.viewLogs),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 44),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      onPressed: () => launchUrl(Uri.parse('https://github.com/aginies/SecureMark')),
-                      icon: const Icon(Icons.code),
-                      label: Text(l10n.openGitHub),
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 44),
                       ),

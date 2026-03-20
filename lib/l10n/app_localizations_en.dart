@@ -306,6 +306,44 @@ class AppLocalizationsEn extends AppLocalizations {
   String get close => 'Close';
 
   @override
+  String get aboutApp => 'About SecureMark';
+
+  @override
+  String get appDescription =>
+      'A professional application to secure documents with watermarks for safe sharing.';
+
+  @override
+  String authorLabel(String name) {
+    return 'Author: $name';
+  }
+
+  @override
+  String get checkForUpdates => 'Check for Updates';
+
+  @override
+  String get checkingForUpdates => 'Checking for updates...';
+
+  @override
+  String get upToDate => 'You are using the latest version.';
+
+  @override
+  String updateAvailable(String version) {
+    return 'A new version ($version) is available!';
+  }
+
+  @override
+  String get updateCheckError => 'Could not check for updates.';
+
+  @override
+  String get githubRepository => 'GitHub Repository';
+
+  @override
+  String get privacyPolicy => 'Privacy Policy';
+
+  @override
+  String get viewUpdate => 'View';
+
+  @override
   String get processingCancelled => 'Processing cancelled';
 
   @override

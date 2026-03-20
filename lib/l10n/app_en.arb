@@ -30,7 +30,7 @@
   "processingCached": "Retrieved from cache",
   "processingComplete": "Processing complete",
   "processingFlattening": "Rasterizing PDF (flattening)...",
-  "authorFooter": "Author: guibo",
+  "authorFooter": "Author: Antoine Giniès",
   "pickFiles": "Images or PDF",
   "selectedFile": "Selected file: {name}",
   "@selectedFile": {
@@ -226,6 +226,31 @@
   "noLogsYet": "No logs yet",
   "openGitHub": "Open GitHub Repository",
   "close": "Close",
+  "aboutApp": "About SecureMark",
+  "appDescription": "A professional application to secure documents with watermarks for safe sharing.",
+  "authorLabel": "Author: {name}",
+  "@authorLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "checkForUpdates": "Check for Updates",
+  "checkingForUpdates": "Checking for updates...",
+  "upToDate": "You are using the latest version.",
+  "updateAvailable": "A new version ({version}) is available!",
+  "@updateAvailable": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateCheckError": "Could not check for updates.",
+  "githubRepository": "GitHub Repository",
+  "privacyPolicy": "Privacy Policy",
+  "viewUpdate": "View",
   "processingCancelled": "Processing cancelled",
   "processingStatusMultiple": "Processed {successCount} files successfully. {failedCount} files failed.",
   "@processingStatusMultiple": {

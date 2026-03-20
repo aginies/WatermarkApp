@@ -518,6 +518,72 @@ abstract class AppLocalizations {
   /// **'Close'**
   String get close;
 
+  /// No description provided for @aboutApp.
+  ///
+  /// In en, this message translates to:
+  /// **'About SecureMark'**
+  String get aboutApp;
+
+  /// No description provided for @appDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A professional application to secure documents with watermarks for safe sharing.'**
+  String get appDescription;
+
+  /// No description provided for @authorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Author: {name}'**
+  String authorLabel(String name);
+
+  /// No description provided for @checkForUpdates.
+  ///
+  /// In en, this message translates to:
+  /// **'Check for Updates'**
+  String get checkForUpdates;
+
+  /// No description provided for @checkingForUpdates.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking for updates...'**
+  String get checkingForUpdates;
+
+  /// No description provided for @upToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'You are using the latest version.'**
+  String get upToDate;
+
+  /// No description provided for @updateAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'A new version ({version}) is available!'**
+  String updateAvailable(String version);
+
+  /// No description provided for @updateCheckError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not check for updates.'**
+  String get updateCheckError;
+
+  /// No description provided for @githubRepository.
+  ///
+  /// In en, this message translates to:
+  /// **'GitHub Repository'**
+  String get githubRepository;
+
+  /// No description provided for @privacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get privacyPolicy;
+
+  /// No description provided for @viewUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get viewUpdate;
+
   /// No description provided for @processingCancelled.
   ///
   /// In en, this message translates to:
