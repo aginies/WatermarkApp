@@ -976,16 +976,18 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                 children: [
                   if (_rawImage != null && _shaderProgram != null) ...[
                     // Live Shader Preview!
-                    SizedBox(
-                      height: 250,
-                      child: CustomPaint(
-                        painter: WatermarkShaderPainter(
-                          shader: _shaderProgram!.fragmentShader(),
-                          image: _rawImage!,
-                          color: _useRandomColor ? Colors.deepPurple : _selectedColor,
-                          transparency: _transparency,
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 300),
+                      child: AspectRatio(
+                        aspectRatio: _rawImage!.width / _rawImage!.height,
+                        child: CustomPaint(
+                          painter: WatermarkShaderPainter(
+                            shader: _shaderProgram!.fragmentShader(),
+                            image: _rawImage!,
+                            color: _useRandomColor ? Colors.deepPurple : _selectedColor,
+                            transparency: _transparency,
+                          ),
                         ),
-                        child: Container(),
                       ),
                     ),
                     const SizedBox(height: 12),
