@@ -1127,10 +1127,11 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
   }
 
   Future<void> _processPaths(List<String> paths) async {
+    if (_processing || paths.isEmpty) return;
+    
     _addLog('Processing ${paths.length} paths');
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    await _cleanupTempFiles();
 
     _cancellationToken = CancellationToken();
 
@@ -1143,14 +1144,18 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
       _statusMessage = l10n.processingCount(paths.length);
     });
 
+    await _cleanupTempFiles();
+
     final processedFiles = <_ProcessedFile>[];
     final failedFiles = <String>[];
+    bool dialogOpened = false;
 
     // Show progress dialog
-    final dialogFuture = showDialog(
+    showDialog(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
+        dialogOpened = true;
         return StatefulBuilder(
           builder: (context, setDialogState) {
             // Internal progress listener to trigger dialog rebuilds
@@ -1262,86 +1267,53 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
           _addLog('Failed to process $fileName: $e');
           failedFiles.add(path);
           
-          if (e is WatermarkError && mounted) {
+          if (mounted) {
             setState(() {
-              _statusMessage = e.userMessage;
+              _statusMessage = e is WatermarkError ? e.userMessage : l10n.errorPrefix(e.toString());
             });
             _progressListener?.call();
           }
         }
       }
-
+    } finally {
       // Close dialog when done or cancelled
-      if (mounted && Navigator.canPop(context)) {
-        Navigator.of(context).pop();
+      if (mounted && dialogOpened) {
+        // Use the root navigator to be sure we're popping the dialog
+        Navigator.of(context, rootNavigator: true).pop();
       }
       _progressListener = null;
 
-      if (!mounted) return;
+      if (mounted) {
+        if (_cancellationToken?.isCancelled == true) {
+          setState(() {
+            _processing = false;
+            _progress = 0.0;
+            _progressMessage = '';
+            _statusMessage = l10n.processingCancelled;
+          });
+        } else {
+          final successMessage = processedFiles.isEmpty
+              ? l10n.processingFailed
+              : failedFiles.isEmpty
+                  ? (!kIsWeb && (Platform.isAndroid || Platform.isIOS))
+                      ? l10n.previewReadyMobile(processedFiles.length)
+                      : l10n.previewReady(processedFiles.length)
+                  : l10n.processingStatusMultiple(processedFiles.length, failedFiles.length);
 
-      if (_cancellationToken?.isCancelled == true) {
-        setState(() {
-          _processing = false;
-          _progress = 0.0;
-          _progressMessage = '';
-          _statusMessage = l10n.processingCancelled;
-        });
-        return;
+          setState(() {
+            _processedFiles = processedFiles;
+            _previewIndex = 0;
+            _statusMessage = successMessage;
+            _processing = false;
+            _progress = 1.0;
+            _progressMessage = '';
+          });
+
+          if (_previewController.hasClients) {
+            _previewController.jumpToPage(0);
+          }
+        }
       }
-
-      if (processedFiles.isEmpty && failedFiles.isNotEmpty) {
-        setState(() {
-          _statusMessage = failedFiles.length == 1 
-              ? l10n.processingFailedSingle
-              : l10n.processingFailedMultiple(failedFiles.length);
-          _processing = false;
-          _progress = 0.0;
-          _progressMessage = '';
-        });
-        return;
-      }
-
-      final successMessage = processedFiles.isEmpty
-          ? l10n.processingFailed
-          : failedFiles.isEmpty
-              ? (!kIsWeb && (Platform.isAndroid || Platform.isIOS))
-                  ? l10n.previewReadyMobile(processedFiles.length)
-                  : l10n.previewReady(processedFiles.length)
-              : l10n.processingStatusMultiple(processedFiles.length, failedFiles.length);
-
-      setState(() {
-        _processedFiles = processedFiles;
-        _previewIndex = 0;
-        _statusMessage = successMessage;
-        _processing = false;
-        _progress = 1.0;
-        _progressMessage = '';
-      });
-
-      if (_previewController.hasClients) {
-        _previewController.jumpToPage(0);
-      }
-    } catch (error) {
-      if (mounted && Navigator.canPop(context)) {
-        Navigator.of(context).pop();
-      }
-      _progressListener = null;
-
-      if (!mounted) return;
-
-      String errorMessage;
-      if (error is WatermarkError) {
-        errorMessage = error.userMessage;
-      } else {
-        errorMessage = l10n.errorPrefix(error.toString());
-      }
-
-      setState(() {
-        _statusMessage = errorMessage;
-        _processing = false;
-        _progress = 0.0;
-        _progressMessage = '';
-      });
     }
   }
 
@@ -1357,7 +1329,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
       _statusMessage = l10n.processingCancelled;
     });
     if (mounted && Navigator.canPop(context)) {
-      Navigator.of(context).pop();
+      Navigator.of(context, rootNavigator: true).pop();
     }
   }
 
