@@ -80,23 +80,7 @@ class MainActivity : FlutterActivity() {
         return try {
             when (uri.scheme) {
                 "file" -> uri.path
-                "content" -> {
-                    val cursor = contentResolver.query(uri, null, null, null, null)
-                    cursor?.use {
-                        if (it.moveToFirst()) {
-                            val columnIndex = it.getColumnIndex(MediaStore.Images.Media.DATA)
-                            if (columnIndex != -1) {
-                                val path = it.getString(columnIndex)
-                                if (path != null && File(path).exists()) {
-                                    return path
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Fallback: copy the file to app's cache directory
-                    copyUriToCache(uri)
-                }
+                "content" -> copyUriToCache(uri)
                 else -> null
             }
         } catch (e: Exception) {

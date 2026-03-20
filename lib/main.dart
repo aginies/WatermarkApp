@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -132,6 +133,25 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
     WidgetsBinding.instance.addObserver(this);
     _handleSharedContent();
     _initPackageInfo();
+    _initOutputDirectory();
+  }
+
+  Future<void> _initOutputDirectory() async {
+    if (!kIsWeb && Platform.isMacOS) {
+      try {
+        final directory = await getDownloadsDirectory();
+        if (directory != null) {
+          if (mounted) {
+            setState(() {
+              _outputDirectory = directory.path;
+            });
+          }
+          _addLog('Default macOS output directory set to: ${directory.path}');
+        }
+      } catch (e) {
+        _addLog('Error setting default macOS output directory: $e');
+      }
+    }
   }
 
   Future<void> _initPackageInfo() async {
@@ -1420,14 +1440,19 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
     if (_processedFiles.isEmpty) return '';
     
     final firstFile = _processedFiles.first;
-    final directory = p.dirname(firstFile.sourcePath);
-    final displayDir = p.basename(directory);
+    final directory = _outputDirectory ?? p.dirname(firstFile.sourcePath);
+    final displayDir = _outputDirectory != null ? _outputDirectory! : p.basename(directory);
+    
+    // For long paths, show a shortened version
+    final displayPath = displayDir.length > 40 
+        ? '...${displayDir.substring(displayDir.length - 37)}' 
+        : displayDir;
     
     if (_processedFiles.length == 1) {
       final fileName = p.basenameWithoutExtension(firstFile.result.outputPath);
-      return 'Will save as: $fileName in $displayDir/';
+      return 'Will save as: $fileName in $displayPath/';
     } else {
-      return 'Will save ${_processedFiles.length} files to: $displayDir/';
+      return 'Will save ${_processedFiles.length} files to: $displayPath/';
     }
   }
 
@@ -1497,18 +1522,25 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
       return;
     }
 
+    final shareFiles = <XFile>[];
     for (final file in _processedFiles) {
-      await File(file.result.outputPath).writeAsBytes(file.result.outputBytes);
-    }
+      String outputPath = file.result.outputPath;
+      if (_outputDirectory != null) {
+        final fileName = p.basename(file.result.outputPath);
+        outputPath = p.join(_outputDirectory!, fileName);
+      }
+      
+      final directory = p.dirname(outputPath);
+      if (!await Directory(directory).exists()) {
+        await Directory(directory).create(recursive: true);
+      }
 
-    final shareFiles = _processedFiles
-        .map(
-          (file) => XFile(
-            file.result.outputPath,
-            mimeType: _mimeTypeForPath(file.result.outputPath),
-          ),
-        )
-        .toList();
+      await File(outputPath).writeAsBytes(file.result.outputBytes);
+      shareFiles.add(XFile(
+        outputPath,
+        mimeType: _mimeTypeForPath(outputPath),
+      ));
+    }
 
     final result = await SharePlus.instance.share(
       ShareParams(
