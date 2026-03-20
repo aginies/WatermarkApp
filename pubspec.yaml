@@ -73,5 +73,6 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
+  windows: true
   image_path: "assets/icon/app_icon.png"
   min_sdk_android: 21

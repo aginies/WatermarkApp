@@ -673,15 +673,19 @@ class WatermarkProcessor {
       );
     }
 
-    // Sanitize metadata if requested
+    // Sanitize metadata if requested, or add our app tag
     if (!preserveMetadata) {
       document.documentInformation.author = '';
-      document.documentInformation.creator = '';
-      document.documentInformation.keywords = '';
-      document.documentInformation.producer = '';
+      document.documentInformation.creator = 'SecureMark (https://github.com/aginies/SecureMark)';
+      document.documentInformation.keywords = 'SecureMark, Watermark, Security';
+      document.documentInformation.producer = 'SecureMark';
       document.documentInformation.subject = '';
       document.documentInformation.title = '';
-      // We can also clear creation/modification dates if needed, but Syncfusion might reset them on save
+    } else {
+      // Even if preserving, add our tag to creator if it's empty
+      if (document.documentInformation.creator.isEmpty) {
+        document.documentInformation.creator = 'SecureMark (https://github.com/aginies/SecureMark)';
+      }
     }
     
     final pageCount = document.pages.count;
@@ -792,6 +796,11 @@ class WatermarkProcessor {
       if (preserveMetadata && !decoded.exif.isEmpty) {
         outputImage.exif = decoded.exif.clone();
       }
+
+      // Add our app tag to the image metadata
+      outputImage.textData ??= {};
+      outputImage.textData!['Description'] = 'SecureMark (https://github.com/aginies/SecureMark)';
+      outputImage.textData!['Software'] = 'SecureMark';
 
       _applyWatermarkField(
         outputImage,
