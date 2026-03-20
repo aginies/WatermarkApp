@@ -18,8 +18,30 @@ permissions:
   contents: write # Needed to create releases
 
 jobs:
+  test:
+    name: Run Tests and Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Static Analysis
+        run: flutter analyze
+      - name: Run Tests with Coverage
+        run: flutter test --coverage
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/lcov.info
+
   build-android:
     name: Build Android
+    needs: [test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -56,6 +78,7 @@ jobs:
 
   build-linux:
     name: Build Linux (AppImage)
+    needs: [test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -117,6 +140,7 @@ jobs:
 
   build-ios:
     name: Build iOS/iPad
+    needs: [test]
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -149,6 +173,7 @@ jobs:
 
   build-windows:
     name: Build Windows
+    needs: [test]
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -190,6 +215,7 @@ jobs:
 
   build-macos:
     name: Build macOS
+    needs: [test]
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
