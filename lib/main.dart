@@ -2360,20 +2360,35 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
   }
 
   Future<void> _pickFile() async {
-    final result = await FilePicker.platform.pickFiles(
-      allowMultiple: true,
-      type: FileType.custom,
-      allowedExtensions: ['jpg', 'jpeg', 'png', 'webp', 'pdf', 'heic', 'heif'],
-    );
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'webp', 'pdf', 'heic', 'heif'],
+        withData: false, // We usually want paths for main files
+        lockParentWindow: true,
+      );
 
-    if (result == null || result.files.isEmpty) {
-      _addLog('File picker cancelled or no files selected.');
-      return;
+      if (result == null || result.files.isEmpty) {
+        _addLog('File picker cancelled or no files selected.');
+        return;
+      }
+
+      _addLog('Picked ${result.files.length} files via picker.');
+      
+      final validPaths = result.files
+          .where((f) => f.path != null)
+          .map((f) => f.path!)
+          .toList();
+          
+      if (validPaths.isNotEmpty) {
+        _selectPaths(validPaths);
+      } else {
+        _addLog('Error: Picked files have no valid local paths.');
+      }
+    } catch (e) {
+      _addLog('Error picking files: $e');
     }
-
-    _addLog('Picked ${result.files.length} files via picker.');
-    // FilePicker on mobile copies files to a temporary location, providing a valid local path
-    _selectPaths(result.files.where((f) => f.path != null).map((f) => f.path!).toList());
   }
 
   void _selectPaths(List<String> paths) {
@@ -2545,6 +2560,10 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
           );
         }
 
+        // Only apply steganography if there's something to hide (text or file)
+        final bool shouldApplyStegano = _useSteganography && 
+            (_textController.text.isNotEmpty || (_hideFileWithSteganography && _hiddenFileBytes != null));
+
         try {
           final result = await WatermarkProcessor.processFile(
             file: File(path),
@@ -2562,7 +2581,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
             rasterizePdf: _rasterizePdf,
             filePrefix: _filePrefix,
             antiAiLevel: _antiAiLevel,
-            useSteganography: _useSteganography,
+            useSteganography: shouldApplyStegano,
             steganographyPassword: _hidingPassword,
             hiddenFileName: _hideFileWithSteganography ? _hiddenFileName : null,
             hiddenFileBytes: _hideFileWithSteganography ? _hiddenFileBytes : null,
@@ -2705,6 +2724,10 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
     } catch (e) {
       _addLog('Error clearing preferences: $e');
     }
+
+    // Clear processor cache and cleanup temp files
+    WatermarkProcessor.clearCache();
+    await _cleanupTempFiles();
 
     if (_previewController.hasClients) {
       _previewController.jumpToPage(0);

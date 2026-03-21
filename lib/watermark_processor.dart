@@ -1202,6 +1202,8 @@ class WatermarkProcessor {
     String message, {
     String? password,
   }) {
+    if (message.isEmpty) return image; // Don't embed empty message
+    
     // 1. Prepare the data: Magic Header ('SM' or 'SX') + Length (32-bit) + Message + CRC16 (16-bit)
     final bool encrypt = password != null && password.isNotEmpty;
     final Uint8List originalMessageBytes = Uint8List.fromList(utf8.encode(message));
@@ -1316,6 +1318,10 @@ class WatermarkProcessor {
 
       // Check magic header
       final String magic = utf8.decode(bytes.sublist(0, 2), allowMalformed: true);
+      
+      // If we see a file magic, return null so extractFile can handle it
+      if (magic == 'SF' || magic == 'SE') return null;
+      
       final bool isEncrypted = magic == 'SX';
       if (magic != 'SM' && magic != 'SX') {
         return null;
@@ -1415,6 +1421,10 @@ class WatermarkProcessor {
 
       // Check magic header for file ('SF' = Plain, 'SE' = Encrypted)
       final String magic = utf8.decode(bytes.sublist(0, 2), allowMalformed: true);
+      
+      // If we see a text signature magic, return null so extractLSB can handle it
+      if (magic == 'SM' || magic == 'SX') return null;
+      
       final bool isEncrypted = magic == 'SE';
       if (magic != 'SF' && magic != 'SE') {
         return null;
