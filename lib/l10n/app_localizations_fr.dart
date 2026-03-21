@@ -352,6 +352,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get steganographyVerified => 'Stéganographie Vérifiée';
 
   @override
+  String get steganographyEnabledHint =>
+      'La stéganographie est activée et sera appliquée';
+
+  @override
+  String get abToggleTooltipOriginal => 'Afficher l\'original';
+
+  @override
+  String get abToggleTooltipProcessed => 'Afficher le traité';
+
+  @override
   String get processingCancelled => 'Traitement annulé';
 
   @override

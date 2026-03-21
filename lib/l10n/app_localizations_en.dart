@@ -350,6 +350,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get steganographyVerified => 'Steganography Verified';
 
   @override
+  String get steganographyEnabledHint =>
+      'Steganography is enabled and will be applied';
+
+  @override
+  String get abToggleTooltipOriginal => 'Show Original';
+
+  @override
+  String get abToggleTooltipProcessed => 'Show Processed';
+
+  @override
   String get processingCancelled => 'Processing cancelled';
 
   @override

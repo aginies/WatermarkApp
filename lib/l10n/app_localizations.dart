@@ -632,6 +632,24 @@ abstract class AppLocalizations {
   /// **'Steganography Verified'**
   String get steganographyVerified;
 
+  /// No description provided for @steganographyEnabledHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Steganography is enabled and will be applied'**
+  String get steganographyEnabledHint;
+
+  /// No description provided for @abToggleTooltipOriginal.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Original'**
+  String get abToggleTooltipOriginal;
+
+  /// No description provided for @abToggleTooltipProcessed.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Processed'**
+  String get abToggleTooltipProcessed;
+
   /// No description provided for @processingCancelled.
   ///
   /// In en, this message translates to:

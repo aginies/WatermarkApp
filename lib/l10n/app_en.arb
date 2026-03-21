@@ -245,6 +245,9 @@
   },
   "analysisResult": "Result:",
   "steganographyVerified": "Steganography Verified",
+  "steganographyEnabledHint": "Steganography is enabled and will be applied",
+  "abToggleTooltipOriginal": "Show Original",
+  "abToggleTooltipProcessed": "Show Processed",
   "processingCancelled": "Processing cancelled",
   "processingStatusMultiple": "Processed {successCount} files successfully. {failedCount} files failed.",
   "@processingStatusMultiple": {

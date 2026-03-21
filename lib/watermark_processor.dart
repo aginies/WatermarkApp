@@ -93,12 +93,14 @@ class ProcessResult {
     required this.outputPath,
     required this.outputBytes,
     required this.previewBytes,
+    required this.originalBytes,
     this.steganographyVerified = false,
   });
 
   final String outputPath;
   final Uint8List outputBytes;
   final Uint8List? previewBytes;
+  final Uint8List? originalBytes;
   final bool steganographyVerified;
 }
 
@@ -600,6 +602,7 @@ class WatermarkProcessor {
         outputPath: outputPath,
         outputBytes: outputBytes,
         previewBytes: outputBytes,
+        originalBytes: inputBytes, // Store original bytes for A/B comparison
         steganographyVerified: verified,
       );
     } catch (e) {
@@ -731,6 +734,7 @@ class WatermarkProcessor {
         outputPath: outputPath,
         outputBytes: outputBytes,
         previewBytes: previewBytes,
+        originalBytes: inputBytes, // Store original bytes for A/B comparison
         steganographyVerified: false,
       );
     } catch (e) {
@@ -1682,6 +1686,7 @@ class WatermarkProcessor {
       var hasPages = false;
       var pageCount = 0;
       var processedPages = 0;
+      Uint8List? firstPageOriginalBytes; // Declare here
 
       // Use a safe DPI for fallback processing
       const double fallbackDpi = 150;
@@ -1698,6 +1703,7 @@ class WatermarkProcessor {
         pageCount++;
 
         final pngBytes = await page.toPng();
+        firstPageOriginalBytes ??= pngBytes; // Use null-aware assignment
         final decoded = img.decodeImage(pngBytes);
 
         var watermarked = img.Image.from(decoded!);
@@ -1779,6 +1785,7 @@ class WatermarkProcessor {
         outputPath: outputPath,
         outputBytes: outputBytes,
         previewBytes: preview,
+        originalBytes: firstPageOriginalBytes, // Use the stored original bytes
         steganographyVerified: verified,
       );
     } catch (e) {

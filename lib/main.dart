@@ -146,6 +146,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
   ui.FragmentProgram? _shaderProgram;
   Stopwatch? _stopwatch;
   Timer? _timer;
+  bool _showOriginalPreview = false;
 
   Future<void> _loadShader() async {
     try {
@@ -465,8 +466,6 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
     );
   }
   Widget _buildControlsPanel(ThemeData theme) {
-    final l10n = AppLocalizations.of(context)!;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -557,10 +556,10 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
   }
 
   void _showLogs() {
-    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
         return AlertDialog(
           title: Text(l10n.appLogs),
           content: SizedBox(
@@ -594,13 +593,13 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
   }
 
   void _showAboutDialog() {
-    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
+          final l10n = AppLocalizations.of(context)!;
           return AlertDialog(
             title: Row(
               children: [
@@ -1339,12 +1338,33 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                                 scaleEnabled: true,
                                 child: Center(
                                   child: Image.memory(
-                                    previewBytes, 
+                                    _showOriginalPreview 
+                                      ? _processedFiles[index].result.originalBytes! // Display original
+                                      : previewBytes, // Display processed
                                     fit: BoxFit.contain,
                                   ),
                                 ),
                               ),
                             ),
+                            // A/B button
+                            if (_processedFiles[index].result.originalBytes != null)
+                              Positioned(
+                                bottom: 8,
+                                left: 8,
+                                child: FloatingActionButton.small(
+                                  heroTag: "ab_toggle_$index",
+                                  onPressed: () {
+                                    setState(() {
+                                      _showOriginalPreview = !_showOriginalPreview;
+                                    });
+                                  },
+                                  backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
+                                  child: Icon(
+                                    _showOriginalPreview ? Icons.flip_to_front : Icons.flip_to_back,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
                             // Steganography verification badge
                             if (_processedFiles[index].result.steganographyVerified)
                               Positioned(
@@ -1571,6 +1591,14 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
               ),
             ),
+            if (_useSteganography) // Show "Verified" next to Apply if steganography is enabled
+              Tooltip(
+                message: l10n.steganographyEnabledHint,
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4.0),
+                  child: Icon(Icons.verified_user_outlined, color: Colors.green),
+                ),
+              ),
             // Hide Save button on mobile platforms (iOS/Android)
             if (!isMobile)
               FilledButton.icon(
@@ -1793,7 +1821,6 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
   }
 
   void _selectPaths(List<String> paths) {
-    final l10n = AppLocalizations.of(context)!;
     final uniquePaths = paths.toSet().toList();
 
     setState(() {
