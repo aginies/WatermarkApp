@@ -388,6 +388,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'Note: This password will be required to extract the hidden file using SecureMark. It uses AES-256 encryption.';
 
   @override
+  String get zipAllFiles => 'ZIP All Files';
+
+  @override
+  String get zipEnabledHint => 'ZIP compression enabled for sharing';
+
+  @override
+  String get zipDisabledHint => 'ZIP compression disabled';
+
+  @override
   String get qrWatermarkTitle => 'QR Code Watermark';
 
   @override

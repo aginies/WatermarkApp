@@ -11,6 +11,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:archive/archive.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:pub_semver/pub_semver.dart';
@@ -155,6 +156,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
   String? _hiddenFileName;
   String _hidingPassword = '';
   String _extractionPassword = '';
+  bool _zipOutputs = false;
 
   // QR Code Configuration
   bool _qrVisible = false;
@@ -248,6 +250,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
           _filePrefix = prefs.getString('filePrefix') ?? 'securemark-';
           _antiAiLevel = prefs.getDouble('antiAiLevel') ?? 50.0;
           _useSteganography = prefs.getBool('useSteganography') ?? false;
+          _zipOutputs = prefs.getBool('zipOutputs') ?? false;
           WatermarkProcessor.isSteganographyEnabled = _useSteganography; // Initialize static flag
           _useRandomColor = prefs.getBool('useRandomColor') ?? true;
           final colorValue = prefs.getInt('selectedColor');
@@ -430,6 +433,22 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
         ),
         centerTitle: false,
         actions: [
+          IconButton(
+            icon: Icon(_zipOutputs ? Icons.folder_zip : Icons.folder_zip_outlined),
+            onPressed: () {
+              setState(() {
+                _zipOutputs = !_zipOutputs;
+              });
+              _savePreference('zipOutputs', _zipOutputs);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(_zipOutputs ? l10n.zipEnabledHint : l10n.zipDisabledHint),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+            tooltip: l10n.zipAllFiles,
+          ),
           IconButton(
             icon: const Icon(Icons.search_rounded),
             onPressed: _showFileAnalyzer,
@@ -919,13 +938,14 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
 
   Future<void> _pickAndAnalyze(StateSetter setDialogState) async {
     final l10n = AppLocalizations.of(context)!;
-    const group = XTypeGroup(
-      label: 'Images',
-      extensions: <String>['jpg', 'jpeg', 'png', 'webp'],
+    
+    final result = await FilePicker.platform.pickFiles(
+      allowMultiple: false,
+      type: FileType.image,
     );
 
-    final file = await openFile(acceptedTypeGroups: <XTypeGroup>[group]);
-    if (file == null) return;
+    if (result == null || result.files.isEmpty) return;
+    final pickedFile = result.files.single;
 
     setDialogState(() {
       _analyzingFile = true;
@@ -934,7 +954,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
     });
 
     try {
-      final bytes = await File(file.path).readAsBytes();
+      final bytes = pickedFile.bytes ?? await File(pickedFile.path!).readAsBytes();
       final password = _extractionPassword.isNotEmpty ? _extractionPassword : null;
 
       // Check for all types of hidden data
@@ -1169,9 +1189,22 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                           final result = await FilePicker.platform.pickFiles(
                             allowMultiple: false,
                             type: FileType.any,
+                            withData: true, // Crucial for mobile cloud providers
                           );
 
-                          if (result != null && result.files.single.path != null) {
+                          if (result != null && result.files.single.bytes != null) {
+                            final platformFile = result.files.single;
+                            final fileBytes = platformFile.bytes!;
+                            setDialogState(() {
+                              _hiddenFileBytes = fileBytes;
+                              _hiddenFileName = platformFile.name;
+                            });
+                            setState(() {
+                              _hiddenFileBytes = fileBytes;
+                              _hiddenFileName = platformFile.name;
+                            });
+                          } else if (result != null && result.files.single.path != null) {
+                            // Fallback for desktop or cases where bytes aren't populated
                             final platformFile = result.files.single;
                             final fileBytes = await File(platformFile.path!).readAsBytes();
                             setDialogState(() {
@@ -2319,22 +2352,20 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
   }
 
   Future<void> _pickFile() async {
-    final l10n = AppLocalizations.of(context)!;
-
-    final group = XTypeGroup(
-      label: l10n.pickerLabel,
-      extensions: const <String>['jpg', 'jpeg', 'png', 'webp', 'pdf', 'heic', 'heif'],
-      uniformTypeIdentifiers: const <String>['public.jpeg', 'public.png', 'public.webp', 'com.adobe.pdf', 'public.heic', 'public.heif'],
+    final result = await FilePicker.platform.pickFiles(
+      allowMultiple: true,
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'jpeg', 'png', 'webp', 'pdf', 'heic', 'heif'],
     );
 
-    final files = await openFiles(acceptedTypeGroups: <XTypeGroup>[group]);
-    if (files.isEmpty) {
+    if (result == null || result.files.isEmpty) {
       _addLog('File picker cancelled or no files selected.');
       return;
     }
 
-    _addLog('Picked ${files.length} files via picker.');
-    _selectPaths(files.map((file) => file.path).toList());
+    _addLog('Picked ${result.files.length} files via picker.');
+    // FilePicker on mobile copies files to a temporary location, providing a valid local path
+    _selectPaths(result.files.where((f) => f.path != null).map((f) => f.path!).toList());
   }
 
   void _selectPaths(List<String> paths) {
@@ -2361,6 +2392,9 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
               });
             }
           });
+        }).catchError((e) {
+          _addLog('Error reading first image for preview: $e');
+          debugPrint('Preview error: $e');
         });
       }
     }
@@ -2890,24 +2924,51 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
     }
 
     final shareFiles = <XFile>[];
-    for (final file in _processedFiles) {
-      String outputPath = file.result.outputPath;
-      if (_outputDirectory != null) {
+
+    if (_zipOutputs) {
+      // Create ZIP archive
+      final encoder = ZipEncoder();
+      final archive = Archive();
+
+      for (final file in _processedFiles) {
         final fileName = p.basename(file.result.outputPath);
-        outputPath = p.join(_outputDirectory!, fileName);
-      }
-      
-      final directory = p.dirname(outputPath);
-      if (!await Directory(directory).exists()) {
-        await Directory(directory).create(recursive: true);
+        final archiveFile = ArchiveFile(
+          fileName,
+          file.result.outputBytes.length,
+          file.result.outputBytes,
+        );
+        archive.addFile(archiveFile);
       }
 
-      await File(outputPath).writeAsBytes(file.result.outputBytes);
-      _tempFiles.add(outputPath);
-      shareFiles.add(XFile(
-        outputPath,
-        mimeType: _mimeTypeForPath(outputPath),
-      ));
+      final zipData = encoder.encode(archive);
+      if (zipData != null) {
+        final tempDir = await getTemporaryDirectory();
+        final zipPath = p.join(tempDir.path, 'securemark-files.zip');
+        await File(zipPath).writeAsBytes(zipData);
+        _tempFiles.add(zipPath);
+        shareFiles.add(XFile(zipPath, mimeType: 'application/zip'));
+      }
+    } else {
+      // Share individual files
+      for (final file in _processedFiles) {
+        String outputPath = file.result.outputPath;
+        if (_outputDirectory != null) {
+          final fileName = p.basename(file.result.outputPath);
+          outputPath = p.join(_outputDirectory!, fileName);
+        }
+        
+        final directory = p.dirname(outputPath);
+        if (!await Directory(directory).exists()) {
+          await Directory(directory).create(recursive: true);
+        }
+
+        await File(outputPath).writeAsBytes(file.result.outputBytes);
+        _tempFiles.add(outputPath);
+        shareFiles.add(XFile(
+          outputPath,
+          mimeType: _mimeTypeForPath(outputPath),
+        ));
+      }
     }
 
     final result = await SharePlus.instance.share(

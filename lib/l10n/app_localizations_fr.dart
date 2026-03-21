@@ -391,6 +391,15 @@ class AppLocalizationsFr extends AppLocalizations {
       'Remarque : Ce mot de passe sera requis pour extraire le fichier caché à l\'aide de SecureMark. Il utilise le chiffrage AES-256.';
 
   @override
+  String get zipAllFiles => 'Zipper tous les fichiers';
+
+  @override
+  String get zipEnabledHint => 'Compression ZIP activée pour le partage';
+
+  @override
+  String get zipDisabledHint => 'Compression ZIP désactivée';
+
+  @override
   String get qrWatermarkTitle => 'Filigrane QR Code';
 
   @override

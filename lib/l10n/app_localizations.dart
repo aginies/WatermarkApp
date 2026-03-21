@@ -692,6 +692,24 @@ abstract class AppLocalizations {
   /// **'Note: This password will be required to extract the hidden file using SecureMark. It uses AES-256 encryption.'**
   String get steganographyPasswordNote;
 
+  /// No description provided for @zipAllFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'ZIP All Files'**
+  String get zipAllFiles;
+
+  /// No description provided for @zipEnabledHint.
+  ///
+  /// In en, this message translates to:
+  /// **'ZIP compression enabled for sharing'**
+  String get zipEnabledHint;
+
+  /// No description provided for @zipDisabledHint.
+  ///
+  /// In en, this message translates to:
+  /// **'ZIP compression disabled'**
+  String get zipDisabledHint;
+
   /// No description provided for @qrWatermarkTitle.
   ///
   /// In en, this message translates to:
