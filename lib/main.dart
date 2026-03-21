@@ -22,6 +22,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'l10n/app_localizations.dart';
 import 'watermark_processor.dart';
 import 'font_manager.dart';
+import 'qr_config.dart';
 
 class WatermarkShaderPainter extends CustomPainter {
   WatermarkShaderPainter({
@@ -130,6 +131,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
   String _filePrefix = 'securemark-';
   double _antiAiLevel = 50.0;
   bool _useSteganography = false;
+  bool _steganographyVerificationFailed = false;
   bool _useRandomColor = true;
   Color _selectedColor = Colors.red;
   bool _dragging = false;
@@ -151,6 +153,15 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
   bool _hideFileWithSteganography = false;
   Uint8List? _hiddenFileBytes;
   String? _hiddenFileName;
+
+  // QR Code Configuration
+  bool _qrVisible = false;
+  bool _qrInvisible = false;
+  String _qrAuthor = '';
+  String _qrUrl = '';
+  QrPosition _qrPosition = QrPosition.bottomRight;
+  double _qrSize = 100.0;
+  double _qrOpacity = 0.8;
 
   Future<void> _loadShader() async {
     try {
@@ -248,6 +259,18 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
             } catch (_) {
               // Keep default if not found
             }
+          }
+
+          // Load QR watermark preferences
+          _qrVisible = prefs.getBool('qrVisible') ?? false;
+          _qrInvisible = prefs.getBool('qrInvisible') ?? false;
+          _qrAuthor = prefs.getString('qrAuthor') ?? '';
+          _qrUrl = prefs.getString('qrUrl') ?? '';
+          _qrSize = prefs.getDouble('qrSize') ?? 100.0;
+          _qrOpacity = prefs.getDouble('qrOpacity') ?? 0.8;
+          final qrPosIndex = prefs.getInt('qrPosition');
+          if (qrPosIndex != null && qrPosIndex >= 0 && qrPosIndex < QrPosition.values.length) {
+            _qrPosition = QrPosition.values[qrPosIndex];
           }
         });
       }
@@ -414,6 +437,11 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
             icon: const Icon(Icons.password_outlined),
             onPressed: _showSteganographyOptions,
             tooltip: l10n.steganographyTitle,
+          ),
+          IconButton(
+            icon: const Icon(Icons.qr_code_2),
+            onPressed: _showQrWatermarkOptions,
+            tooltip: l10n.qrWatermarkTitle,
           ),
           IconButton(
             icon: const Icon(Icons.settings_suggest_outlined),
@@ -885,27 +913,34 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
     try {
       final bytes = await File(file.path).readAsBytes();
 
-      // First try to extract a hidden file
+      // Check for all types of hidden data
       final fileResult = await WatermarkProcessor.extractFileAsync(bytes);
+      final qrResult = await WatermarkProcessor.extractQrCodeLSBAsync(bytes);
+      final textResult = await WatermarkProcessor.extractLSBAsync(bytes);
+
+      // Build combined result
+      final results = <String>[];
 
       if (fileResult != null) {
-        // Found a hidden file
-        setDialogState(() {
-          _extractedFile = fileResult;
-          _analysisResult = 'Hidden file detected: ${fileResult.fileName} (${_formatFileSize(fileResult.fileBytes.length)})';
-        });
-      } else {
-        // Try to extract LSB text signature
-        final textResult = await WatermarkProcessor.extractLSBAsync(bytes);
-
-        setDialogState(() {
-          if (textResult != null && textResult.isNotEmpty) {
-            _analysisResult = l10n.signatureFound(textResult);
-          } else {
-            _analysisResult = l10n.noSignatureFound;
-          }
-        });
+        _extractedFile = fileResult;
+        results.add('Hidden file detected: ${fileResult.fileName} (${_formatFileSize(fileResult.fileBytes.length)})');
       }
+
+      if (qrResult != null && qrResult.isNotEmpty) {
+        results.add(l10n.qrDataExtracted(qrResult));
+      }
+
+      if (textResult != null && textResult.isNotEmpty) {
+        results.add(l10n.signatureFound(textResult));
+      }
+
+      setDialogState(() {
+        if (results.isEmpty) {
+          _analysisResult = l10n.noSignatureFound;
+        } else {
+          _analysisResult = results.join('\n\n');
+        }
+      });
     } catch (e) {
       setDialogState(() {
         _analysisResult = l10n.analysisError(e.toString());
@@ -993,6 +1028,8 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                         _useSteganography = enabled;
                         if (enabled) {
                           _rasterizePdf = true;
+                          // Disable invisible QR (mutual exclusion with LSB)
+                          _qrInvisible = false;
                         }
                         if (!enabled) { // If steganography is disabled, also disable file hiding
                           _hideFileWithSteganography = false;
@@ -1004,6 +1041,8 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                         _useSteganography = enabled;
                         if (enabled) {
                           _rasterizePdf = true;
+                          // Disable invisible QR (mutual exclusion with LSB)
+                          _qrInvisible = false;
                         }
                         if (!enabled) { // If steganography is disabled, also disable file hiding
                           _hideFileWithSteganography = false;
@@ -1014,6 +1053,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                       _savePreference('useSteganography', enabled);
                       if (enabled) {
                         _savePreference('rasterizePdf', true);
+                        _savePreference('qrInvisible', false);
                       }
                     },
                   ),
@@ -1025,20 +1065,32 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                       value: _hideFileWithSteganography,
                       contentPadding: EdgeInsets.zero,
                       onChanged: (value) {
+                        final enabled = value ?? false;
                         setDialogState(() {
-                          _hideFileWithSteganography = value ?? false;
-                          if (!(_hideFileWithSteganography)) { // Clear hidden file if checkbox is unchecked
+                          _hideFileWithSteganography = enabled;
+                          if (enabled) {
+                            // Disable invisible QR (mutual exclusion with LSB)
+                            _qrInvisible = false;
+                          }
+                          if (!enabled) { // Clear hidden file if checkbox is unchecked
                             _hiddenFileBytes = null;
                             _hiddenFileName = null;
                           }
                         });
                         setState(() {
-                          _hideFileWithSteganography = value ?? false;
-                          if (!(_hideFileWithSteganography)) { // Clear hidden file if checkbox is unchecked
+                          _hideFileWithSteganography = enabled;
+                          if (enabled) {
+                            // Disable invisible QR (mutual exclusion with LSB)
+                            _qrInvisible = false;
+                          }
+                          if (!enabled) { // Clear hidden file if checkbox is unchecked
                             _hiddenFileBytes = null;
                             _hiddenFileName = null;
                           }
                         });
+                        if (enabled) {
+                          _savePreference('qrInvisible', false);
+                        }
                       },
                     ),
                     if (_hideFileWithSteganography) ...[
@@ -1108,6 +1160,188 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                     ],
                   ],
                 ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(l10n.close),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showQrWatermarkOptions() {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Row(
+                children: [
+                  const Icon(Icons.qr_code_2),
+                  const SizedBox(width: 12),
+                  Text(l10n.qrWatermarkTitle),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Mode selection
+                    Text(l10n.qrMode, style: theme.textTheme.titleSmall),
+                    CheckboxListTile(
+                      title: Text(l10n.qrVisibleMode),
+                      subtitle: Text(l10n.qrVisibleModeDesc),
+                      value: _qrVisible,
+                      contentPadding: EdgeInsets.zero,
+                      onChanged: (value) {
+                        setDialogState(() => _qrVisible = value ?? false);
+                        setState(() => _qrVisible = value ?? false);
+                        _savePreference('qrVisible', value ?? false);
+                      },
+                    ),
+                    CheckboxListTile(
+                      title: Text(l10n.qrInvisibleMode),
+                      subtitle: Text(l10n.qrInvisibleModeDesc),
+                      value: _qrInvisible,
+                      contentPadding: EdgeInsets.zero,
+                      onChanged: (value) {
+                        final enabled = value ?? false;
+                        setDialogState(() {
+                          _qrInvisible = enabled;
+                          if (enabled) {
+                            // Disable text steganography and file hiding (mutual exclusion with LSB)
+                            _useSteganography = false;
+                            _hideFileWithSteganography = false;
+                            _hiddenFileBytes = null;
+                            _hiddenFileName = null;
+                            WatermarkProcessor.isSteganographyEnabled = false;
+                          }
+                        });
+                        setState(() {
+                          _qrInvisible = enabled;
+                          if (enabled) {
+                            // Disable text steganography and file hiding (mutual exclusion with LSB)
+                            _useSteganography = false;
+                            _hideFileWithSteganography = false;
+                            _hiddenFileBytes = null;
+                            _hiddenFileName = null;
+                            WatermarkProcessor.isSteganographyEnabled = false;
+                          }
+                        });
+                        _savePreference('qrInvisible', enabled);
+                        if (enabled) {
+                          _savePreference('useSteganography', false);
+                        }
+                      },
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Metadata fields
+                    TextField(
+                      decoration: InputDecoration(
+                        labelText: l10n.qrAuthorLabel,
+                        hintText: l10n.qrAuthorHint,
+                        border: const OutlineInputBorder(),
+                      ),
+                      onChanged: (value) {
+                        setState(() => _qrAuthor = value);
+                        _savePreference('qrAuthor', value);
+                      },
+                      controller: TextEditingController(text: _qrAuthor),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      decoration: InputDecoration(
+                        labelText: l10n.qrUrlLabel,
+                        hintText: l10n.qrUrlHint,
+                        border: const OutlineInputBorder(),
+                      ),
+                      onChanged: (value) {
+                        setState(() => _qrUrl = value);
+                        _savePreference('qrUrl', value);
+                      },
+                      controller: TextEditingController(text: _qrUrl),
+                    ),
+
+                    if (_qrVisible) ...[
+                      const SizedBox(height: 16),
+                      const Divider(),
+                      const SizedBox(height: 8),
+                      Text(l10n.qrVisibleOptions, style: theme.textTheme.titleSmall),
+
+                      // Position selector
+                      const SizedBox(height: 8),
+                      Text(l10n.qrPositionLabel),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: theme.dividerColor),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<QrPosition>(
+                            value: _qrPosition,
+                            isExpanded: true,
+                            onChanged: (value) {
+                              if (value != null) {
+                                setDialogState(() => _qrPosition = value);
+                                setState(() => _qrPosition = value);
+                                _savePreference('qrPosition', value.index);
+                              }
+                            },
+                            items: [
+                              DropdownMenuItem(value: QrPosition.topLeft, child: Text(l10n.qrPosTopLeft)),
+                              DropdownMenuItem(value: QrPosition.topRight, child: Text(l10n.qrPosTopRight)),
+                              DropdownMenuItem(value: QrPosition.bottomLeft, child: Text(l10n.qrPosBottomLeft)),
+                              DropdownMenuItem(value: QrPosition.bottomRight, child: Text(l10n.qrPosBottomRight)),
+                              DropdownMenuItem(value: QrPosition.center, child: Text(l10n.qrPosCenter)),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      // Size slider
+                      const SizedBox(height: 16),
+                      Text(l10n.qrSizeValue(_qrSize.round()), style: theme.textTheme.titleSmall),
+                      Slider(
+                        value: _qrSize,
+                        min: 50,
+                        max: 200,
+                        divisions: 15,
+                        onChanged: (value) {
+                          setDialogState(() => _qrSize = value);
+                          setState(() => _qrSize = value);
+                          _savePreference('qrSize', value);
+                        },
+                      ),
+
+                      // Opacity slider
+                      Text(l10n.qrOpacityValue((_qrOpacity * 100).round()), style: theme.textTheme.titleSmall),
+                      Slider(
+                        value: _qrOpacity,
+                        min: 0.1,
+                        max: 1.0,
+                        divisions: 9,
+                        onChanged: (value) {
+                          setDialogState(() => _qrOpacity = value);
+                          setState(() => _qrOpacity = value);
+                          _savePreference('qrOpacity', value);
+                        },
+                      ),
+                    ],
+                  ],
+                ),
               ),
               actions: [
                 TextButton(
@@ -1799,12 +2033,28 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
               ),
             ),
-            if (_useSteganography) // Show "Verified" next to Apply if steganography is enabled
+            if (_useSteganography && !_steganographyVerificationFailed) // Show "Verified" icon when steganography is enabled
               Tooltip(
                 message: l10n.steganographyEnabledHint,
                 child: const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 4.0),
                   child: Icon(Icons.verified_user_outlined, color: Colors.green),
+                ),
+              ),
+            if (_steganographyVerificationFailed) // Show warning icon when verification failed
+              Tooltip(
+                message: l10n.steganographyVerificationFailed,
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4.0),
+                  child: Icon(Icons.warning_outlined, color: Colors.red),
+                ),
+              ),
+            if (_qrVisible || _qrInvisible) // Show QR icon if QR is enabled
+              Tooltip(
+                message: l10n.qrWatermarkTitle,
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4.0),
+                  child: Icon(Icons.qr_code_2, color: Colors.blue),
                 ),
               ),
             // Hide Save button on mobile platforms (iOS/Android)
@@ -2179,6 +2429,21 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
         });
         _progressListener?.call();
 
+        // Build QR config if enabled
+        QrWatermarkConfig? qrConfig;
+        if (_qrVisible || _qrInvisible) {
+          qrConfig = QrWatermarkConfig(
+            author: _qrAuthor.isNotEmpty ? _qrAuthor : null,
+            url: _qrUrl.isNotEmpty ? _qrUrl : null,
+            timestamp: DateTime.now(),
+            position: _qrPosition,
+            size: _qrSize,
+            opacity: _qrOpacity,
+            visibleQr: _qrVisible,
+            invisibleQr: _qrInvisible,
+          );
+        }
+
         try {
           final result = await WatermarkProcessor.processFile(
             file: File(path),
@@ -2199,6 +2464,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
             useSteganography: _useSteganography,
             hiddenFileName: _hideFileWithSteganography ? _hiddenFileName : null,
             hiddenFileBytes: _hideFileWithSteganography ? _hiddenFileBytes : null,
+            qrConfig: qrConfig,
             onProgress: (progress, message) {
               if (mounted) {
                 setState(() {
@@ -2246,6 +2512,8 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
         } else {
           // Log steganography verification results
           final verifiedCount = processedFiles.where((f) => f.result.steganographyVerified).length;
+          final steganographyFailed = _useSteganography && processedFiles.isNotEmpty && verifiedCount == 0;
+
           if (_useSteganography && verifiedCount > 0) {
             _addLog('Steganography verified for $verifiedCount file(s)');
           } else if (_useSteganography) {
@@ -2257,7 +2525,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
               : failedFiles.isEmpty
                   ? '' // No message if files are processed and no failures
                   : l10n.processingStatusMultiple(processedFiles.length, failedFiles.length);
-          
+
           if (_useSteganography && verifiedCount > 0) {
             successMessage += ' (Steganography Verified ✓)';
           }
@@ -2268,6 +2536,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
             _statusMessage = successMessage;
             _processing = false;
             _progress = 1.0;
+            _steganographyVerificationFailed = steganographyFailed;
             _progressMessage = '';
           });
 
@@ -2369,6 +2638,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
       _useRandomColor = true;
       _selectedColor = Colors.deepPurple;
       _selectedFont = WatermarkFont.arial;
+      _steganographyVerificationFailed = false;
     });
   }
 
@@ -2383,6 +2653,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
       _previewIndex = 0;
       _showOriginalPreview = false;
       _transformationController.value = Matrix4.identity();
+      _steganographyVerificationFailed = false;
     });
 
     // Reset preview controller to first page if it has clients

@@ -245,6 +245,7 @@
   },
   "analysisResult": "Result:",
   "steganographyVerified": "Steganography Verified",
+  "steganographyVerificationFailed": "Steganography verification failed",
   "steganographyEnabledHint": "Steganography is enabled and will be applied",
   "hideFileWithSteganographyTitle": "Hide a file (experimental)",
   "hideFileWithSteganographySubtitle": "Embed an entire file within the image (might increase output size)",
@@ -258,6 +259,50 @@
     }
   },
   "hiddenFileSecurityWarning": "Security Notice: Hidden files are only secure if encrypted before embedding. Steganography obscures but does not encrypt your data.",
+  "qrWatermarkTitle": "QR Code Watermark",
+  "enableQrWatermark": "Enable QR Code",
+  "enableQrWatermarkSubtitle": "Embed metadata in a QR code",
+  "qrMode": "QR Code Mode",
+  "qrVisibleMode": "Visible QR Code",
+  "qrVisibleModeDesc": "Show QR code on the image",
+  "qrInvisibleMode": "Invisible QR Code (LSB)",
+  "qrInvisibleModeDesc": "Hide QR data in pixels (requires PNG output)",
+  "qrAuthorLabel": "Author Name",
+  "qrAuthorHint": "e.g., John Doe",
+  "qrUrlLabel": "URL or Website",
+  "qrUrlHint": "e.g., https://example.com",
+  "qrVisibleOptions": "Visible QR Options",
+  "qrPositionLabel": "QR Code Position",
+  "qrPosTopLeft": "Top Left",
+  "qrPosTopRight": "Top Right",
+  "qrPosBottomLeft": "Bottom Left",
+  "qrPosBottomRight": "Bottom Right",
+  "qrPosCenter": "Center",
+  "qrSizeValue": "QR Code Size: {value}px",
+  "@qrSizeValue": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "qrOpacityValue": "QR Code Opacity: {value}%",
+  "@qrOpacityValue": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "qrDataExtracted": "✅ QR Code found: {data}",
+  "@qrDataExtracted": {
+    "placeholders": {
+      "data": {
+        "type": "String"
+      }
+    }
+  },
+  "noQrFound": "❌ No QR code detected",
   "abToggleTooltipOriginal": "Show Original",
   "abToggleTooltipProcessed": "Show Processed",
   "processingCancelled": "Processing cancelled",

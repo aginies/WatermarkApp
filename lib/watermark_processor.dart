@@ -13,8 +13,10 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart' as sync;
+import 'package:qr/qr.dart';
 
 import 'font_manager.dart';
+import 'qr_config.dart';
 
 final Random _random = Random();
 const double _angleStepDegrees = 15;
@@ -199,6 +201,7 @@ class WatermarkProcessor {
     bool useSteganography = false,
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
+    QrWatermarkConfig? qrConfig,
     ProgressCallback? onProgress,
     CancellationToken? cancellationToken,
   }) async {
@@ -238,6 +241,7 @@ class WatermarkProcessor {
       useSteganography,
       hiddenFileName,
       hiddenFileBytes,
+      qrConfig,
     );
 
     if (_resultCache.containsKey(cacheKey)) {
@@ -271,6 +275,7 @@ class WatermarkProcessor {
           useSteganography: useSteganography,
           hiddenFileName: hiddenFileName,
           hiddenFileBytes: hiddenFileBytes,
+          qrConfig: qrConfig,
           onProgress: onProgress,
           cancellationToken: cancellationToken,
         );
@@ -293,6 +298,7 @@ class WatermarkProcessor {
           useSteganography: useSteganography,
           hiddenFileName: hiddenFileName,
           hiddenFileBytes: hiddenFileBytes,
+          qrConfig: qrConfig,
           onProgress: onProgress,
           cancellationToken: cancellationToken,
         );
@@ -424,9 +430,13 @@ class WatermarkProcessor {
     bool useSteganography,
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
+    QrWatermarkConfig? qrConfig,
   ) {
     final hiddenFileHash = hiddenFileBytes != null ? hiddenFileBytes.length.toString() : 'none';
-    return '$filePath-$transparency-$density-$watermarkText-$useRandomColor-$selectedColorValue-$fontSize-${font.fontFamily}-$jpegQuality-$targetSize-$includeTimestamp-$preserveMetadata-$rasterizePdf-$filePrefix-$antiAiLevel-$useSteganography-$hiddenFileName-$hiddenFileHash';
+    final qrHash = qrConfig != null
+        ? '${qrConfig.visibleQr}-${qrConfig.invisibleQr}-${qrConfig.author}-${qrConfig.url}-${qrConfig.position}-${qrConfig.size}'
+        : 'none';
+    return '$filePath-$transparency-$density-$watermarkText-$useRandomColor-$selectedColorValue-$fontSize-${font.fontFamily}-$jpegQuality-$targetSize-$includeTimestamp-$preserveMetadata-$rasterizePdf-$filePrefix-$antiAiLevel-$useSteganography-$hiddenFileName-$hiddenFileHash-$qrHash';
   }
 
   /// Add result to cache with size management
@@ -531,6 +541,7 @@ class WatermarkProcessor {
     bool useSteganography = false,
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
+    QrWatermarkConfig? qrConfig,
     ProgressCallback? onProgress,
     CancellationToken? cancellationToken,
   }) async {
@@ -587,6 +598,7 @@ class WatermarkProcessor {
           useSteganography: useSteganography,
           hiddenFileName: hiddenFileName,
           hiddenFileBytes: hiddenFileBytes,
+          qrConfig: qrConfig,
           preRenderedStamps: preRenderedStamps,
         ),
       );
@@ -611,15 +623,37 @@ class WatermarkProcessor {
 
       // Verify steganography if enabled
       bool verified = false;
-      if (useSteganography) {
+      if (useSteganography || hiddenFileName != null || (qrConfig?.invisibleQr == true)) {
         onProgress?.call(0.95, 'Verifying steganography...');
-        final extractedText = await extractLSBAsync(outputBytes);
-        verified = extractedText == watermarkText;
+
+        // Verify based on what type of LSB data was embedded
+        if (hiddenFileName != null) {
+          // Verify hidden file
+          final extractedFile = await extractFileAsync(outputBytes);
+          verified = extractedFile != null && extractedFile.fileName == hiddenFileName;
+          if (!verified) {
+            debugPrint('Hidden file verification failed for $outputPath');
+          }
+        } else if (qrConfig?.invisibleQr == true) {
+          // Verify invisible QR code
+          final extractedQr = await extractQrCodeLSBAsync(outputBytes);
+          verified = extractedQr != null && extractedQr.isNotEmpty;
+          if (!verified) {
+            debugPrint('Invisible QR verification failed for $outputPath');
+          }
+        } else {
+          // Verify text steganography
+          final extractedText = await extractLSBAsync(outputBytes);
+          verified = extractedText == watermarkText;
+          if (!verified) {
+            debugPrint('Steganography verification failed for $outputPath: expected "$watermarkText", got "$extractedText"');
+          }
+        }
+
         if (verified) {
           onProgress?.call(0.98, 'Steganography verified');
         } else {
           onProgress?.call(0.98, 'Steganography verification failed');
-          debugPrint('Steganography verification failed for $outputPath: expected "$watermarkText", got "$extractedText"');
         }
       }
 
@@ -661,6 +695,7 @@ class WatermarkProcessor {
     bool useSteganography = false,
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
+    QrWatermarkConfig? qrConfig,
     ProgressCallback? onProgress,
     CancellationToken? cancellationToken,
   }) async {
@@ -686,6 +721,7 @@ class WatermarkProcessor {
           useSteganography: useSteganography,
           hiddenFileName: hiddenFileName,
           hiddenFileBytes: hiddenFileBytes,
+          qrConfig: qrConfig,
           onProgress: onProgress,
           cancellationToken: cancellationToken,
         );
@@ -740,6 +776,7 @@ class WatermarkProcessor {
           useSteganography: useSteganography,
           hiddenFileName: hiddenFileName,
           hiddenFileBytes: hiddenFileBytes,
+          qrConfig: qrConfig,
           onProgress: onProgress,
           cancellationToken: cancellationToken,
         );
@@ -917,6 +954,7 @@ class WatermarkProcessor {
     bool useSteganography = false,
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
+    QrWatermarkConfig? qrConfig,
     Map<String, Uint8List>? preRenderedStamps,
   }) {
     try {
@@ -952,6 +990,7 @@ class WatermarkProcessor {
         font,
         preRenderedStamps,
         antiAiLevel: antiAiLevel,
+        qrConfig: qrConfig,
       );
 
       // Apply steganography if requested (LSB embedding)
@@ -965,8 +1004,16 @@ class WatermarkProcessor {
         }
       }
 
-      // Encode in the original format (or force PNG if steganography is used)
-      return _encodeImageInOriginalFormat(outputImage, originalExtension, jpegQuality, useSteganography);
+      // Apply invisible QR if configured
+      var forcePng = useSteganography;
+      if (qrConfig != null && qrConfig.invisibleQr) {
+        final qrData = _buildQrMetadata(qrConfig);
+        outputImage = _embedQrCodeLSB(outputImage, qrData);
+        forcePng = true; // QR LSB requires PNG
+      }
+
+      // Encode in the original format (or force PNG if steganography/QR is used)
+      return _encodeImageInOriginalFormat(outputImage, originalExtension, jpegQuality, forcePng);
     } catch (e) {
       if (e is WatermarkError) {
         rethrow;
@@ -1380,6 +1427,240 @@ class WatermarkProcessor {
     return crc;
   }
 
+  /// Generates QR code as img.Image
+  static img.Image _generateQrCodeImage({
+    required String data,
+    required int size,
+  }) {
+    try {
+      // Create QR code using the correct API
+      final qrCode = QrCode.fromData(
+        data: data,
+        errorCorrectLevel: QrErrorCorrectLevel.H,
+      );
+
+      // Create QR image from QR code
+      final qrImage = QrImage(qrCode);
+      final moduleCount = qrImage.moduleCount;
+
+      if (moduleCount == 0) {
+        debugPrint('QR code generation failed: moduleCount is 0');
+        // Return empty image
+        return img.Image(width: size, height: size, numChannels: 4);
+      }
+
+      // Create image with white background
+      final image = img.Image(
+        width: size,
+        height: size,
+        numChannels: 4,
+      );
+      image.clear(img.ColorRgba8(255, 255, 255, 255));
+
+      // Draw QR modules (scale matrix to image size)
+      final moduleSize = size / moduleCount;
+      for (var y = 0; y < moduleCount; y++) {
+        for (var x = 0; x < moduleCount; x++) {
+          if (qrImage.isDark(y, x)) {
+            final px = (x * moduleSize).round();
+            final py = (y * moduleSize).round();
+            final endX = ((x + 1) * moduleSize).round();
+            final endY = ((y + 1) * moduleSize).round();
+
+            // Fill module with black
+            for (var iy = py; iy < endY && iy < size; iy++) {
+              for (var ix = px; ix < endX && ix < size; ix++) {
+                image.setPixel(ix, iy, img.ColorRgba8(0, 0, 0, 255));
+              }
+            }
+          }
+        }
+      }
+
+      return image;
+    } catch (e) {
+      debugPrint('QR code generation error: $e');
+      // Return empty image on error
+      return img.Image(width: size, height: size, numChannels: 4);
+    }
+  }
+
+  /// Prepares QR metadata string from QrWatermarkConfig
+  static String _buildQrMetadata(QrWatermarkConfig config) {
+    return config.toJsonString();
+  }
+
+  /// Calculates position for visible QR code
+  static (int, int) _calculateQrPosition({
+    required int imageWidth,
+    required int imageHeight,
+    required int qrSize,
+    required QrPosition position,
+  }) {
+    const margin = 20; // Pixels from edge
+
+    return switch (position) {
+      QrPosition.topLeft => (margin, margin),
+      QrPosition.topRight => (imageWidth - qrSize - margin, margin),
+      QrPosition.bottomLeft => (margin, imageHeight - qrSize - margin),
+      QrPosition.bottomRight => (imageWidth - qrSize - margin, imageHeight - qrSize - margin),
+      QrPosition.center => ((imageWidth - qrSize) ~/ 2, (imageHeight - qrSize) ~/ 2),
+    };
+  }
+
+  /// Embeds QR code data into image using LSB steganography
+  /// Uses magic header 'SQ' (SecureMark QR)
+  static img.Image _embedQrCodeLSB(img.Image image, String qrData) {
+    try {
+      final qrBytes = utf8.encode(qrData);
+      final crc = _crc16(qrBytes);
+      final headerBytes = utf8.encode('SQ'); // SecureMark QR Identifier
+
+      final fullPayload = BytesBuilder();
+      fullPayload.add(headerBytes);
+
+      // Add QR data length as 4 bytes (32-bit big endian)
+      final length = qrBytes.length;
+      fullPayload.add([
+        (length >> 24) & 0xFF,
+        (length >> 16) & 0xFF,
+        (length >> 8) & 0xFF,
+        length & 0xFF,
+      ]);
+
+      fullPayload.add(qrBytes);
+
+      // Add CRC16
+      fullPayload.add([
+        (crc >> 8) & 0xFF,
+        crc & 0xFF,
+      ]);
+
+      final payload = fullPayload.toBytes();
+      final totalBits = payload.length * 8;
+      final totalPixels = image.width * image.height;
+
+      if (totalBits > totalPixels) {
+        debugPrint('Image too small for QR data (${payload.length} bytes needed, ${totalPixels ~/ 8} bytes available)');
+        return image;
+      }
+
+      // Header (48 bits) sequential at start
+      const headerBits = 48;
+      for (var i = 0; i < headerBits && i < totalBits; i++) {
+        final byteIdx = i ~/ 8;
+        final bitOffset = 7 - (i % 8);
+        final bit = (payload[byteIdx] >> bitOffset) & 1;
+
+        final pixel = image.getPixel(i % image.width, i ~/ image.width);
+        pixel.b = (pixel.b.toInt() & ~1) | bit;
+      }
+
+      // Spread remaining bits across image
+      final remainingBits = totalBits - headerBits;
+      if (remainingBits > 0) {
+        final remainingPixels = totalPixels - headerBits;
+        final stride = (remainingPixels ~/ remainingBits).clamp(1, 1000);
+
+        for (var i = 0; i < remainingBits; i++) {
+          final bitIdx = headerBits + i;
+          final byteIdx = bitIdx ~/ 8;
+          final bitOffset = 7 - (bitIdx % 8);
+          final bit = (payload[byteIdx] >> bitOffset) & 1;
+
+          final pixelIdx = headerBits + (i * stride);
+          if (pixelIdx >= totalPixels) break;
+
+          final pixel = image.getPixel(pixelIdx % image.width, pixelIdx ~/ image.width);
+          pixel.b = (pixel.b.toInt() & ~1) | bit;
+        }
+      }
+
+      return image;
+    } catch (e) {
+      debugPrint('QR LSB embedding error: $e');
+      return image;
+    }
+  }
+
+  /// Extracts QR code data from LSB steganography
+  static Future<String?> extractQrCodeLSBAsync(Uint8List imageBytes) async {
+    return await Isolate.run(() => extractQrCodeLSB(imageBytes));
+  }
+
+  static String? extractQrCodeLSB(Uint8List imageBytes) {
+    try {
+      final image = img.decodeImage(imageBytes);
+      if (image == null) return null;
+
+      final totalPixels = image.width * image.height;
+      if (totalPixels < 48) return null;
+
+      // Extract header (48 bits = 6 bytes: 'SQ' + length)
+      final bytes = <int>[];
+      var currentByte = 0;
+
+      for (var i = 0; i < 48; i++) {
+        final pixel = image.getPixel(i % image.width, i ~/ image.width);
+        final bit = pixel.b.toInt() & 1;
+
+        currentByte = (currentByte << 1) | bit;
+        if ((i + 1) % 8 == 0) {
+          bytes.add(currentByte);
+          currentByte = 0;
+        }
+      }
+
+      // Check magic header
+      if (utf8.decode(bytes.sublist(0, 2), allowMalformed: true) != 'SQ') {
+        return null;
+      }
+
+      // Parse QR data length
+      final qrLength = (bytes[2] << 24) | (bytes[3] << 16) | (bytes[4] << 8) | bytes[5];
+      if (qrLength <= 0 || qrLength > 10240) return null; // Max 10KB QR data
+
+      // Extract QR data + CRC
+      final dataBytesNeeded = qrLength + 2; // QR data + CRC16
+      final dataBitsNeeded = dataBytesNeeded * 8;
+      final remainingPixels = totalPixels - 48;
+
+      if (dataBitsNeeded > remainingPixels) return null;
+
+      final stride = (remainingPixels ~/ dataBitsNeeded).clamp(1, 1000);
+      currentByte = 0;
+
+      for (var i = 0; i < dataBitsNeeded; i++) {
+        final pixelIdx = 48 + (i * stride);
+        if (pixelIdx >= totalPixels) break;
+
+        final pixel = image.getPixel(pixelIdx % image.width, pixelIdx ~/ image.width);
+        final bit = pixel.b.toInt() & 1;
+
+        currentByte = (currentByte << 1) | bit;
+        if ((i + 1) % 8 == 0) {
+          bytes.add(currentByte);
+          currentByte = 0;
+        }
+      }
+
+      if (bytes.length < 6 + dataBytesNeeded) return null;
+
+      final qrBytes = bytes.sublist(6, 6 + qrLength);
+      final extractedCrc = (bytes[6 + qrLength] << 8) | bytes[6 + qrLength + 1];
+
+      // Verify CRC
+      if (_crc16(qrBytes) != extractedCrc) {
+        return null;
+      }
+
+      return utf8.decode(qrBytes, allowMalformed: true);
+    } catch (e) {
+      debugPrint('QR LSB extraction error: $e');
+      return null;
+    }
+  }
+
   static img.Image _buildWatermarkStamp(
     String watermarkText,
     _Placement placement,
@@ -1492,6 +1773,7 @@ class WatermarkProcessor {
     WatermarkFont font,
     Map<String, Uint8List>? preRenderedStamps, {
     double antiAiLevel = 0.0,
+    QrWatermarkConfig? qrConfig,
   }) {
     // If transparency is 100%, skip visible watermark rendering
     if (transparency >= 100) return;
@@ -1541,6 +1823,44 @@ class WatermarkProcessor {
         dstY: placement.y + jitterY,
         blend: img.BlendMode.alpha,
       );
+    }
+
+    // Apply visible QR code if configured
+    if (qrConfig != null && qrConfig.visibleQr) {
+      final qrData = _buildQrMetadata(qrConfig);
+      final qrSize = qrConfig.size.round();
+
+      final qrImage = _generateQrCodeImage(
+        data: qrData,
+        size: qrSize,
+      );
+
+      // Apply opacity to QR code
+      for (final pixel in qrImage) {
+        pixel.a = (pixel.a * qrConfig.opacity).round();
+      }
+
+      // Calculate position
+      final (x, y) = _calculateQrPosition(
+        imageWidth: image.width,
+        imageHeight: image.height,
+        qrSize: qrSize,
+        position: qrConfig.position,
+      );
+
+      // Ensure QR code fits within image bounds
+      if (x >= 0 && y >= 0 && x + qrSize <= image.width && y + qrSize <= image.height) {
+        // Composite QR code onto image
+        img.compositeImage(
+          image,
+          qrImage,
+          dstX: x,
+          dstY: y,
+          blend: img.BlendMode.alpha,
+        );
+      } else {
+        debugPrint('QR code position out of bounds, skipping');
+      }
     }
   }
 
@@ -1899,6 +2219,7 @@ class WatermarkProcessor {
     bool useSteganography = false,
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
+    QrWatermarkConfig? qrConfig,
     ProgressCallback? onProgress,
     CancellationToken? cancellationToken,
   }) async {
@@ -1954,6 +2275,7 @@ class WatermarkProcessor {
           font,
           pdfStamps,
           antiAiLevel: antiAiLevel,
+          qrConfig: qrConfig,
         );
 
         // Apply steganography if requested (LSB embedding)
@@ -1965,6 +2287,12 @@ class WatermarkProcessor {
             // Embed text watermark signature
             watermarked = _embedLSB(watermarked, watermarkText);
           }
+        }
+
+        // Apply invisible QR if configured
+        if (qrConfig != null && qrConfig.invisibleQr) {
+          final qrData = _buildQrMetadata(qrConfig);
+          watermarked = _embedQrCodeLSB(watermarked, qrData);
         }
 
         final encoded = _encodePngForSharing(watermarked);
@@ -2003,10 +2331,38 @@ class WatermarkProcessor {
 
       // Verify steganography if enabled (check first page preview)
       bool verified = false;
-      if (useSteganography && preview != null) {
+      if ((useSteganography || hiddenFileName != null || (qrConfig?.invisibleQr == true)) && preview != null) {
         onProgress?.call(0.95, 'Verifying steganography...');
-        final extractedText = await extractLSBAsync(preview);
-        verified = extractedText == watermarkText;
+
+        // Verify based on what type of LSB data was embedded
+        if (hiddenFileName != null) {
+          // Verify hidden file
+          final extractedFile = await extractFileAsync(preview);
+          verified = extractedFile != null && extractedFile.fileName == hiddenFileName;
+          if (!verified) {
+            debugPrint('Hidden file verification failed for PDF preview');
+          }
+        } else if (qrConfig?.invisibleQr == true) {
+          // Verify invisible QR code
+          final extractedQr = await extractQrCodeLSBAsync(preview);
+          verified = extractedQr != null && extractedQr.isNotEmpty;
+          if (!verified) {
+            debugPrint('Invisible QR verification failed for PDF preview');
+          }
+        } else {
+          // Verify text steganography
+          final extractedText = await extractLSBAsync(preview);
+          verified = extractedText == watermarkText;
+          if (!verified) {
+            debugPrint('Steganography verification failed for PDF preview');
+          }
+        }
+
+        if (verified) {
+          onProgress?.call(0.98, 'Steganography verified');
+        } else {
+          onProgress?.call(0.98, 'Steganography verification failed');
+        }
       }
 
       return ProcessResult(

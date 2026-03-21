@@ -352,6 +352,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get steganographyVerified => 'Stéganographie Vérifiée';
 
   @override
+  String get steganographyVerificationFailed =>
+      'Échec de la vérification de la stéganographie';
+
+  @override
   String get steganographyEnabledHint =>
       'La stéganographie est activée et sera appliquée';
 
@@ -374,6 +378,83 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get hiddenFileSecurityWarning =>
       'Avis de sécurité : Les fichiers cachés ne sont sécurisés que s\'ils sont chiffrés avant l\'incorporation. La stéganographie obscurcit mais ne chiffre pas vos données.';
+
+  @override
+  String get qrWatermarkTitle => 'Filigrane QR Code';
+
+  @override
+  String get enableQrWatermark => 'Activer le QR Code';
+
+  @override
+  String get enableQrWatermarkSubtitle =>
+      'Intégrer des métadonnées dans un QR code';
+
+  @override
+  String get qrMode => 'Mode QR Code';
+
+  @override
+  String get qrVisibleMode => 'QR Code Visible';
+
+  @override
+  String get qrVisibleModeDesc => 'Afficher le QR code sur l\'image';
+
+  @override
+  String get qrInvisibleMode => 'QR Code Invisible (LSB)';
+
+  @override
+  String get qrInvisibleModeDesc =>
+      'Cacher les données QR dans les pixels (nécessite sortie PNG)';
+
+  @override
+  String get qrAuthorLabel => 'Nom de l\'auteur';
+
+  @override
+  String get qrAuthorHint => 'ex: Jean Dupont';
+
+  @override
+  String get qrUrlLabel => 'URL ou Site Web';
+
+  @override
+  String get qrUrlHint => 'ex: https://exemple.fr';
+
+  @override
+  String get qrVisibleOptions => 'Options QR Visible';
+
+  @override
+  String get qrPositionLabel => 'Position du QR Code';
+
+  @override
+  String get qrPosTopLeft => 'Haut Gauche';
+
+  @override
+  String get qrPosTopRight => 'Haut Droite';
+
+  @override
+  String get qrPosBottomLeft => 'Bas Gauche';
+
+  @override
+  String get qrPosBottomRight => 'Bas Droite';
+
+  @override
+  String get qrPosCenter => 'Centre';
+
+  @override
+  String qrSizeValue(int value) {
+    return 'Taille du QR Code : ${value}px';
+  }
+
+  @override
+  String qrOpacityValue(int value) {
+    return 'Opacité du QR Code : $value%';
+  }
+
+  @override
+  String qrDataExtracted(String data) {
+    return '✅ QR Code trouvé : $data';
+  }
+
+  @override
+  String get noQrFound => '❌ Aucun QR code détecté';
 
   @override
   String get abToggleTooltipOriginal => 'Afficher l\'original';

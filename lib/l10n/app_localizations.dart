@@ -632,6 +632,12 @@ abstract class AppLocalizations {
   /// **'Steganography Verified'**
   String get steganographyVerified;
 
+  /// No description provided for @steganographyVerificationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Steganography verification failed'**
+  String get steganographyVerificationFailed;
+
   /// No description provided for @steganographyEnabledHint.
   ///
   /// In en, this message translates to:
@@ -667,6 +673,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Security Notice: Hidden files are only secure if encrypted before embedding. Steganography obscures but does not encrypt your data.'**
   String get hiddenFileSecurityWarning;
+
+  /// No description provided for @qrWatermarkTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'QR Code Watermark'**
+  String get qrWatermarkTitle;
+
+  /// No description provided for @enableQrWatermark.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable QR Code'**
+  String get enableQrWatermark;
+
+  /// No description provided for @enableQrWatermarkSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Embed metadata in a QR code'**
+  String get enableQrWatermarkSubtitle;
+
+  /// No description provided for @qrMode.
+  ///
+  /// In en, this message translates to:
+  /// **'QR Code Mode'**
+  String get qrMode;
+
+  /// No description provided for @qrVisibleMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Visible QR Code'**
+  String get qrVisibleMode;
+
+  /// No description provided for @qrVisibleModeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Show QR code on the image'**
+  String get qrVisibleModeDesc;
+
+  /// No description provided for @qrInvisibleMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Invisible QR Code (LSB)'**
+  String get qrInvisibleMode;
+
+  /// No description provided for @qrInvisibleModeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide QR data in pixels (requires PNG output)'**
+  String get qrInvisibleModeDesc;
+
+  /// No description provided for @qrAuthorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Author Name'**
+  String get qrAuthorLabel;
+
+  /// No description provided for @qrAuthorHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., John Doe'**
+  String get qrAuthorHint;
+
+  /// No description provided for @qrUrlLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'URL or Website'**
+  String get qrUrlLabel;
+
+  /// No description provided for @qrUrlHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., https://example.com'**
+  String get qrUrlHint;
+
+  /// No description provided for @qrVisibleOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Visible QR Options'**
+  String get qrVisibleOptions;
+
+  /// No description provided for @qrPositionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'QR Code Position'**
+  String get qrPositionLabel;
+
+  /// No description provided for @qrPosTopLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Top Left'**
+  String get qrPosTopLeft;
+
+  /// No description provided for @qrPosTopRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Top Right'**
+  String get qrPosTopRight;
+
+  /// No description provided for @qrPosBottomLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Bottom Left'**
+  String get qrPosBottomLeft;
+
+  /// No description provided for @qrPosBottomRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Bottom Right'**
+  String get qrPosBottomRight;
+
+  /// No description provided for @qrPosCenter.
+  ///
+  /// In en, this message translates to:
+  /// **'Center'**
+  String get qrPosCenter;
+
+  /// No description provided for @qrSizeValue.
+  ///
+  /// In en, this message translates to:
+  /// **'QR Code Size: {value}px'**
+  String qrSizeValue(int value);
+
+  /// No description provided for @qrOpacityValue.
+  ///
+  /// In en, this message translates to:
+  /// **'QR Code Opacity: {value}%'**
+  String qrOpacityValue(int value);
+
+  /// No description provided for @qrDataExtracted.
+  ///
+  /// In en, this message translates to:
+  /// **'✅ QR Code found: {data}'**
+  String qrDataExtracted(String data);
+
+  /// No description provided for @noQrFound.
+  ///
+  /// In en, this message translates to:
+  /// **'❌ No QR code detected'**
+  String get noQrFound;
 
   /// No description provided for @abToggleTooltipOriginal.
   ///

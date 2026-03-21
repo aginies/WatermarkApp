@@ -245,6 +245,7 @@
   },
   "analysisResult": "Résultat :",
   "steganographyVerified": "Stéganographie Vérifiée",
+  "steganographyVerificationFailed": "Échec de la vérification de la stéganographie",
   "steganographyEnabledHint": "La stéganographie est activée et sera appliquée",
   "hideFileWithSteganographyTitle": "Cacher un fichier (expérimental)",
   "hideFileWithSteganographySubtitle": "Incorporer un fichier entier dans l'image (peut augmenter la taille de sortie)",
@@ -258,6 +259,50 @@
     }
   },
   "hiddenFileSecurityWarning": "Avis de sécurité : Les fichiers cachés ne sont sécurisés que s'ils sont chiffrés avant l'incorporation. La stéganographie obscurcit mais ne chiffre pas vos données.",
+  "qrWatermarkTitle": "Filigrane QR Code",
+  "enableQrWatermark": "Activer le QR Code",
+  "enableQrWatermarkSubtitle": "Intégrer des métadonnées dans un QR code",
+  "qrMode": "Mode QR Code",
+  "qrVisibleMode": "QR Code Visible",
+  "qrVisibleModeDesc": "Afficher le QR code sur l'image",
+  "qrInvisibleMode": "QR Code Invisible (LSB)",
+  "qrInvisibleModeDesc": "Cacher les données QR dans les pixels (nécessite sortie PNG)",
+  "qrAuthorLabel": "Nom de l'auteur",
+  "qrAuthorHint": "ex: Jean Dupont",
+  "qrUrlLabel": "URL ou Site Web",
+  "qrUrlHint": "ex: https://exemple.fr",
+  "qrVisibleOptions": "Options QR Visible",
+  "qrPositionLabel": "Position du QR Code",
+  "qrPosTopLeft": "Haut Gauche",
+  "qrPosTopRight": "Haut Droite",
+  "qrPosBottomLeft": "Bas Gauche",
+  "qrPosBottomRight": "Bas Droite",
+  "qrPosCenter": "Centre",
+  "qrSizeValue": "Taille du QR Code : {value}px",
+  "@qrSizeValue": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "qrOpacityValue": "Opacité du QR Code : {value}%",
+  "@qrOpacityValue": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "qrDataExtracted": "✅ QR Code trouvé : {data}",
+  "@qrDataExtracted": {
+    "placeholders": {
+      "data": {
+        "type": "String"
+      }
+    }
+  },
+  "noQrFound": "❌ Aucun QR code détecté",
   "abToggleTooltipOriginal": "Afficher l'original",
   "abToggleTooltipProcessed": "Afficher le traité",
   "processingCancelled": "Traitement annulé",
