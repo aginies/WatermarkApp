@@ -104,12 +104,6 @@ abstract class AppLocalizations {
   /// **'SecureMark'**
   String get appTitle;
 
-  /// No description provided for @readyToSaveFiles.
-  ///
-  /// In en, this message translates to:
-  /// **'Ready to save {count, plural, one {1 file} other {{count} files}}'**
-  String readyToSaveFiles(int count);
-
   /// No description provided for @emptyPreviewHint.
   ///
   /// In en, this message translates to:
@@ -121,6 +115,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Files selected. Click Apply SecureMark to generate previews'**
   String get selectedPreviewHint;
+
+  /// No description provided for @selectedFilesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected Files ({count})'**
+  String selectedFilesLabel(int count);
+
+  /// No description provided for @clickApplyToPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Click \"Apply SecureMark\" to generate previews'**
+  String get clickApplyToPreview;
 
   /// No description provided for @previewUnavailable.
   ///
@@ -278,18 +284,6 @@ abstract class AppLocalizations {
   /// **'Images and PDFs'**
   String get pickerLabel;
 
-  /// No description provided for @selectedApplySingle.
-  ///
-  /// In en, this message translates to:
-  /// **'Selected {name}. Click Apply SecureMark.'**
-  String selectedApplySingle(String name);
-
-  /// No description provided for @selectedApplyMultiple.
-  ///
-  /// In en, this message translates to:
-  /// **'Selected {count} files. Click Apply SecureMark.'**
-  String selectedApplyMultiple(int count);
-
   /// No description provided for @processingCount.
   ///
   /// In en, this message translates to:
@@ -307,18 +301,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unsupported file or processing failed.'**
   String get processingFailed;
-
-  /// No description provided for @previewReady.
-  ///
-  /// In en, this message translates to:
-  /// **'Preview ready for {count, plural, one {1 file} other {{count} files}}. You can save or share them.'**
-  String previewReady(int count);
-
-  /// No description provided for @previewReadyMobile.
-  ///
-  /// In en, this message translates to:
-  /// **'Preview ready for {count, plural, one {1 file} other {{count} fichiers}}. You can share them.'**
-  String previewReadyMobile(int count);
 
   /// No description provided for @errorPrefix.
   ///
@@ -643,6 +625,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Result:'**
   String get analysisResult;
+
+  /// No description provided for @steganographyVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Steganography Verified'**
+  String get steganographyVerified;
 
   /// No description provided for @processingCancelled.
   ///

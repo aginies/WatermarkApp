@@ -12,23 +12,21 @@ class AppLocalizationsFr extends AppLocalizations {
   String get appTitle => 'SecureMark';
 
   @override
-  String readyToSaveFiles(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count fichiers',
-      one: '1 fichier',
-    );
-    return 'Prêt à enregistrer $_temp0';
-  }
-
-  @override
   String get emptyPreviewHint =>
       'Saisissez le texte du filigrane puis choisissez une ou plusieurs images ou PDF';
 
   @override
   String get selectedPreviewHint =>
       'Fichiers sélectionnés. Cliquez sur Appliquer SecureMark pour générer les aperçus';
+
+  @override
+  String selectedFilesLabel(int count) {
+    return 'Fichiers sélectionnés ($count)';
+  }
+
+  @override
+  String get clickApplyToPreview =>
+      'Cliquez sur \"Appliquer SecureMark\" pour générer les aperçus';
 
   @override
   String get previewUnavailable => 'Aperçu indisponible';
@@ -120,16 +118,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get pickerLabel => 'Images et PDF';
 
   @override
-  String selectedApplySingle(String name) {
-    return '$name sélectionné. Cliquez sur Appliquer SecureMark.';
-  }
-
-  @override
-  String selectedApplyMultiple(int count) {
-    return '$count fichiers sélectionnés. Cliquez sur Appliquer SecureMark.';
-  }
-
-  @override
   String processingCount(int count) {
     return 'Traitement de 1/$count fichiers...';
   }
@@ -142,28 +130,6 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get processingFailed =>
       'Fichier non pris en charge ou échec du traitement.';
-
-  @override
-  String previewReady(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count fichiers',
-      one: '1 fichier',
-    );
-    return 'Aperçu prêt pour $_temp0. Vous pouvez les enregistrer ou les partager.';
-  }
-
-  @override
-  String previewReadyMobile(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count fichiers',
-      one: '1 fichier',
-    );
-    return 'Aperçu prêt pour $_temp0. Vous pouvez les partager.';
-  }
 
   @override
   String errorPrefix(String error) {
@@ -381,6 +347,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get analysisResult => 'Résultat :';
+
+  @override
+  String get steganographyVerified => 'Stéganographie Vérifiée';
 
   @override
   String get processingCancelled => 'Traitement annulé';

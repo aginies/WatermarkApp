@@ -1,7 +1,7 @@
 name: secure_mark
 description: SecureMark - A professional application to secure documents with watermarks for safe sharing.
 publish_to: 'none'
-version: 1.1.5+1
+version: 1.1.6+1
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -43,35 +43,21 @@ flutter:
     - family: CustomRoboto
       fonts:
         - asset: assets/fonts/Roboto-Regular.ttf
-        - asset: assets/fonts/Roboto-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/Roboto-Bold.ttf
-          weight: 700
     - family: CustomOpenSans
       fonts:
         - asset: assets/fonts/OpenSans-Regular.ttf
-        - asset: assets/fonts/OpenSans-Bold.ttf
-          weight: 700
     - family: Charis
       fonts:
         - asset: assets/fonts/Charis-Regular.ttf
-        - asset: assets/fonts/Charis-Bold.ttf
-          weight: 700
     - family: LiberationMono
       fonts:
         - asset: assets/fonts/LiberationMono-Regular.ttf
-        - asset: assets/fonts/LiberationMono-Bold.ttf
-          weight: 700
     - family: LiberationSerif
       fonts:
         - asset: assets/fonts/LiberationSerif-Regular.ttf
-        - asset: assets/fonts/LiberationSerif-Bold.ttf
-          weight: 700
     - family: Vera
       fonts:
         - asset: assets/fonts/Vera.ttf
-        - asset: assets/fonts/VeraBd.ttf
-          weight: 700
 
   shaders:
     - shaders/watermark.frag

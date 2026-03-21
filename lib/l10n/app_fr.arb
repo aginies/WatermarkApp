@@ -1,16 +1,17 @@
 {
   "@@locale": "fr",
   "appTitle": "SecureMark",
-  "readyToSaveFiles": "Prêt à enregistrer {count, plural, one {1 fichier} other {{count} fichiers}}",
-  "@readyToSaveFiles": {
+  "emptyPreviewHint": "Saisissez le texte du filigrane puis choisissez une ou plusieurs images ou PDF",
+  "selectedPreviewHint": "Fichiers sélectionnés. Cliquez sur Appliquer SecureMark pour générer les aperçus",
+  "selectedFilesLabel": "Fichiers sélectionnés ({count})",
+  "@selectedFilesLabel": {
     "placeholders": {
       "count": {
         "type": "int"
       }
     }
   },
-  "emptyPreviewHint": "Saisissez le texte du filigrane puis choisissez une ou plusieurs images ou PDF",
-  "selectedPreviewHint": "Fichiers sélectionnés. Cliquez sur Appliquer SecureMark pour générer les aperçus",
+  "clickApplyToPreview": "Cliquez sur \"Appliquer SecureMark\" pour générer les aperçus",
   "previewUnavailable": "Aperçu indisponible",
   "swipeHint": "Glissez à gauche pour le suivant, à droite pour le précédent ({current}/{total})",
   "@swipeHint": {
@@ -75,22 +76,6 @@
   "droppedPathUnavailable": "Les chemins des fichiers déposés sont indisponibles.",
   "desktopDropArea": "Déposer les fichiers ici",
   "pickerLabel": "Images et PDF",
-  "selectedApplySingle": "{name} sélectionné. Cliquez sur Appliquer SecureMark.",
-  "@selectedApplySingle": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "selectedApplyMultiple": "{count} fichiers sélectionnés. Cliquez sur Appliquer SecureMark.",
-  "@selectedApplyMultiple": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "processingCount": "Traitement de 1/{count} fichiers...",
   "@processingCount": {
     "placeholders": {
@@ -114,22 +99,6 @@
     }
   },
   "processingFailed": "Fichier non pris en charge ou échec du traitement.",
-  "previewReady": "Aperçu prêt pour {count, plural, one {1 fichier} other {{count} fichiers}}. Vous pouvez les enregistrer ou les partager.",
-  "@previewReady": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "previewReadyMobile": "Aperçu prêt pour {count, plural, one {1 fichier} other {{count} fichiers}}. Vous pouvez les partager.",
-  "@previewReadyMobile": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "errorPrefix": "Erreur : {error}",
   "@errorPrefix": {
     "placeholders": {
@@ -275,6 +244,7 @@
     }
   },
   "analysisResult": "Résultat :",
+  "steganographyVerified": "Stéganographie Vérifiée",
   "processingCancelled": "Traitement annulé",
   "processingStatusMultiple": "{successCount} fichiers traités avec succès. {failedCount} fichiers ont échoué.",
   "@processingStatusMultiple": {

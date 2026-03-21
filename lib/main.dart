@@ -230,6 +230,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
           _filePrefix = prefs.getString('filePrefix') ?? 'securemark-';
           _antiAiLevel = prefs.getDouble('antiAiLevel') ?? 50.0;
           _useSteganography = prefs.getBool('useSteganography') ?? false;
+          WatermarkProcessor.isSteganographyEnabled = _useSteganography; // Initialize static flag
           _useRandomColor = prefs.getBool('useRandomColor') ?? true;
           final colorValue = prefs.getInt('selectedColor');
           if (colorValue != null) {
@@ -514,12 +515,12 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
         if (_processedFiles.isNotEmpty) ...[
           const SizedBox(height: 8),
           // Only show "Ready to save" message on desktop platforms where Save button is visible
-          if (!kIsWeb && (Platform.isMacOS || Platform.isLinux || Platform.isWindows)) ...[
-            Text(
-              l10n.readyToSaveFiles(_processedFiles.length),
-              style: theme.textTheme.bodySmall,
-            ),
-          ],
+          // if (!kIsWeb && (Platform.isMacOS || Platform.isLinux || Platform.isWindows)) ...[
+          //   Text(
+          //     l10n.readyToSaveFiles(_processedFiles.length),
+          //     style: theme.textTheme.bodySmall,
+          //   ),
+          // ],
           // Only show save location info on desktop platforms where Save button is visible
           if (!kIsWeb && (Platform.isMacOS || Platform.isLinux || Platform.isWindows)) ...[
             const SizedBox(height: 4),
@@ -637,32 +638,34 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                 ),
                 const SizedBox(height: 16),
                 Text(l10n.authorLabel('Antoine Giniès'), style: theme.textTheme.bodyMedium),
-                if (_updateMessage != null) ...[
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      _updateMessage!,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
+                if (!kIsWeb && !(Platform.isAndroid || Platform.isIOS)) ...[ // Only show on desktop
+                  const SizedBox(height: 16), // Use this instead of 24
+                  ElevatedButton.icon(
+                    onPressed: _isCheckingForUpdates ? null : () => _checkForUpdates(setDialogState),
+                    icon: _isCheckingForUpdates 
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.system_update_alt),
+                    label: Text(l10n.checkForUpdates),
                   ),
+                  if (_updateMessage != null) ...[ // Display message only if present
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        _updateMessage!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
                 ],
-                const SizedBox(height: 24),
-                ElevatedButton.icon(
-                  onPressed: _isCheckingForUpdates ? null : () => _checkForUpdates(setDialogState),
-                  icon: _isCheckingForUpdates 
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.system_update_alt),
-                  label: Text(l10n.checkForUpdates),
-                ),
                 const SizedBox(height: 8),
                 OutlinedButton.icon(
                   onPressed: () => launchUrl(Uri.parse('https://github.com/aginies/SecureMark')),
@@ -787,7 +790,31 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(l10n.analysisResult, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(l10n.analysisResult, style: const TextStyle(fontWeight: FontWeight.bold)),
+                            if (_analysisResult != null && !_analysisResult!.contains(l10n.noSignatureFound))
+                              IconButton(
+                                icon: const Icon(Icons.copy_rounded, size: 18),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                tooltip: 'Copy signature',
+                                onPressed: () {
+                                  // Extract the actual signature text from the result message
+                                  // The result message is usually l10n.signatureFound(result)
+                                  // For simplicity, let's just copy the whole thing or try to find the part after the colon
+                                  final textToCopy = _analysisResult!.contains(': ') 
+                                      ? _analysisResult!.split(': ').sublist(1).join(': ')
+                                      : _analysisResult!;
+                                  Clipboard.setData(ClipboardData(text: textToCopy));
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Signature copied to clipboard'), duration: Duration(seconds: 2)),
+                                  );
+                                },
+                              ),
+                          ],
+                        ),
                         const SizedBox(height: 8),
                         Text(_analysisResult!),
                       ],
@@ -1028,6 +1055,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                       contentPadding: EdgeInsets.zero,
                       onChanged: (value) {
                         final bool enabled = value ?? false;
+                        WatermarkProcessor.isSteganographyEnabled = enabled; // Update static flag
                         setDialogState(() {
                           _useSteganography = enabled;
                           if (enabled) {
@@ -1189,7 +1217,32 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (_rawImage != null && _shaderProgram != null) ...[
+                  if (_selectedPaths.isNotEmpty) ...[
+                    Text(
+                      l10n.selectedFilesLabel(_selectedPaths.length),
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: _selectedPaths.length,
+                        itemBuilder: (context, index) {
+                          final fileName = p.basename(_selectedPaths[index]);
+                          return ListTile(
+                            leading: Icon(Icons.insert_drive_file_outlined, color: theme.colorScheme.primary),
+                            title: Text(fileName),
+                            dense: true,
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      l10n.clickApplyToPreview,
+                      style: theme.textTheme.bodySmall,
+                      textAlign: TextAlign.center,
+                    ),
+                  ] else if (_rawImage != null && _shaderProgram != null) ...[
                     // Live Shader Preview!
                     ConstrainedBox(
                       constraints: const BoxConstraints(maxHeight: 300),
@@ -1219,9 +1272,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      _selectedPaths.isEmpty
-                          ? l10n.emptyPreviewHint
-                          : l10n.selectedPreviewHint,
+                      l10n.emptyPreviewHint,
                       style: theme.textTheme.titleMedium,
                       textAlign: TextAlign.center,
                     ),
@@ -1294,6 +1345,41 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                                 ),
                               ),
                             ),
+                            // Steganography verification badge
+                            if (_processedFiles[index].result.steganographyVerified)
+                              Positioned(
+                                top: 12,
+                                right: 12,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.withValues(alpha: 0.85),
+                                    borderRadius: BorderRadius.circular(20),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.2),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.verified_user_outlined, color: Colors.white, size: 14),
+                                      SizedBox(width: 6),
+                                      Text(
+                                        'Verified',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             // Navigation arrows for Desktop
                             if (!kIsWeb && (Platform.isLinux || Platform.isWindows || Platform.isMacOS) && _processedFiles.length > 1) ...[
                               Positioned(
@@ -1646,8 +1732,8 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
         Text(l10n.transparencyValue(_transparency.round())),
         Slider(
           value: _transparency,
-          min: 10,
-          max: 90,
+          min: 0,
+          max: 100,
           divisions: 80,
           onChanged: _processing
               ? null
@@ -1715,9 +1801,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
       _processedFiles = <_ProcessedFile>[];
       _previewIndex = 0;
       _rawImage = null; // Clear old image
-      _statusMessage = uniquePaths.length == 1
-          ? l10n.selectedApplySingle(File(uniquePaths.first).uri.pathSegments.last)
-          : l10n.selectedApplyMultiple(uniquePaths.length);
+      _statusMessage = ''; // Removed "Selected X files..." message
     });
 
     // Load the first image for live shader preview
@@ -1923,13 +2007,23 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
             _statusMessage = l10n.processingCancelled;
           });
         } else {
-          final successMessage = processedFiles.isEmpty
+          // Log steganography verification results
+          final verifiedCount = processedFiles.where((f) => f.result.steganographyVerified).length;
+          if (_useSteganography && verifiedCount > 0) {
+            _addLog('Steganography verified for $verifiedCount file(s)');
+          } else if (_useSteganography) {
+            _addLog('Steganography verification failed for all files');
+          }
+
+          var successMessage = processedFiles.isEmpty
               ? l10n.processingFailed
               : failedFiles.isEmpty
-                  ? (!kIsWeb && (Platform.isAndroid || Platform.isIOS))
-                      ? l10n.previewReadyMobile(processedFiles.length)
-                      : l10n.previewReady(processedFiles.length)
+                  ? '' // No message if files are processed and no failures
                   : l10n.processingStatusMultiple(processedFiles.length, failedFiles.length);
+          
+          if (_useSteganography && verifiedCount > 0) {
+            successMessage += ' (Steganography Verified ✓)';
+          }
 
           setState(() {
             _processedFiles = processedFiles;

@@ -1,16 +1,17 @@
 {
   "@@locale": "en",
   "appTitle": "SecureMark",
-  "readyToSaveFiles": "Ready to save {count, plural, one {1 file} other {{count} files}}",
-  "@readyToSaveFiles": {
+  "emptyPreviewHint": "Enter watermark text and pick one or more image or PDF files",
+  "selectedPreviewHint": "Files selected. Click Apply SecureMark to generate previews",
+  "selectedFilesLabel": "Selected Files ({count})",
+  "@selectedFilesLabel": {
     "placeholders": {
       "count": {
         "type": "int"
       }
     }
   },
-  "emptyPreviewHint": "Enter watermark text and pick one or more image or PDF files",
-  "selectedPreviewHint": "Files selected. Click Apply SecureMark to generate previews",
+  "clickApplyToPreview": "Click \"Apply SecureMark\" to generate previews",
   "previewUnavailable": "Preview unavailable",
   "swipeHint": "Swipe left for next, right for previous ({current}/{total})",
   "@swipeHint": {
@@ -75,22 +76,6 @@
   "droppedPathUnavailable": "The dropped file paths are unavailable.",
   "desktopDropArea": "Drop Files Here",
   "pickerLabel": "Images and PDFs",
-  "selectedApplySingle": "Selected {name}. Click Apply SecureMark.",
-  "@selectedApplySingle": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "selectedApplyMultiple": "Selected {count} files. Click Apply SecureMark.",
-  "@selectedApplyMultiple": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "processingCount": "Processing 1/{count} files...",
   "@processingCount": {
     "placeholders": {
@@ -114,22 +99,6 @@
     }
   },
   "processingFailed": "Unsupported file or processing failed.",
-  "previewReady": "Preview ready for {count, plural, one {1 file} other {{count} files}}. You can save or share them.",
-  "@previewReady": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "previewReadyMobile": "Preview ready for {count, plural, one {1 file} other {{count} fichiers}}. You can share them.",
-  "@previewReadyMobile": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "errorPrefix": "Error: {error}",
   "@errorPrefix": {
     "placeholders": {
@@ -275,6 +244,7 @@
     }
   },
   "analysisResult": "Result:",
+  "steganographyVerified": "Steganography Verified",
   "processingCancelled": "Processing cancelled",
   "processingStatusMultiple": "Processed {successCount} files successfully. {failedCount} files failed.",
   "@processingStatusMultiple": {

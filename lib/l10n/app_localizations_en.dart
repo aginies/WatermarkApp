@@ -12,23 +12,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'SecureMark';
 
   @override
-  String readyToSaveFiles(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count files',
-      one: '1 file',
-    );
-    return 'Ready to save $_temp0';
-  }
-
-  @override
   String get emptyPreviewHint =>
       'Enter watermark text and pick one or more image or PDF files';
 
   @override
   String get selectedPreviewHint =>
       'Files selected. Click Apply SecureMark to generate previews';
+
+  @override
+  String selectedFilesLabel(int count) {
+    return 'Selected Files ($count)';
+  }
+
+  @override
+  String get clickApplyToPreview =>
+      'Click \"Apply SecureMark\" to generate previews';
 
   @override
   String get previewUnavailable => 'Preview unavailable';
@@ -120,16 +118,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pickerLabel => 'Images and PDFs';
 
   @override
-  String selectedApplySingle(String name) {
-    return 'Selected $name. Click Apply SecureMark.';
-  }
-
-  @override
-  String selectedApplyMultiple(int count) {
-    return 'Selected $count files. Click Apply SecureMark.';
-  }
-
-  @override
   String processingCount(int count) {
     return 'Processing 1/$count files...';
   }
@@ -141,28 +129,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get processingFailed => 'Unsupported file or processing failed.';
-
-  @override
-  String previewReady(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count files',
-      one: '1 file',
-    );
-    return 'Preview ready for $_temp0. You can save or share them.';
-  }
-
-  @override
-  String previewReadyMobile(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count fichiers',
-      one: '1 file',
-    );
-    return 'Preview ready for $_temp0. You can share them.';
-  }
 
   @override
   String errorPrefix(String error) {
@@ -379,6 +345,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get analysisResult => 'Result:';
+
+  @override
+  String get steganographyVerified => 'Steganography Verified';
 
   @override
   String get processingCancelled => 'Processing cancelled';

@@ -93,11 +93,13 @@ class ProcessResult {
     required this.outputPath,
     required this.outputBytes,
     required this.previewBytes,
+    this.steganographyVerified = false,
   });
 
   final String outputPath;
   final Uint8List outputBytes;
   final Uint8List? previewBytes;
+  final bool steganographyVerified;
 }
 
 /// Progress callback for reporting processing progress
@@ -160,6 +162,10 @@ class WatermarkProcessor {
   
   /// Maximum cache size to prevent memory issues
   static const int _maxCacheSize = 10;
+
+  /// A static flag to indicate if steganography is currently enabled in the UI.
+  /// This is set by the main UI and used by other parts of the processor.
+  static bool isSteganographyEnabled = false;
 
   /// Process a file with comprehensive error handling and validation
   static Future<ProcessResult> processFile({
@@ -576,10 +582,25 @@ class WatermarkProcessor {
       
       final outputPath = _outputPath(file.path, outputExtension, includeTimestamp, filePrefix);
 
+      // Verify steganography if enabled
+      bool verified = false;
+      if (useSteganography) {
+        onProgress?.call(0.95, 'Verifying steganography...');
+        final extractedText = await extractLSBAsync(outputBytes);
+        verified = extractedText == watermarkText;
+        if (verified) {
+          onProgress?.call(0.98, 'Steganography verified');
+        } else {
+          onProgress?.call(0.98, 'Steganography verification failed');
+          debugPrint('Steganography verification failed for $outputPath: expected "$watermarkText", got "$extractedText"');
+        }
+      }
+
       return ProcessResult(
         outputPath: outputPath,
         outputBytes: outputBytes,
         previewBytes: outputBytes,
+        steganographyVerified: verified,
       );
     } catch (e) {
       if (e is WatermarkError) {
@@ -710,6 +731,7 @@ class WatermarkProcessor {
         outputPath: outputPath,
         outputBytes: outputBytes,
         previewBytes: previewBytes,
+        steganographyVerified: false,
       );
     } catch (e) {
       if (e is WatermarkError) rethrow;
@@ -962,10 +984,11 @@ class WatermarkProcessor {
   }
 
   /// Embeds a text message into an image using LSB (Least Significant Bit) steganography
-  /// Currently uses the Blue channel for embedding as it's the least sensitive to human eye
+  /// Uses the Blue channel for embedding with spreading to improve invisibility.
   static img.Image _embedLSB(img.Image image, String message) {
-    // 1. Prepare the data: Magic Header ('SM') + Length (32-bit) + Message
+    // 1. Prepare the data: Magic Header ('SM') + Length (32-bit) + Message + CRC16 (16-bit)
     final messageBytes = utf8.encode(message);
+    final crc = _crc16(messageBytes);
     final headerBytes = utf8.encode('SM'); // SecureMark Identifier
     
     final fullPayload = BytesBuilder();
@@ -981,38 +1004,55 @@ class WatermarkProcessor {
     ]);
     fullPayload.add(messageBytes);
     
+    // Add CRC
+    fullPayload.add([
+      (crc >> 8) & 0xFF,
+      crc & 0xFF,
+    ]);
+    
     final payload = fullPayload.toBytes();
     final totalBits = payload.length * 8;
+    final int width = image.width;
+    final int height = image.height;
+    final int totalPixels = width * height;
     
-    if (totalBits > image.width * image.height) {
-      // Image too small for this message, skip or truncate
+    if (totalBits > totalPixels) {
+      // Image too small for this message, skip
       return image;
     }
 
-    final result = image.clone();
-    var bitIndex = 0;
-    
-    for (final pixel in result) {
-      if (bitIndex >= totalBits) break;
-      
-      // Get the bit to embed
-      final byteIdx = bitIndex ~/ 8;
-      final bitOffset = 7 - (bitIndex % 8);
+    // Header (48 bits) is sequential at the beginning
+    const int headerBits = 48;
+    for (var i = 0; i < headerBits && i < totalBits; i++) {
+      final byteIdx = i ~/ 8;
+      final bitOffset = 7 - (i % 8);
       final bit = (payload[byteIdx] >> bitOffset) & 1;
       
-      // Embed in Blue channel (least noticeable)
-      // For img library, we need to handle different pixel formats
-      // result.setPixelRgba is safest or direct component access
-      
-      final b = pixel.b.toInt();
-      // Clear last bit and set the new bit
-      final newB = (b & ~1) | bit;
-      pixel.b = newB;
-      
-      bitIndex++;
+      final pixel = image.getPixel(i % width, i ~/ width);
+      pixel.b = (pixel.b.toInt() & ~1) | bit;
     }
     
-    return result;
+    // Payload is spread across the remaining pixels
+    final int remainingBits = totalBits - headerBits;
+    if (remainingBits > 0) {
+      final int remainingPixels = totalPixels - headerBits;
+      final int stride = (remainingPixels ~/ remainingBits).clamp(1, 1000);
+      
+      for (var i = 0; i < remainingBits; i++) {
+        final bitIdx = headerBits + i;
+        final byteIdx = bitIdx ~/ 8;
+        final bitOffset = 7 - (bitIdx % 8);
+        final bit = (payload[byteIdx] >> bitOffset) & 1;
+        
+        final pixelIdx = headerBits + (i * stride);
+        if (pixelIdx >= totalPixels) break;
+        
+        final pixel = image.getPixel(pixelIdx % width, pixelIdx ~/ width);
+        pixel.b = (pixel.b.toInt() & ~1) | bit;
+      }
+    }
+    
+    return image;
   }
 
   /// Static helper to run extraction in a background isolate safely
@@ -1026,68 +1066,94 @@ class WatermarkProcessor {
       final image = img.decodeImage(imageBytes);
       if (image == null) return null;
 
-      final totalPixels = image.width * image.height;
+      final int width = image.width;
+      final int height = image.height;
+      final int totalPixels = width * height;
       
       // We need at least SM (16 bits) + Length (32 bits) = 48 bits to start
       if (totalPixels < 48) return null;
 
-      // 1. Extract all LSBs from Blue channel
-      // We only extract as much as needed to avoid scanning millions of pixels if not necessary
-      // But for simplicity in this implementation, we'll scan until we find our marker or reach a limit
-      
-      var bitCount = 0;
-      final bytes = <int>[];
+      const int headerBits = 48;
+      final List<int> bytes = <int>[];
       var currentByte = 0;
-
-      for (final pixel in image) {
-        final b = pixel.b.toInt();
-        final bit = b & 1;
+      
+      // 1. Extract header bits sequentially
+      for (var i = 0; i < headerBits; i++) {
+        final pixel = image.getPixel(i % width, i ~/ width);
+        final bit = pixel.b.toInt() & 1;
         
         currentByte = (currentByte << 1) | bit;
-        bitCount++;
-
-        if (bitCount % 8 == 0) {
+        if ((i + 1) % 8 == 0) {
           bytes.add(currentByte);
           currentByte = 0;
-          
-          // Optimization: check for header early
-          if (bytes.length == 2) {
-            final header = utf8.decode(bytes, allowMalformed: true);
-            if (header != 'SM') return null; // Not our format
-          }
-          
-          // If we have header + length (6 bytes), we know how much to read
-          if (bytes.length == 6) {
-            final length = (bytes[2] << 24) | (bytes[3] << 16) | (bytes[4] << 8) | bytes[5];
-            // Safety limit: 10KB message max for extraction
-            if (length <= 0 || length > 10240) return null;
-            
-            // Total bytes needed = header (2) + length (4) + message
-            final totalBytesNeeded = 6 + length;
-            
-            // If the image is too small for the claimed length, it's malformed
-            if (totalBytesNeeded * 8 > totalPixels) return null;
-          }
-          
-          // Check if we finished reading based on the length we found at byte 6
-          if (bytes.length >= 6) {
-            final length = (bytes[2] << 24) | (bytes[3] << 16) | (bytes[4] << 8) | bytes[5];
-            if (bytes.length >= 6 + length) {
-              final messageBytes = bytes.sublist(6, 6 + length);
-              return utf8.decode(messageBytes, allowMalformed: true);
-            }
-          }
         }
-        
-        // Hard limit to avoid infinite loops on huge empty images
-        if (bytes.length > 11000) break;
       }
       
-      return null;
+      // Check magic header
+      if (utf8.decode(bytes.sublist(0, 2), allowMalformed: true) != 'SM') {
+        return null;
+      }
+      
+      // Parse length
+      final int payloadLength = (bytes[2] << 24) | (bytes[3] << 16) | (bytes[4] << 8) | bytes[5];
+      // Safety limit: 1MB message max
+      if (payloadLength <= 0 || payloadLength > 1024 * 1024) return null;
+      
+      // 2. Extract payload and CRC
+      final int payloadBytesNeeded = payloadLength + 2; // message + CRC16
+      final int payloadBitsNeeded = payloadBytesNeeded * 8;
+      final int remainingPixels = totalPixels - headerBits;
+      
+      if (payloadBitsNeeded > remainingPixels) return null;
+      
+      final int stride = (remainingPixels ~/ payloadBitsNeeded).clamp(1, 1000);
+      currentByte = 0;
+      
+      for (var i = 0; i < payloadBitsNeeded; i++) {
+        final pixelIdx = headerBits + (i * stride);
+        if (pixelIdx >= totalPixels) break;
+        
+        final pixel = image.getPixel(pixelIdx % width, pixelIdx ~/ width);
+        final bit = pixel.b.toInt() & 1;
+        
+        currentByte = (currentByte << 1) | bit;
+        if ((i + 1) % 8 == 0) {
+          bytes.add(currentByte);
+          currentByte = 0;
+        }
+      }
+      
+      if (bytes.length < 6 + payloadBytesNeeded) return null;
+      
+      final messageBytes = bytes.sublist(6, 6 + payloadLength);
+      final extractedCrc = (bytes[6 + payloadLength] << 8) | bytes[6 + payloadLength + 1];
+      
+      // Verify CRC
+      if (_crc16(messageBytes) != extractedCrc) {
+        return null;
+      }
+      
+      return utf8.decode(messageBytes, allowMalformed: true);
     } catch (e) {
       debugPrint('LSB extraction error: $e');
       return null;
     }
+  }
+
+  /// Simple CRC16 (CCITT) implementation for data integrity
+  static int _crc16(List<int> data) {
+    var crc = 0xFFFF;
+    for (var b in data) {
+      crc ^= b;
+      for (var i = 0; i < 8; i++) {
+        if ((crc & 0x0001) != 0) {
+          crc = (crc >> 1) ^ 0xA001;
+        } else {
+          crc >>= 1;
+        }
+      }
+    }
+    return crc;
   }
 
   static img.Image _buildWatermarkStamp(
@@ -1203,6 +1269,9 @@ class WatermarkProcessor {
     Map<String, Uint8List>? preRenderedStamps, {
     double antiAiLevel = 0.0,
   }) {
+    // If transparency is 100%, skip visible watermark rendering
+    if (transparency >= 100) return;
+
     final placements = _buildPlacements(
       width: image.width,
       height: image.height,
@@ -1433,7 +1502,8 @@ class WatermarkProcessor {
   }
 
   static int _alphaFromTransparency(double transparency) {
-    final opacity = (100 - transparency).clamp(10, 90) / 100;
+    if (transparency >= 100) return 0; // Completely transparent
+    final opacity = (100 - transparency) / 100; // Allow 0-100%
     return (opacity * 255).round();
   }
 
@@ -1697,10 +1767,19 @@ class WatermarkProcessor {
       final outputBytes = await doc.save();
       final outputPath = _outputPath(file.path, '.pdf', includeTimestamp, filePrefix);
 
+      // Verify steganography if enabled (check first page preview)
+      bool verified = false;
+      if (useSteganography && preview != null) {
+        onProgress?.call(0.95, 'Verifying steganography...');
+        final extractedText = await extractLSBAsync(preview);
+        verified = extractedText == watermarkText;
+      }
+
       return ProcessResult(
         outputPath: outputPath,
         outputBytes: outputBytes,
         previewBytes: preview,
+        steganographyVerified: verified,
       );
     } catch (e) {
       throw WatermarkError(
@@ -1721,6 +1800,11 @@ class WatermarkProcessor {
       final now = DateTime.now();
       suffix = '-${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}'
                '-${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
+    }
+
+    // Ensure output extension is .png if steganography is used
+    if (targetExtension != '.pdf' && WatermarkProcessor.isSteganographyEnabled) { // Access static flag
+      targetExtension = '.png';
     }
 
     return p.join(directory, '$filePrefix$baseName$suffix$targetExtension');
