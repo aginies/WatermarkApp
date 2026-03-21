@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart' show TextPainter, TextSpan, TextAlign, TextDirection, FontWeight;
 import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as p;
@@ -14,6 +15,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart' as sync;
 import 'package:qr/qr.dart';
+import 'package:encrypt/encrypt.dart' as enc;
 
 import 'font_manager.dart';
 import 'qr_config.dart';
@@ -110,10 +112,12 @@ class ExtractedFileResult {
   const ExtractedFileResult({
     required this.fileName,
     required this.fileBytes,
+    this.isEncrypted = false,
   });
 
   final String fileName;
   final Uint8List fileBytes;
+  final bool isEncrypted;
 }
 
 /// Progress callback for reporting processing progress
@@ -199,6 +203,7 @@ class WatermarkProcessor {
     String filePrefix = 'securemark-',
     double antiAiLevel = 0.0,
     bool useSteganography = false,
+    String? steganographyPassword,
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
     QrWatermarkConfig? qrConfig,
@@ -239,6 +244,7 @@ class WatermarkProcessor {
       filePrefix,
       antiAiLevel,
       useSteganography,
+      steganographyPassword,
       hiddenFileName,
       hiddenFileBytes,
       qrConfig,
@@ -273,6 +279,7 @@ class WatermarkProcessor {
           filePrefix: filePrefix,
           antiAiLevel: antiAiLevel,
           useSteganography: useSteganography,
+          steganographyPassword: steganographyPassword,
           hiddenFileName: hiddenFileName,
           hiddenFileBytes: hiddenFileBytes,
           qrConfig: qrConfig,
@@ -296,6 +303,7 @@ class WatermarkProcessor {
           filePrefix: filePrefix,
           antiAiLevel: antiAiLevel,
           useSteganography: useSteganography,
+          steganographyPassword: steganographyPassword,
           hiddenFileName: hiddenFileName,
           hiddenFileBytes: hiddenFileBytes,
           qrConfig: qrConfig,
@@ -428,6 +436,7 @@ class WatermarkProcessor {
     String filePrefix,
     double antiAiLevel,
     bool useSteganography,
+    String? steganographyPassword,
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
     QrWatermarkConfig? qrConfig,
@@ -436,7 +445,7 @@ class WatermarkProcessor {
     final qrHash = qrConfig != null
         ? '${qrConfig.visibleQr}-${qrConfig.invisibleQr}-${qrConfig.author}-${qrConfig.url}-${qrConfig.position}-${qrConfig.size}'
         : 'none';
-    return '$filePath-$transparency-$density-$watermarkText-$useRandomColor-$selectedColorValue-$fontSize-${font.fontFamily}-$jpegQuality-$targetSize-$includeTimestamp-$preserveMetadata-$rasterizePdf-$filePrefix-$antiAiLevel-$useSteganography-$hiddenFileName-$hiddenFileHash-$qrHash';
+    return '$filePath-$transparency-$density-$watermarkText-$useRandomColor-$selectedColorValue-$fontSize-${font.fontFamily}-$jpegQuality-$targetSize-$includeTimestamp-$preserveMetadata-$rasterizePdf-$filePrefix-$antiAiLevel-$useSteganography-$steganographyPassword-$hiddenFileName-$hiddenFileHash-$qrHash';
   }
 
   /// Add result to cache with size management
@@ -539,6 +548,7 @@ class WatermarkProcessor {
     String filePrefix = 'securemark-',
     double antiAiLevel = 0.0,
     bool useSteganography = false,
+    String? steganographyPassword,
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
     QrWatermarkConfig? qrConfig,
@@ -596,6 +606,7 @@ class WatermarkProcessor {
           preserveMetadata: preserveMetadata,
           antiAiLevel: antiAiLevel,
           useSteganography: useSteganography,
+          steganographyPassword: steganographyPassword,
           hiddenFileName: hiddenFileName,
           hiddenFileBytes: hiddenFileBytes,
           qrConfig: qrConfig,
@@ -693,6 +704,7 @@ class WatermarkProcessor {
     String filePrefix = 'securemark-',
     double antiAiLevel = 0.0,
     bool useSteganography = false,
+    String? steganographyPassword,
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
     QrWatermarkConfig? qrConfig,
@@ -719,6 +731,7 @@ class WatermarkProcessor {
           filePrefix: filePrefix,
           antiAiLevel: antiAiLevel,
           useSteganography: useSteganography,
+          steganographyPassword: steganographyPassword,
           hiddenFileName: hiddenFileName,
           hiddenFileBytes: hiddenFileBytes,
           qrConfig: qrConfig,
@@ -952,6 +965,7 @@ class WatermarkProcessor {
     bool preserveMetadata = false,
     double antiAiLevel = 0.0,
     bool useSteganography = false,
+    String? steganographyPassword,
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
     QrWatermarkConfig? qrConfig,
@@ -997,10 +1011,19 @@ class WatermarkProcessor {
       if (useSteganography) {
         if (hiddenFileName != null && hiddenFileBytes != null) {
           // Embed a hidden file
-          outputImage = _embedFileIntoImage(outputImage, hiddenFileName, hiddenFileBytes);
+          outputImage = _embedFileIntoImage(
+            outputImage, 
+            hiddenFileName, 
+            hiddenFileBytes,
+            password: steganographyPassword,
+          );
         } else {
           // Embed text watermark signature
-          outputImage = _embedLSB(outputImage, watermarkText);
+          outputImage = _embedLSB(
+            outputImage, 
+            watermarkText,
+            password: steganographyPassword,
+          );
         }
       }
 
@@ -1075,15 +1098,30 @@ class WatermarkProcessor {
 
   /// Embeds a file into an image using LSB steganography
   /// Format: 'SF' (2 bytes) + FilenameLen (2 bytes) + FileSize (4 bytes) + Filename + File + CRC16 (2 bytes)
-  static img.Image _embedFileIntoImage(img.Image image, String fileName, Uint8List fileBytes) {
+  /// Embeds an entire file into an image
+  static img.Image _embedFileIntoImage(
+    img.Image image, 
+    String fileName, 
+    Uint8List fileBytes, {
+    String? password,
+  }) {
+    final bool encrypt = password != null && password.isNotEmpty;
+    Uint8List dataToEmbed = fileBytes;
+    
+    // Calculate CRC on ORIGINAL bytes for better password validation during extraction
+    final crc = _crc16(fileBytes);
+
+    if (encrypt) {
+      dataToEmbed = _encryptBytes(fileBytes, password);
+    }
+
     final filenameBytes = utf8.encode(fileName);
     if (filenameBytes.length > 255) {
       debugPrint('Filename too long, truncating');
       return image; // Skip if filename is too long
     }
 
-    final crc = _crc16(fileBytes);
-    final headerBytes = utf8.encode('SF'); // SecureMark File Identifier
+    final headerBytes = utf8.encode(encrypt ? 'SE' : 'SF'); // SF=Plain, SE=Encrypted
 
     final fullPayload = BytesBuilder();
     fullPayload.add(headerBytes);
@@ -1095,7 +1133,7 @@ class WatermarkProcessor {
     ]);
 
     // Add file size as 4 bytes (32-bit big endian)
-    final fileSize = fileBytes.length;
+    final fileSize = dataToEmbed.length;
     fullPayload.add([
       (fileSize >> 24) & 0xFF,
       (fileSize >> 16) & 0xFF,
@@ -1104,9 +1142,9 @@ class WatermarkProcessor {
     ]);
 
     fullPayload.add(filenameBytes);
-    fullPayload.add(fileBytes);
+    fullPayload.add(dataToEmbed);
 
-    // Add CRC
+    // Add CRC (of original bytes)
     fullPayload.add([
       (crc >> 8) & 0xFF,
       crc & 0xFF,
@@ -1159,11 +1197,24 @@ class WatermarkProcessor {
 
   /// Embeds a text message into an image using LSB (Least Significant Bit) steganography
   /// Uses the Blue channel for embedding with spreading to improve invisibility.
-  static img.Image _embedLSB(img.Image image, String message) {
-    // 1. Prepare the data: Magic Header ('SM') + Length (32-bit) + Message + CRC16 (16-bit)
-    final messageBytes = utf8.encode(message);
-    final crc = _crc16(messageBytes);
-    final headerBytes = utf8.encode('SM'); // SecureMark Identifier
+  static img.Image _embedLSB(
+    img.Image image, 
+    String message, {
+    String? password,
+  }) {
+    // 1. Prepare the data: Magic Header ('SM' or 'SX') + Length (32-bit) + Message + CRC16 (16-bit)
+    final bool encrypt = password != null && password.isNotEmpty;
+    final Uint8List originalMessageBytes = Uint8List.fromList(utf8.encode(message));
+    Uint8List messageBytes = originalMessageBytes;
+    
+    // Calculate CRC on ORIGINAL bytes
+    final crc = _crc16(originalMessageBytes);
+
+    if (encrypt) {
+      messageBytes = _encryptBytes(originalMessageBytes, password);
+    }
+
+    final headerBytes = utf8.encode(encrypt ? 'SX' : 'SM'); // SecureMark Identifier
     
     final fullPayload = BytesBuilder();
     fullPayload.add(headerBytes);
@@ -1178,7 +1229,7 @@ class WatermarkProcessor {
     ]);
     fullPayload.add(messageBytes);
     
-    // Add CRC
+    // Add CRC (of original bytes)
     fullPayload.add([
       (crc >> 8) & 0xFF,
       crc & 0xFF,
@@ -1230,12 +1281,12 @@ class WatermarkProcessor {
   }
 
   /// Static helper to run extraction in a background isolate safely
-  static Future<String?> extractLSBAsync(Uint8List bytes) async {
-    return await Isolate.run(() => extractLSB(bytes));
+  static Future<String?> extractLSBAsync(Uint8List bytes, {String? password}) async {
+    return await Isolate.run(() => extractLSB(bytes, password: password));
   }
 
   /// Extracts a hidden message from an image using LSB steganography
-  static String? extractLSB(Uint8List imageBytes) {
+  static String? extractLSB(Uint8List imageBytes, {String? password}) {
     try {
       final image = img.decodeImage(imageBytes);
       if (image == null) return null;
@@ -1264,7 +1315,9 @@ class WatermarkProcessor {
       }
 
       // Check magic header
-      if (utf8.decode(bytes.sublist(0, 2), allowMalformed: true) != 'SM') {
+      final String magic = utf8.decode(bytes.sublist(0, 2), allowMalformed: true);
+      final bool isEncrypted = magic == 'SX';
+      if (magic != 'SM' && magic != 'SX') {
         return null;
       }
 
@@ -1299,15 +1352,27 @@ class WatermarkProcessor {
 
       if (bytes.length < 6 + payloadBytesNeeded) return null;
 
-      final messageBytes = bytes.sublist(6, 6 + payloadLength);
+      Uint8List payloadBytes = Uint8List.fromList(bytes.sublist(6, 6 + payloadLength));
       final extractedCrc = (bytes[6 + payloadLength] << 8) | bytes[6 + payloadLength + 1];
 
-      // Verify CRC
-      if (_crc16(messageBytes) != extractedCrc) {
-        return null;
+      // Decrypt if necessary
+      if (isEncrypted) {
+        if (password == null || password.isEmpty) {
+          return '[ENCRYPTED] (Password required)';
+        }
+        final decrypted = _decryptBytes(payloadBytes, password);
+        if (decrypted == null) {
+          return '[ENCRYPTED] (Wrong password)';
+        }
+        payloadBytes = decrypted;
       }
 
-      return utf8.decode(messageBytes, allowMalformed: true);
+      // Verify CRC (now on decrypted bytes if it was encrypted)
+      if (_crc16(payloadBytes) != extractedCrc) {
+        return isEncrypted ? '[ENCRYPTED] (Wrong password)' : null;
+      }
+
+      return utf8.decode(payloadBytes, allowMalformed: true);
     } catch (e) {
       debugPrint('LSB extraction error: $e');
       return null;
@@ -1316,11 +1381,11 @@ class WatermarkProcessor {
 
   /// Extracts a hidden file from an image using LSB steganography
   /// Returns ExtractedFileResult with filename and file bytes, or null if no file found
-  static Future<ExtractedFileResult?> extractFileAsync(Uint8List imageBytes) async {
-    return await Isolate.run(() => extractFile(imageBytes));
+  static Future<ExtractedFileResult?> extractFileAsync(Uint8List imageBytes, {String? password}) async {
+    return await Isolate.run(() => extractFile(imageBytes, password: password));
   }
 
-  static ExtractedFileResult? extractFile(Uint8List imageBytes) {
+  static ExtractedFileResult? extractFile(Uint8List imageBytes, {String? password}) {
     try {
       final image = img.decodeImage(imageBytes);
       if (image == null) return null;
@@ -1329,7 +1394,7 @@ class WatermarkProcessor {
       final int height = image.height;
       final int totalPixels = width * height;
 
-      // We need at least SF (16 bits) + FilenameLen (16 bits) + FileSize (32 bits) = 64 bits to start
+      // We need at least SF/SE (16 bits) + FilenameLen (16 bits) + FileSize (32 bits) = 64 bits to start
       if (totalPixels < 64) return null;
 
       final List<int> bytes = <int>[];
@@ -1348,8 +1413,10 @@ class WatermarkProcessor {
         }
       }
 
-      // Check magic header for file ('SF' = SecureMark File)
-      if (utf8.decode(bytes.sublist(0, 2), allowMalformed: true) != 'SF') {
+      // Check magic header for file ('SF' = Plain, 'SE' = Encrypted)
+      final String magic = utf8.decode(bytes.sublist(0, 2), allowMalformed: true);
+      final bool isEncrypted = magic == 'SE';
+      if (magic != 'SF' && magic != 'SE') {
         return null;
       }
 
@@ -1390,20 +1457,51 @@ class WatermarkProcessor {
 
       // Extract components
       final filenameBytes = bytes.sublist(8, 8 + filenameLength);
-      final fileBytes = bytes.sublist(8 + filenameLength, 8 + filenameLength + fileSize);
+      Uint8List fileBytes = Uint8List.fromList(bytes.sublist(8 + filenameLength, 8 + filenameLength + fileSize));
       final extractedCrc = (bytes[8 + filenameLength + fileSize] << 8) |
                           bytes[8 + filenameLength + fileSize + 1];
 
-      // Verify CRC of file data
+      // Decrypt if necessary
+      if (isEncrypted) {
+        if (password == null || password.isEmpty) {
+          // Password required but not provided
+          return ExtractedFileResult(
+            fileName: utf8.decode(filenameBytes, allowMalformed: true),
+            fileBytes: Uint8List(0),
+            isEncrypted: true,
+          );
+        }
+        final decrypted = _decryptBytes(fileBytes, password);
+        if (decrypted == null) {
+          // Wrong password
+          return ExtractedFileResult(
+            fileName: utf8.decode(filenameBytes, allowMalformed: true),
+            fileBytes: Uint8List(0),
+            isEncrypted: true,
+          );
+        }
+        fileBytes = decrypted;
+      }
+
+      // Verify CRC (of decrypted/plain bytes)
       if (_crc16(fileBytes) != extractedCrc) {
-        return null;
+        if (isEncrypted) {
+          // If CRC fails after decryption attempt, it's likely a wrong password
+          return ExtractedFileResult(
+            fileName: utf8.decode(filenameBytes, allowMalformed: true),
+            fileBytes: Uint8List(0),
+            isEncrypted: true,
+          );
+        }
+        return null; // For plain files, CRC failure means corruption
       }
 
       final filename = utf8.decode(filenameBytes, allowMalformed: true);
 
       return ExtractedFileResult(
         fileName: filename,
-        fileBytes: Uint8List.fromList(fileBytes),
+        fileBytes: fileBytes,
+        isEncrypted: isEncrypted,
       );
     } catch (e) {
       debugPrint('LSB file extraction error: $e');
@@ -1425,6 +1523,45 @@ class WatermarkProcessor {
       }
     }
     return crc;
+  }
+
+  /// Encrypts bytes using AES-256 with a password
+  static Uint8List _encryptBytes(Uint8List data, String password) {
+    // Deriving a 32-byte key from the password using SHA-256
+    final keyBytes = sha256.convert(utf8.encode(password)).bytes;
+    final key = enc.Key(Uint8List.fromList(keyBytes));
+    
+    // Using a random IV
+    final iv = enc.IV.fromSecureRandom(16);
+    final encrypter = enc.Encrypter(enc.AES(key, mode: enc.AESMode.cbc));
+    
+    final encrypted = encrypter.encryptBytes(data, iv: iv);
+    
+    // Result is IV (16 bytes) + Encrypted Data
+    final result = BytesBuilder();
+    result.add(iv.bytes);
+    result.add(encrypted.bytes);
+    return result.toBytes();
+  }
+
+  /// Decrypts bytes using AES-256 with a password
+  static Uint8List? _decryptBytes(Uint8List encryptedData, String password) {
+    try {
+      if (encryptedData.length < 16) return null;
+      
+      final iv = enc.IV(encryptedData.sublist(0, 16));
+      final data = encryptedData.sublist(16);
+      
+      final keyBytes = sha256.convert(utf8.encode(password)).bytes;
+      final key = enc.Key(Uint8List.fromList(keyBytes));
+      
+      final encrypter = enc.Encrypter(enc.AES(key, mode: enc.AESMode.cbc));
+      final decrypted = encrypter.decryptBytes(enc.Encrypted(data), iv: iv);
+      return Uint8List.fromList(decrypted);
+    } catch (e) {
+      debugPrint('Decryption error: $e');
+      return null;
+    }
   }
 
   /// Generates QR code as img.Image
@@ -2217,6 +2354,7 @@ class WatermarkProcessor {
     String filePrefix = 'securemark-',
     double antiAiLevel = 0.0,
     bool useSteganography = false,
+    String? steganographyPassword,
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
     QrWatermarkConfig? qrConfig,
@@ -2282,10 +2420,19 @@ class WatermarkProcessor {
         if (useSteganography) {
           if (hiddenFileName != null && hiddenFileBytes != null) {
             // Embed a hidden file
-            watermarked = _embedFileIntoImage(watermarked, hiddenFileName, hiddenFileBytes);
+            watermarked = _embedFileIntoImage(
+              watermarked, 
+              hiddenFileName, 
+              hiddenFileBytes,
+              password: steganographyPassword,
+            );
           } else {
             // Embed text watermark signature
-            watermarked = _embedLSB(watermarked, watermarkText);
+            watermarked = _embedLSB(
+              watermarked, 
+              watermarkText,
+              password: steganographyPassword,
+            );
           }
         }
 

@@ -377,6 +377,17 @@ class AppLocalizationsEn extends AppLocalizations {
       'Security Notice: Hidden files are only secure if encrypted before embedding. Steganography obscures but does not encrypt your data.';
 
   @override
+  String get steganographyPasswordLabel => 'Encryption Password';
+
+  @override
+  String get steganographyPasswordHint =>
+      'Enter password to protect hidden file';
+
+  @override
+  String get steganographyPasswordNote =>
+      'Note: This password will be required to extract the hidden file using SecureMark. It uses AES-256 encryption.';
+
+  @override
   String get qrWatermarkTitle => 'QR Code Watermark';
 
   @override

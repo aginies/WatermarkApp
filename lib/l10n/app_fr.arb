@@ -259,6 +259,9 @@
     }
   },
   "hiddenFileSecurityWarning": "Avis de sécurité : Les fichiers cachés ne sont sécurisés que s'ils sont chiffrés avant l'incorporation. La stéganographie obscurcit mais ne chiffre pas vos données.",
+  "steganographyPasswordLabel": "Mot de passe de chiffrage",
+  "steganographyPasswordHint": "Entrez le mot de passe pour protéger le fichier caché",
+  "steganographyPasswordNote": "Remarque : Ce mot de passe sera requis pour extraire le fichier caché à l'aide de SecureMark. Il utilise le chiffrage AES-256.",
   "qrWatermarkTitle": "Filigrane QR Code",
   "enableQrWatermark": "Activer le QR Code",
   "enableQrWatermarkSubtitle": "Intégrer des métadonnées dans un QR code",

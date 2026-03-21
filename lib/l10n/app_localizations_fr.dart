@@ -380,6 +380,17 @@ class AppLocalizationsFr extends AppLocalizations {
       'Avis de sécurité : Les fichiers cachés ne sont sécurisés que s\'ils sont chiffrés avant l\'incorporation. La stéganographie obscurcit mais ne chiffre pas vos données.';
 
   @override
+  String get steganographyPasswordLabel => 'Mot de passe de chiffrage';
+
+  @override
+  String get steganographyPasswordHint =>
+      'Entrez le mot de passe pour protéger le fichier caché';
+
+  @override
+  String get steganographyPasswordNote =>
+      'Remarque : Ce mot de passe sera requis pour extraire le fichier caché à l\'aide de SecureMark. Il utilise le chiffrage AES-256.';
+
+  @override
   String get qrWatermarkTitle => 'Filigrane QR Code';
 
   @override

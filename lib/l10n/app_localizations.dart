@@ -674,6 +674,24 @@ abstract class AppLocalizations {
   /// **'Security Notice: Hidden files are only secure if encrypted before embedding. Steganography obscures but does not encrypt your data.'**
   String get hiddenFileSecurityWarning;
 
+  /// No description provided for @steganographyPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Encryption Password'**
+  String get steganographyPasswordLabel;
+
+  /// No description provided for @steganographyPasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter password to protect hidden file'**
+  String get steganographyPasswordHint;
+
+  /// No description provided for @steganographyPasswordNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note: This password will be required to extract the hidden file using SecureMark. It uses AES-256 encryption.'**
+  String get steganographyPasswordNote;
+
   /// No description provided for @qrWatermarkTitle.
   ///
   /// In en, this message translates to:

@@ -153,6 +153,8 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
   bool _hideFileWithSteganography = false;
   Uint8List? _hiddenFileBytes;
   String? _hiddenFileName;
+  String _hidingPassword = '';
+  String _extractionPassword = '';
 
   // QR Code Configuration
   bool _qrVisible = false;
@@ -795,6 +797,11 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
   void _showFileAnalyzer() {
     final l10n = AppLocalizations.of(context)!;
     
+    // Clear extraction password when opening analyzer to ensure manual entry
+    setState(() {
+      _extractionPassword = '';
+    });
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -812,6 +819,22 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(l10n.fileAnalyzerDescription),
+                const SizedBox(height: 16),
+                TextField(
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: l10n.steganographyPasswordLabel,
+                    hintText: l10n.steganographyPasswordHint,
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.lock_outline),
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _extractionPassword = value;
+                    });
+                  },
+                  controller: TextEditingController(text: _extractionPassword)..selection = TextSelection.fromPosition(TextPosition(offset: _extractionPassword.length)),
+                ),
                 const SizedBox(height: 24),
                 if (_analyzingFile)
                   const CircularProgressIndicator()
@@ -853,7 +876,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                         ),
                         const SizedBox(height: 8),
                         Text(_analysisResult!),
-                        if (_extractedFile != null) ...[
+                        if (_extractedFile != null && (!_extractedFile!.isEncrypted || _extractedFile!.fileBytes.isNotEmpty)) ...[
                           const SizedBox(height: 16),
                           FilledButton.icon(
                             onPressed: () => _saveExtractedFile(),
@@ -912,18 +935,23 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
 
     try {
       final bytes = await File(file.path).readAsBytes();
+      final password = _extractionPassword.isNotEmpty ? _extractionPassword : null;
 
       // Check for all types of hidden data
-      final fileResult = await WatermarkProcessor.extractFileAsync(bytes);
+      final fileResult = await WatermarkProcessor.extractFileAsync(bytes, password: password);
       final qrResult = await WatermarkProcessor.extractQrCodeLSBAsync(bytes);
-      final textResult = await WatermarkProcessor.extractLSBAsync(bytes);
+      final textResult = await WatermarkProcessor.extractLSBAsync(bytes, password: password);
 
       // Build combined result
       final results = <String>[];
 
       if (fileResult != null) {
-        _extractedFile = fileResult;
-        results.add('Hidden file detected: ${fileResult.fileName} (${_formatFileSize(fileResult.fileBytes.length)})');
+        if (fileResult.isEncrypted && fileResult.fileBytes.isEmpty) {
+          results.add('🔐 Encrypted file detected: ${fileResult.fileName}. Please provide the correct password.');
+        } else {
+          _extractedFile = fileResult;
+          results.add('📁 Hidden file detected: ${fileResult.fileName} (${_formatFileSize(fileResult.fileBytes.length)})');
+        }
       }
 
       if (qrResult != null && qrResult.isNotEmpty) {
@@ -931,7 +959,11 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
       }
 
       if (textResult != null && textResult.isNotEmpty) {
-        results.add(l10n.signatureFound(textResult));
+        if (textResult.contains('[ENCRYPTED]')) {
+          results.add('🔐 Encrypted signature detected. Please provide the correct password.');
+        } else {
+          results.add(l10n.signatureFound(textResult));
+        }
       }
 
       setDialogState(() {
@@ -960,6 +992,12 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
 
   Future<void> _saveExtractedFile() async {
     if (_extractedFile == null) return;
+    
+    // Safety check: don't save if it's encrypted and we don't have the decrypted bytes
+    if (_extractedFile!.isEncrypted && _extractedFile!.fileBytes.isEmpty) {
+      _addLog('Cannot save: file is encrypted and no password provided');
+      return;
+    }
 
     try {
       final FileSaveLocation? saveLocation = await getSaveLocation(
@@ -1157,6 +1195,27 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                           textAlign: TextAlign.center,
                         ),
                       ],
+                      const SizedBox(height: 16),
+                      TextField(
+                        obscureText: true,
+                        decoration: InputDecoration(
+                          labelText: l10n.steganographyPasswordLabel,
+                          hintText: l10n.steganographyPasswordHint,
+                          border: const OutlineInputBorder(),
+                          prefixIcon: const Icon(Icons.lock_outline),
+                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            _hidingPassword = value;
+                          });
+                        },
+                        controller: TextEditingController(text: _hidingPassword)..selection = TextSelection.fromPosition(TextPosition(offset: _hidingPassword.length)),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        l10n.steganographyPasswordNote,
+                        style: theme.textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
+                      ),
                     ],
                   ],
                 ],
@@ -2462,6 +2521,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
             filePrefix: _filePrefix,
             antiAiLevel: _antiAiLevel,
             useSteganography: _useSteganography,
+            steganographyPassword: _hidingPassword,
             hiddenFileName: _hideFileWithSteganography ? _hiddenFileName : null,
             hiddenFileBytes: _hideFileWithSteganography ? _hiddenFileBytes : null,
             qrConfig: qrConfig,
@@ -2635,6 +2695,8 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
       _hideFileWithSteganography = false;
       _hiddenFileBytes = null;
       _hiddenFileName = null;
+      _hidingPassword = '';
+      _extractionPassword = '';
       _useRandomColor = true;
       _selectedColor = Colors.deepPurple;
       _selectedFont = WatermarkFont.arial;
