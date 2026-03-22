@@ -196,9 +196,7 @@ class WatermarkProcessor {
   /// Maximum cache size to prevent memory issues
   static const int _maxCacheSize = 10;
 
-  /// A static flag to indicate if steganography is currently enabled in the UI.
-  /// This is set by the main UI and used by other parts of the processor.
-  static bool isSteganographyEnabled = false;
+
 
   /// Process a file with comprehensive error handling and validation
   static Future<ProcessResult> processFile({
@@ -948,6 +946,10 @@ class WatermarkProcessor {
         qrConfig: qrConfig,
       );
 
+      if (useRobustSteganography) {
+        outputImage = _embedRobustSignature(outputImage, watermarkText);
+      }
+
       if (useSteganography) {
         if (hiddenFileName != null && hiddenFileBytes != null) {
           outputImage = _embedFileIntoImage(
@@ -967,14 +969,11 @@ class WatermarkProcessor {
         );
       }
 
-      if (useRobustSteganography) {
-        outputImage = _embedRobustSignature(outputImage, watermarkText);
-      }
-
-      var forcePng = false;
+      var forcePng = useSteganography || useRobustSteganography;
       if (qrConfig != null && qrConfig.invisibleQr) {
         final qrData = _buildQrMetadata(qrConfig);
         outputImage = _embedQrCodeLSB(outputImage, qrData, channel: 'r'); // Use Red channel for QR
+        forcePng = true;
       }
 
       return _encodeImageInOriginalFormat(outputImage, originalExtension, jpegQuality, forcePng);
@@ -1600,6 +1599,9 @@ class WatermarkProcessor {
           stamps = {'${font.fontFamily}-${fontSize.round()}': bytes};
         }
         _applyWatermarkField(watermarked, watermarkText, transparency, density, useRandomColor, selectedColorValue, fontSize, font, stamps, antiAiLevel: antiAiLevel, qrConfig: qrConfig);
+        if (useRobustSteganography) {
+          watermarked = _embedRobustSignature(watermarked, watermarkText);
+        }
         if (useSteganography) {
           if (hiddenFileName != null && hiddenFileBytes != null) {
             watermarked = _embedFileIntoImage(watermarked, hiddenFileName, hiddenFileBytes, password: steganographyPassword, channel: 'g');
@@ -1607,7 +1609,7 @@ class WatermarkProcessor {
           // Always embed watermark text as LSB if steganography is enabled (Blue channel)
           watermarked = _embedLSB(watermarked, watermarkText, password: steganographyPassword, channel: 'b');
         }
-        if (useRobustSteganography) {
+        if (qrConfig != null && qrConfig.invisibleQr) {
           watermarked = _embedRobustSignature(watermarked, watermarkText);
         }
         if (qrConfig != null && qrConfig.invisibleQr) {

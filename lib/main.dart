@@ -259,7 +259,6 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
           _useSteganography = prefs.getBool('useSteganography') ?? false;
           _useRobustSteganography = prefs.getBool('useRobustSteganography') ?? false;
           _zipOutputs = prefs.getBool('zipOutputs') ?? false;
-          WatermarkProcessor.isSteganographyEnabled = _useSteganography; // Initialize static flag
           _useRandomColor = prefs.getBool('useRandomColor') ?? true;
           final colorValue = prefs.getInt('selectedColor');
           if (colorValue != null) {
@@ -1104,22 +1103,11 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                     contentPadding: EdgeInsets.zero,
                     onChanged: (value) {
                       final bool enabled = value ?? false;
-                      WatermarkProcessor.isSteganographyEnabled = enabled; // Update static flag
                       setDialogState(() {
                         _useSteganography = enabled;
-                        if (!enabled) { // If steganography is disabled, also disable file hiding
-                          _hideFileWithSteganography = false;
-                          _hiddenFileBytes = null;
-                          _hiddenFileName = null;
-                        }
                       });
                       setState(() {
                         _useSteganography = enabled;
-                        if (!enabled) { // If steganography is disabled, also disable file hiding
-                          _hideFileWithSteganography = false;
-                          _hiddenFileBytes = null;
-                          _hiddenFileName = null;
-                        }
                       });
                       _savePreference('useSteganography', enabled);
                     },
@@ -1141,129 +1129,128 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                       _savePreference('useRobustSteganography', enabled);
                     },
                   ),
-                  if (_useSteganography) ...[
+                  const SizedBox(height: 8),
+
+                  CheckboxListTile(
+                    title: Text(l10n.hideFileWithSteganographyTitle),
+                    subtitle: Text(l10n.hideFileWithSteganographySubtitle),
+                    value: _hideFileWithSteganography,
+                    contentPadding: EdgeInsets.zero,
+                    onChanged: (value) {
+                      final enabled = value ?? false;
+                      setDialogState(() {
+                        _hideFileWithSteganography = enabled;
+                        if (!enabled) { // Clear hidden file if checkbox is unchecked
+                          _hiddenFileBytes = null;
+                          _hiddenFileName = null;
+                          _savePreference('hiddenFileBytes', null);
+                          _savePreference('hiddenFileName', null);
+                        }
+                      });
+                      setState(() {
+                        _hideFileWithSteganography = enabled;
+                        if (!enabled) { // Clear hidden file if checkbox is unchecked
+                          _hiddenFileBytes = null;
+                          _hiddenFileName = null;
+                        }
+                      });
+                      _savePreference('hideFileWithSteganography', enabled);
+                    },
+                  ),
+                  if (_hideFileWithSteganography) ...[
                     const SizedBox(height: 16),
-                    CheckboxListTile(
-                      title: Text(l10n.hideFileWithSteganographyTitle),
-                      subtitle: Text(l10n.hideFileWithSteganographySubtitle),
-                      value: _hideFileWithSteganography,
-                      contentPadding: EdgeInsets.zero,
-                      onChanged: (value) {
-                        final enabled = value ?? false;
-                        setDialogState(() {
-                          _hideFileWithSteganography = enabled;
-                          if (!enabled) { // Clear hidden file if checkbox is unchecked
-                            _hiddenFileBytes = null;
-                            _hiddenFileName = null;
-                          }
-                        });
-                        setState(() {
-                          _hideFileWithSteganography = enabled;
-                          if (!enabled) { // Clear hidden file if checkbox is unchecked
-                            _hiddenFileBytes = null;
-                            _hiddenFileName = null;
-                          }
-                        });
-                      },
-                    ),
-                    if (_hideFileWithSteganography) ...[
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.errorContainer.withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: theme.colorScheme.error.withValues(alpha: 0.5),
-                            width: 1,
-                          ),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.errorContainer.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: theme.colorScheme.error.withValues(alpha: 0.5),
+                          width: 1,
                         ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Icon(
-                              Icons.warning_amber_rounded,
-                              color: theme.colorScheme.error,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                l10n.hiddenFileSecurityWarning,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onErrorContainer,
-                                ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            color: theme.colorScheme.error,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              l10n.hiddenFileSecurityWarning,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onErrorContainer,
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 16),
-                      ElevatedButton.icon(
-                        onPressed: () async {
-                          final result = await FilePicker.platform.pickFiles(
-                            allowMultiple: false,
-                            type: FileType.any,
-                            withData: true, // Crucial for mobile cloud providers
-                          );
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        final result = await FilePicker.platform.pickFiles(
+                          allowMultiple: false,
+                          type: FileType.any,
+                          withData: true, // Crucial for mobile cloud providers
+                        );
 
-                          if (result != null && result.files.single.bytes != null) {
-                            final platformFile = result.files.single;
-                            final fileBytes = platformFile.bytes!;
-                            setDialogState(() {
-                              _hiddenFileBytes = fileBytes;
-                              _hiddenFileName = platformFile.name;
-                            });
-                            setState(() {
-                              _hiddenFileBytes = fileBytes;
-                              _hiddenFileName = platformFile.name;
-                            });
-                          } else if (result != null && result.files.single.path != null) {
-                            // Fallback for desktop or cases where bytes aren't populated
-                            final platformFile = result.files.single;
-                            final fileBytes = await File(platformFile.path!).readAsBytes();
-                            setDialogState(() {
-                              _hiddenFileBytes = fileBytes;
-                              _hiddenFileName = platformFile.name;
-                            });
-                            setState(() {
-                              _hiddenFileBytes = fileBytes;
-                              _hiddenFileName = platformFile.name;
-                            });
-                          }
-                        },
-                        icon: const Icon(Icons.attach_file),
-                        label: Text(l10n.selectFileToHide),
+                        if (result != null && result.files.single.bytes != null) {
+                          final platformFile = result.files.single;
+                          final fileBytes = platformFile.bytes!;
+                          setDialogState(() {
+                            _hiddenFileBytes = fileBytes;
+                            _hiddenFileName = platformFile.name;
+                          });
+                          setState(() {
+                            _hiddenFileBytes = fileBytes;
+                            _hiddenFileName = platformFile.name;
+                          });
+                          _savePreference('hiddenFileBytes', base64Encode(fileBytes));
+                          _savePreference('hiddenFileName', platformFile.name);
+                        } else if (result != null && result.files.single.path != null) {
+                          final platformFile = result.files.single;
+                          final fileBytes = await File(platformFile.path!).readAsBytes();
+                          setDialogState(() {
+                            _hiddenFileBytes = fileBytes;
+                            _hiddenFileName = platformFile.name;
+                          });
+                          setState(() {
+                            _hiddenFileBytes = fileBytes;
+                            _hiddenFileName = platformFile.name;
+                          });
+                          _savePreference('hiddenFileBytes', base64Encode(fileBytes));
+                          _savePreference('hiddenFileName', platformFile.name);
+                        }
+                      },
+                      icon: const Icon(Icons.attach_file),
+                      label: Text(
+                        _hiddenFileName != null && _hiddenFileName!.isNotEmpty
+                            ? l10n.selectedHiddenFile(_hiddenFileName!)
+                            : l10n.selectFileToHide,
                       ),
-                      if (_hiddenFileName != null) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          l10n.selectedHiddenFile(_hiddenFileName!),
-                          style: theme.textTheme.bodyMedium,
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                      const SizedBox(height: 16),
+                    ),
+                    if (_hiddenFileBytes != null && _hiddenFileBytes!.isNotEmpty) ...[
+                      const SizedBox(height: 8),
                       TextField(
-                        obscureText: true,
+                        controller: TextEditingController(text: _hidingPassword),
                         decoration: InputDecoration(
                           labelText: l10n.steganographyPasswordLabel,
                           hintText: l10n.steganographyPasswordHint,
                           border: const OutlineInputBorder(),
                           prefixIcon: const Icon(Icons.lock_outline),
                         ),
+                        obscureText: true,
                         onChanged: (value) {
-                          setState(() {
-                            _hidingPassword = value;
-                          });
+                          setState(() => _hidingPassword = value);
+                          _savePreference('hidingPassword', value);
                         },
-                        controller: TextEditingController(text: _hidingPassword)..selection = TextSelection.fromPosition(TextPosition(offset: _hidingPassword.length)),
                       ),
                       const SizedBox(height: 8),
-                      Text(
-                        l10n.steganographyPasswordNote,
-                        style: theme.textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
-                      ),
+                      Text(l10n.steganographyPasswordNote, style: theme.textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic)),
                     ],
                   ],
                 ],
@@ -2682,9 +2669,8 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
           );
         }
 
-        // Only apply steganography if there's something to hide (text or file)
-        final bool shouldApplyStegano = _useSteganography && 
-            (_textController.text.isNotEmpty || (_hideFileWithSteganography && _hiddenFileBytes != null));
+        // Apply steganography if either signature or file hiding is enabled
+        final bool shouldApplyStegano = _useSteganography || (_hideFileWithSteganography && _hiddenFileBytes != null);
 
         try {
           final result = await WatermarkProcessor.processFile(
