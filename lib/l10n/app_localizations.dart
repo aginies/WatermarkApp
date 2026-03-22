@@ -500,6 +500,18 @@ abstract class AppLocalizations {
   /// **'View Logs'**
   String get viewLogs;
 
+  /// No description provided for @saveLogs.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Logs'**
+  String get saveLogs;
+
+  /// No description provided for @logsSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Logs saved to: {path}'**
+  String logsSaved(String path);
+
   /// No description provided for @appLogs.
   ///
   /// In en, this message translates to:

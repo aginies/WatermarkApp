@@ -195,6 +195,15 @@
   },
   "selectOutputDirectory": "Select Output Directory",
   "viewLogs": "View Logs",
+  "saveLogs": "Save Logs",
+  "logsSaved": "Logs saved to: {path}",
+  "@logsSaved": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "appLogs": "App Logs",
   "noLogsYet": "No logs yet",
   "openGitHub": "Open GitHub Repository",

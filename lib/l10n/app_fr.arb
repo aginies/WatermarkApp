@@ -195,6 +195,15 @@
   },
   "selectOutputDirectory": "Choisir le dossier de sortie",
   "viewLogs": "Voir les logs",
+  "saveLogs": "Enregistrer les logs",
+  "logsSaved": "Logs enregistrés dans : {path}",
+  "@logsSaved": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "appLogs": "Logs de l'application",
   "noLogsYet": "Aucun log pour le moment",
   "openGitHub": "Voir le dépôt GitHub",

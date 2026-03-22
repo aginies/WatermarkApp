@@ -276,6 +276,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String get viewLogs => 'Voir les logs';
 
   @override
+  String get saveLogs => 'Enregistrer les logs';
+
+  @override
+  String logsSaved(String path) {
+    return 'Logs enregistrés dans : $path';
+  }
+
+  @override
   String get appLogs => 'Logs de l\'application';
 
   @override

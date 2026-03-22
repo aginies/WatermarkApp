@@ -782,13 +782,65 @@ class _WatermarkPageState extends State<WatermarkPage>
     );
   }
 
+  Future<void> _saveLogs() async {
+    if (_logs.isEmpty) return;
+
+    final l10n = AppLocalizations.of(context)!;
+    final now = DateTime.now();
+    final timestamp =
+        "${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}";
+    final suggestedName = "securemark_logs_$timestamp.txt";
+
+    try {
+      final FileSaveLocation? saveLocation = await getSaveLocation(
+        suggestedName: suggestedName,
+      );
+
+      if (saveLocation == null) return;
+
+      final logContent = _logs.join('\n');
+      final logFile = XFile.fromData(
+        Uint8List.fromList(utf8.encode(logContent)),
+        name: suggestedName,
+        mimeType: 'text/plain',
+      );
+
+      await logFile.saveTo(saveLocation.path);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.logsSaved(p.basename(saveLocation.path))),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      _addLog('Error saving logs: $e');
+    }
+  }
+
   void _showLogs() {
     showDialog(
       context: context,
       builder: (context) {
         final l10n = AppLocalizations.of(context)!;
         return AlertDialog(
-          title: Text(l10n.appLogs),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(l10n.appLogs),
+              if (_logs.isNotEmpty)
+                IconButton(
+                  icon: const Icon(Icons.save_alt),
+                  tooltip: l10n.saveLogs,
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _saveLogs();
+                  },
+                ),
+            ],
+          ),
           content: SizedBox(
             width: double.maxFinite,
             height: 400,
