@@ -174,7 +174,9 @@
   "rasterizePdfTitle": "Rasterize PDF (Flatten)",
   "rasterizePdfSubtitle": "Convert PDF pages to images for maximum security (bigger size and slower)",
   "steganographyTitle": "Steganography (Invisible Signature)",
-  "steganographySubtitle": "Embed text secretly in pixels (Forces PNG output & flattened PDF)",
+  "steganographySubtitle": "Embed text secretly in pixels.",
+  "robustSteganographyTitle": "Robust Watermarking (DCT Domain)",
+  "robustSteganographySubtitle": "Experimental: Survives re-compression and resizing better than LSB.",
   "filePrefixLabel": "File Prefix",
   "filePrefixHint": "e.g., watermark-",
   "resetExpertHint": "This will reset all expert settings and file prefix to defaults.",
@@ -228,6 +230,14 @@
   "pickAndAnalyze": "Pick and Analyze",
   "signatureFound": "✅ Signature found: \"{message}\"",
   "@signatureFound": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "robustSignatureFound": "💪 Robust signature found: \"{message}\"",
+  "@robustSignatureFound": {
     "placeholders": {
       "message": {
         "type": "String"

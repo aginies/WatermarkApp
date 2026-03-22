@@ -174,7 +174,9 @@
   "rasterizePdfTitle": "Rasteriser le PDF (Aplatir)",
   "rasterizePdfSubtitle": "Convertir les pages PDF en images pour une sécurité maximale (plus lourd et plus lent)",
   "steganographyTitle": "Stéganographie (Signature Invisible)",
-  "steganographySubtitle": "Masquer secrètement du texte dans les pixels (Force Format PNG et PDF aplati)",
+  "steganographySubtitle": "Masquer secrètement du texte dans les pixels.",
+  "robustSteganographyTitle": "Filigrane Robuste (Domaine DCT)",
+  "robustSteganographySubtitle": "Expérimental : Survit mieux à la re-compression et au redimensionnement que le LSB.",
   "filePrefixLabel": "Préfixe de fichier",
   "filePrefixHint": "ex: filigrane-",
   "resetExpertHint": "Cela réinitialisera tous les réglages experts et le préfixe de fichier aux valeurs par défaut.",
@@ -228,6 +230,14 @@
   "pickAndAnalyze": "Choisir et analyser",
   "signatureFound": "✅ Signature trouvée : \"{message}\"",
   "@signatureFound": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "robustSignatureFound": "💪 Signature robuste trouvée : \"{message}\"",
+  "@robustSignatureFound": {
     "placeholders": {
       "message": {
         "type": "String"

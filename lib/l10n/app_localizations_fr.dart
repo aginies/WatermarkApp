@@ -227,7 +227,14 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get steganographySubtitle =>
-      'Masquer secrètement du texte dans les pixels (Force Format PNG et PDF aplati)';
+      'Masquer secrètement du texte dans les pixels.';
+
+  @override
+  String get robustSteganographyTitle => 'Filigrane Robuste (Domaine DCT)';
+
+  @override
+  String get robustSteganographySubtitle =>
+      'Expérimental : Survit mieux à la re-compression et au redimensionnement que le LSB.';
 
   @override
   String get filePrefixLabel => 'Préfixe de fichier';
@@ -334,6 +341,11 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String signatureFound(String message) {
     return '✅ Signature trouvée : \"$message\"';
+  }
+
+  @override
+  String robustSignatureFound(String message) {
+    return '💪 Signature robuste trouvée : \"$message\"';
   }
 
   @override

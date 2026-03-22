@@ -98,6 +98,7 @@ class ProcessResult {
     required this.previewBytes,
     required this.originalBytes,
     this.steganographyVerified = false,
+    this.robustVerified = false,
   });
 
   final String outputPath;
@@ -105,6 +106,7 @@ class ProcessResult {
   final Uint8List? previewBytes;
   final Uint8List? originalBytes;
   final bool steganographyVerified;
+  final bool robustVerified;
 }
 
 class ExtractedFileResult {
@@ -122,11 +124,13 @@ class ExtractedFileResult {
 class AnalysisResult {
   const AnalysisResult({
     this.signature,
+    this.robustSignature,
     this.file,
     this.qrData,
   });
 
   final String? signature;
+  final String? robustSignature;
   final ExtractedFileResult? file;
   final String? qrData;
 }
@@ -214,6 +218,7 @@ class WatermarkProcessor {
     String filePrefix = 'securemark-',
     double antiAiLevel = 0.0,
     bool useSteganography = false,
+    bool useRobustSteganography = false,
     String? steganographyPassword,
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
@@ -255,6 +260,7 @@ class WatermarkProcessor {
       filePrefix,
       antiAiLevel,
       useSteganography,
+      useRobustSteganography,
       steganographyPassword,
       hiddenFileName,
       hiddenFileBytes,
@@ -290,6 +296,7 @@ class WatermarkProcessor {
           filePrefix: filePrefix,
           antiAiLevel: antiAiLevel,
           useSteganography: useSteganography,
+          useRobustSteganography: useRobustSteganography,
           steganographyPassword: steganographyPassword,
           hiddenFileName: hiddenFileName,
           hiddenFileBytes: hiddenFileBytes,
@@ -314,6 +321,7 @@ class WatermarkProcessor {
           filePrefix: filePrefix,
           antiAiLevel: antiAiLevel,
           useSteganography: useSteganography,
+          useRobustSteganography: useRobustSteganography,
           steganographyPassword: steganographyPassword,
           hiddenFileName: hiddenFileName,
           hiddenFileBytes: hiddenFileBytes,
@@ -447,6 +455,7 @@ class WatermarkProcessor {
     String filePrefix,
     double antiAiLevel,
     bool useSteganography,
+    bool useRobustSteganography,
     String? steganographyPassword,
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
@@ -456,7 +465,7 @@ class WatermarkProcessor {
     final qrHash = qrConfig != null
         ? '${qrConfig.visibleQr}-${qrConfig.invisibleQr}-${qrConfig.author}-${qrConfig.url}-${qrConfig.position}-${qrConfig.size}'
         : 'none';
-    return '$filePath-$transparency-$density-$watermarkText-$useRandomColor-$selectedColorValue-$fontSize-${font.fontFamily}-$jpegQuality-$targetSize-$includeTimestamp-$preserveMetadata-$rasterizePdf-$filePrefix-$antiAiLevel-$useSteganography-$steganographyPassword-$hiddenFileName-$hiddenFileHash-$qrHash';
+    return '$filePath-$transparency-$density-$watermarkText-$useRandomColor-$selectedColorValue-$fontSize-${font.fontFamily}-$jpegQuality-$targetSize-$includeTimestamp-$preserveMetadata-$rasterizePdf-$filePrefix-$antiAiLevel-$useSteganography-$useRobustSteganography-$steganographyPassword-$hiddenFileName-$hiddenFileHash-$qrHash';
   }
 
   /// Add result to cache with size management
@@ -490,6 +499,7 @@ class WatermarkProcessor {
     String filePrefix = 'securemark-',
     double antiAiLevel = 0.0,
     bool useSteganography = false,
+    bool useRobustSteganography = false,
     String? steganographyPassword,
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
@@ -548,6 +558,7 @@ class WatermarkProcessor {
           preserveMetadata: preserveMetadata,
           antiAiLevel: antiAiLevel,
           useSteganography: useSteganography,
+          useRobustSteganography: useRobustSteganography,
           steganographyPassword: steganographyPassword,
           hiddenFileName: hiddenFileName,
           hiddenFileBytes: hiddenFileBytes,
@@ -576,25 +587,32 @@ class WatermarkProcessor {
 
       // Verify steganography if enabled
       bool verified = false;
-      if (useSteganography || hiddenFileName != null || (qrConfig?.invisibleQr == true)) {
+      bool robustVerified = false;
+      if (useSteganography || useRobustSteganography || hiddenFileName != null || (qrConfig?.invisibleQr == true)) {
         onProgress?.call(0.95, 'Verifying steganography...');
 
         // Use the new combined analyzer for verification
         final analysis = analyzeImage(outputBytes, password: steganographyPassword);
         
-        bool allVerified = true;
-        if (hiddenFileName != null) {
-          allVerified &= (analysis.file != null && analysis.file!.fileName == hiddenFileName);
+        if (useSteganography || hiddenFileName != null || (qrConfig?.invisibleQr == true)) {
+          bool allVerified = true;
+          if (hiddenFileName != null) {
+            allVerified &= (analysis.file != null && analysis.file!.fileName == hiddenFileName);
+          }
+          if (qrConfig?.invisibleQr == true) {
+            allVerified &= (analysis.qrData != null && analysis.qrData!.isNotEmpty);
+          }
+          if (useSteganography) {
+            allVerified &= (analysis.signature == watermarkText);
+          }
+          verified = allVerified;
         }
-        if (qrConfig?.invisibleQr == true) {
-          allVerified &= (analysis.qrData != null && analysis.qrData!.isNotEmpty);
-        }
-        if (useSteganography) {
-          allVerified &= (analysis.signature == watermarkText);
-        }
-        verified = allVerified;
 
-        if (verified) {
+        if (useRobustSteganography) {
+          robustVerified = analysis.robustSignature == watermarkText;
+        }
+
+        if (verified || robustVerified) {
           onProgress?.call(0.98, 'Steganography verified');
         } else {
           onProgress?.call(0.98, 'Steganography verification failed');
@@ -607,6 +625,7 @@ class WatermarkProcessor {
         previewBytes: outputBytes,
         originalBytes: inputBytes, // Store original bytes for A/B comparison
         steganographyVerified: verified,
+        robustVerified: robustVerified,
       );
     } catch (e) {
       if (e is WatermarkError) {
@@ -637,6 +656,7 @@ class WatermarkProcessor {
     String filePrefix = 'securemark-',
     double antiAiLevel = 0.0,
     bool useSteganography = false,
+    bool useRobustSteganography = false,
     String? steganographyPassword,
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
@@ -664,6 +684,7 @@ class WatermarkProcessor {
           filePrefix: filePrefix,
           antiAiLevel: antiAiLevel,
           useSteganography: useSteganography,
+          useRobustSteganography: useRobustSteganography,
           steganographyPassword: steganographyPassword,
           hiddenFileName: hiddenFileName,
           hiddenFileBytes: hiddenFileBytes,
@@ -720,6 +741,7 @@ class WatermarkProcessor {
           filePrefix: filePrefix,
           antiAiLevel: antiAiLevel,
           useSteganography: useSteganography,
+          useRobustSteganography: useRobustSteganography,
           steganographyPassword: steganographyPassword,
           hiddenFileName: hiddenFileName,
           hiddenFileBytes: hiddenFileBytes,
@@ -884,6 +906,7 @@ class WatermarkProcessor {
     bool preserveMetadata = false,
     double antiAiLevel = 0.0,
     bool useSteganography = false,
+    bool useRobustSteganography = false,
     String? steganographyPassword,
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
@@ -944,11 +967,14 @@ class WatermarkProcessor {
         );
       }
 
-      var forcePng = useSteganography;
+      if (useRobustSteganography) {
+        outputImage = _embedRobustSignature(outputImage, watermarkText);
+      }
+
+      var forcePng = false;
       if (qrConfig != null && qrConfig.invisibleQr) {
         final qrData = _buildQrMetadata(qrConfig);
         outputImage = _embedQrCodeLSB(outputImage, qrData, channel: 'r'); // Use Red channel for QR
-        forcePng = true;
       }
 
       return _encodeImageInOriginalFormat(outputImage, originalExtension, jpegQuality, forcePng);
@@ -1124,7 +1150,9 @@ class WatermarkProcessor {
         if (result.qrData != null) qrData = result.qrData;
       }
 
-      return AnalysisResult(signature: signature, file: file, qrData: qrData);
+      final robustSignature = _extractRobustSignature(image);
+
+      return AnalysisResult(signature: signature, robustSignature: robustSignature, file: file, qrData: qrData);
     } catch (e) { return const AnalysisResult(); }
   }
 
@@ -1535,7 +1563,29 @@ class WatermarkProcessor {
 
   static img.Color _resolveWatermarkColor(bool rnd, int val, int a) => rnd ? _randomWatermarkColor(a) : img.ColorRgba8((val >> 16) & 0xFF, (val >> 8) & 0xFF, val & 0xFF, a);
 
-  static Future<ProcessResult> _processPdfRasterFallback({required Uint8List inputBytes, required File file, required double transparency, required double density, required String watermarkText, required bool useRandomColor, required int selectedColorValue, required double fontSize, required WatermarkFont font, required int jpegQuality, bool includeTimestamp = false, String filePrefix = 'securemark-', double antiAiLevel = 0.0, bool useSteganography = false, String? steganographyPassword, String? hiddenFileName, Uint8List? hiddenFileBytes, QrWatermarkConfig? qrConfig, ProgressCallback? onProgress, CancellationToken? cancellationToken}) async {
+  static Future<ProcessResult> _processPdfRasterFallback({
+    required Uint8List inputBytes,
+    required File file,
+    required double transparency,
+    required double density,
+    required String watermarkText,
+    required bool useRandomColor,
+    required int selectedColorValue,
+    required double fontSize,
+    required WatermarkFont font,
+    required int jpegQuality,
+    bool includeTimestamp = false,
+    String filePrefix = 'securemark-',
+    double antiAiLevel = 0.0,
+    bool useSteganography = false,
+    bool useRobustSteganography = false,
+    String? steganographyPassword,
+    String? hiddenFileName,
+    Uint8List? hiddenFileBytes,
+    QrWatermarkConfig? qrConfig,
+    ProgressCallback? onProgress,
+    CancellationToken? cancellationToken,
+  }) async {
     try {
       final doc = pw.Document(); Uint8List? preview; var hasPages = false; var pageCount = 0; var processed = 0; Uint8List? firstPageOriginal;
       await for (final page in Printing.raster(inputBytes, dpi: 150)) {
@@ -1557,6 +1607,9 @@ class WatermarkProcessor {
           // Always embed watermark text as LSB if steganography is enabled (Blue channel)
           watermarked = _embedLSB(watermarked, watermarkText, password: steganographyPassword, channel: 'b');
         }
+        if (useRobustSteganography) {
+          watermarked = _embedRobustSignature(watermarked, watermarkText);
+        }
         if (qrConfig != null && qrConfig.invisibleQr) {
           watermarked = _embedQrCodeLSB(watermarked, _buildQrMetadata(qrConfig), channel: 'r');
         }
@@ -1569,32 +1622,229 @@ class WatermarkProcessor {
       }
       final out = await doc.save(); final path = _outputPath(file.path, '.pdf', includeTimestamp, filePrefix);
       bool verified = false;
-      if ((useSteganography || hiddenFileName != null || (qrConfig?.invisibleQr == true)) && preview != null) {
+      bool robustVerified = false;
+      if ((useSteganography || useRobustSteganography || hiddenFileName != null || (qrConfig?.invisibleQr == true)) && preview != null) {
         final analysis = analyzeImage(preview, password: steganographyPassword);
-        bool allVerified = true;
-        if (hiddenFileName != null) {
-          allVerified &= (analysis.file != null && analysis.file!.fileName == hiddenFileName);
+        
+        if (useSteganography || hiddenFileName != null || (qrConfig?.invisibleQr == true)) {
+          bool allVerified = true;
+          if (hiddenFileName != null) {
+            allVerified &= (analysis.file != null && analysis.file!.fileName == hiddenFileName);
+          }
+          if (qrConfig?.invisibleQr == true) {
+            allVerified &= (analysis.qrData != null && analysis.qrData!.isNotEmpty);
+          }
+          if (useSteganography) {
+            allVerified &= (analysis.signature == watermarkText);
+          }
+          verified = allVerified;
         }
-        if (qrConfig?.invisibleQr == true) {
-          allVerified &= (analysis.qrData != null && analysis.qrData!.isNotEmpty);
+
+        if (useRobustSteganography) {
+          robustVerified = analysis.robustSignature == watermarkText;
         }
-        if (useSteganography) {
-          allVerified &= (analysis.signature == watermarkText);
-        }
-        verified = allVerified;
       }
-      return ProcessResult(outputPath: path, outputBytes: out, previewBytes: preview, originalBytes: firstPageOriginal, steganographyVerified: verified);
+      return ProcessResult(outputPath: path, outputBytes: out, previewBytes: preview, originalBytes: firstPageOriginal, steganographyVerified: verified, robustVerified: robustVerified);
     } catch (e) { throw WatermarkError(type: WatermarkErrorType.invalidPdfData, message: 'Failed PDF raster', filePath: file.path, originalError: e); }
   }
 
   static String _outputPath(String path, String ext, [bool ts = false, String pref = 'securemark-']) {
     String s = ''; if (ts) { final n = DateTime.now(); s = '-${n.year}${n.month.toString().padLeft(2,'0')}${n.day.toString().padLeft(2,'0')}-${n.hour.toString().padLeft(2,'0')}${n.minute.toString().padLeft(2,'0')}'; }
-    if (ext != '.pdf' && WatermarkProcessor.isSteganographyEnabled) ext = '.png';
     return p.join(p.dirname(path), '$pref${p.basenameWithoutExtension(path)}$s$ext');
   }
 
   static String _resolvedWatermarkText(String t) {
     final n = DateTime.now(); final d = '${n.year}-${n.month.toString().padLeft(2,'0')}-${n.day.toString().padLeft(2,'0')}'; final s = '${n.hour.toString().padLeft(2,'0')}:${n.minute.toString().padLeft(2,'0')}:${n.second.toString().padLeft(2,'0')}';
     return t.trim().isEmpty ? '$d $s' : '${t.trim()} $d $s';
+  }
+
+  // --- Robust DCT Watermarking (Frequency Domain) ---
+
+  /// Embeds a signature robustly using DCT on 8x8 blocks of the Y (Luminance) channel.
+  static img.Image _embedRobustSignature(img.Image image, String signature) {
+    if (signature.isEmpty) return image;
+    
+    // Convert signature to bits
+    final bits = _getRobustSignatureBits(signature);
+    if (bits.isEmpty) return image;
+
+    final width = image.width;
+    final height = image.height;
+    
+    // We need 8x8 blocks. Calculate how many blocks we have.
+    final numBlocksX = width ~/ 8;
+    final numBlocksY = height ~/ 8;
+    
+    if (numBlocksX * numBlocksY < bits.length) {
+      // Image too small for this signature, but we'll embed what we can
+    }
+
+    // Embed each bit into a block
+    int bitIdx = 0;
+    for (var by = 0; by < numBlocksY && bitIdx < bits.length; by++) {
+      for (var bx = 0; bx < numBlocksX && bitIdx < bits.length; bx++) {
+        // 1. Extract 8x8 block Y channel
+        final blockY = List<double>.filled(64, 0.0);
+        for (var y = 0; y < 8; y++) {
+          for (var x = 0; x < 8; x++) {
+            final pixel = image.getPixel(bx * 8 + x, by * 8 + y);
+            // Y = 0.299R + 0.587G + 0.114B
+            blockY[y * 8 + x] = 0.299 * pixel.r + 0.587 * pixel.g + 0.114 * pixel.b;
+          }
+        }
+
+        // 2. Perform DCT
+        final dctBlock = _dct8x8(blockY);
+
+        // 3. Embed bit into mid-frequency coefficient (e.g., [4, 4])
+        const coeffIdx = 4 * 8 + 4; 
+        const strength = 20.0; // Robustness factor
+        
+        if (bits[bitIdx]) {
+          if (dctBlock[coeffIdx] < strength) {
+            dctBlock[coeffIdx] = strength;
+          } else {
+            dctBlock[coeffIdx] += strength;
+          }
+        } else {
+          if (dctBlock[coeffIdx] > -strength) {
+            dctBlock[coeffIdx] = -strength;
+          } else {
+            dctBlock[coeffIdx] -= strength;
+          }
+        }
+
+        // 4. Perform Inverse DCT
+        final idctBlock = _idct8x8(dctBlock);
+
+        // 5. Update image
+        for (var y = 0; y < 8; y++) {
+          for (var x = 0; x < 8; x++) {
+            final pixel = image.getPixel(bx * 8 + x, by * 8 + y);
+            final oldY = 0.299 * pixel.r + 0.587 * pixel.g + 0.114 * pixel.b;
+            final diff = idctBlock[y * 8 + x] - oldY;
+            
+            pixel.r = (pixel.r + diff).clamp(0, 255).toInt();
+            pixel.g = (pixel.g + diff).clamp(0, 255).toInt();
+            pixel.b = (pixel.b + diff).clamp(0, 255).toInt();
+          }
+        }
+
+        bitIdx++;
+      }
+    }
+    
+    return image;
+  }
+
+  /// Extracts a signature robustly from DCT coefficients.
+  static String? _extractRobustSignature(img.Image image) {
+    final width = image.width;
+    final height = image.height;
+    final numBlocksX = width ~/ 8;
+    final numBlocksY = height ~/ 8;
+    
+    final bits = <bool>[];
+    for (var by = 0; by < numBlocksY; by++) {
+      for (var bx = 0; bx < numBlocksX; bx++) {
+        final blockY = List<double>.filled(64, 0.0);
+        for (var y = 0; y < 8; y++) {
+          for (var x = 0; x < 8; x++) {
+            final pixel = image.getPixel(bx * 8 + x, by * 8 + y);
+            blockY[y * 8 + x] = 0.299 * pixel.r + 0.587 * pixel.g + 0.114 * pixel.b;
+          }
+        }
+
+        final dctBlock = _dct8x8(blockY);
+        const coeffIdx = 4 * 8 + 4;
+        bits.add(dctBlock[coeffIdx] > 0);
+        if (bits.length > 1024 * 8) {
+          break;
+        }
+      }
+      if (bits.length > 1024 * 8) {
+        break;
+      }
+    }
+
+    if (bits.length < 16) return null;
+    final bytes = <int>[];
+    for (var i = 0; i < bits.length ~/ 8; i++) {
+      var byte = 0;
+      for (var b = 0; b < 8; b++) {
+        if (bits[i * 8 + b]) byte |= (1 << (7 - b));
+      }
+      bytes.add(byte);
+    }
+
+    if (bytes[0] != 83 || bytes[1] != 82) return null; // 'S', 'R'
+    
+    final length = (bytes[2] << 8) | bytes[3];
+    if (length <= 0 || length > 1024) return null;
+    if (bytes.length < 4 + length) return null;
+
+    try {
+      return utf8.decode(bytes.sublist(4, 4 + length), allowMalformed: true);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static List<bool> _getRobustSignatureBits(String signature) {
+    final payload = <int>[];
+    payload.add(83); // 'S'
+    payload.add(82); // 'R'
+    final sigBytes = utf8.encode(signature);
+    payload.add((sigBytes.length >> 8) & 0xFF);
+    payload.add(sigBytes.length & 0xFF);
+    payload.addAll(sigBytes);
+
+    final bits = <bool>[];
+    for (final byte in payload) {
+      for (var i = 7; i >= 0; i--) {
+        bits.add(((byte >> i) & 1) == 1);
+      }
+    }
+    return bits;
+  }
+
+  static List<double> _dct8x8(List<double> input) {
+    final output = List<double>.filled(64, 0.0);
+    for (var v = 0; v < 8; v++) {
+      for (var u = 0; u < 8; u++) {
+        var sum = 0.0;
+        for (var y = 0; y < 8; y++) {
+          for (var x = 0; x < 8; x++) {
+            sum += input[y * 8 + x] *
+                cos((2 * x + 1) * u * pi / 16.0) *
+                cos((2 * y + 1) * v * pi / 16.0);
+          }
+        }
+        final cu = (u == 0) ? (1.0 / sqrt(2.0)) : 1.0;
+        final cv = (v == 0) ? (1.0 / sqrt(2.0)) : 1.0;
+        output[v * 8 + u] = 0.25 * cu * cv * sum;
+      }
+    }
+    return output;
+  }
+
+  static List<double> _idct8x8(List<double> input) {
+    final output = List<double>.filled(64, 0.0);
+    for (var y = 0; y < 8; y++) {
+      for (var x = 0; x < 8; x++) {
+        var sum = 0.0;
+        for (var v = 0; v < 8; v++) {
+          for (var u = 0; u < 8; u++) {
+            final cu = (u == 0) ? (1.0 / sqrt(2.0)) : 1.0;
+            final cv = (v == 0) ? (1.0 / sqrt(2.0)) : 1.0;
+            sum += cu * cv * input[v * 8 + u] *
+                cos((2 * x + 1) * u * pi / 16.0) *
+                cos((2 * y + 1) * v * pi / 16.0);
+          }
+        }
+        output[y * 8 + x] = 0.25 * sum;
+      }
+    }
+    return output;
   }
 }

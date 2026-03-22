@@ -132,6 +132,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
   String _filePrefix = 'securemark-';
   double _antiAiLevel = 50.0;
   bool _useSteganography = false;
+  bool _useRobustSteganography = false;
   bool _steganographyVerificationFailed = false;
   bool _useRandomColor = true;
   Color _selectedColor = Colors.red;
@@ -256,6 +257,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
           _filePrefix = prefs.getString('filePrefix') ?? 'securemark-';
           _antiAiLevel = prefs.getDouble('antiAiLevel') ?? 50.0;
           _useSteganography = prefs.getBool('useSteganography') ?? false;
+          _useRobustSteganography = prefs.getBool('useRobustSteganography') ?? false;
           _zipOutputs = prefs.getBool('zipOutputs') ?? false;
           WatermarkProcessor.isSteganographyEnabled = _useSteganography; // Initialize static flag
           _useRandomColor = prefs.getBool('useRandomColor') ?? true;
@@ -1003,6 +1005,10 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
         }
       }
 
+      if (analysis.robustSignature != null && analysis.robustSignature!.isNotEmpty) {
+        results.add(l10n.robustSignatureFound(analysis.robustSignature!));
+      }
+
       setDialogState(() {
         if (results.isEmpty) {
           _analysisResult = l10n.noSignatureFound;
@@ -1101,9 +1107,6 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                       WatermarkProcessor.isSteganographyEnabled = enabled; // Update static flag
                       setDialogState(() {
                         _useSteganography = enabled;
-                        if (enabled) {
-                          _rasterizePdf = true;
-                        }
                         if (!enabled) { // If steganography is disabled, also disable file hiding
                           _hideFileWithSteganography = false;
                           _hiddenFileBytes = null;
@@ -1112,9 +1115,6 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                       });
                       setState(() {
                         _useSteganography = enabled;
-                        if (enabled) {
-                          _rasterizePdf = true;
-                        }
                         if (!enabled) { // If steganography is disabled, also disable file hiding
                           _hideFileWithSteganography = false;
                           _hiddenFileBytes = null;
@@ -1122,9 +1122,23 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                         }
                       });
                       _savePreference('useSteganography', enabled);
-                      if (enabled) {
-                        _savePreference('rasterizePdf', true);
-                      }
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  CheckboxListTile(
+                    title: Text(l10n.robustSteganographyTitle),
+                    subtitle: Text(l10n.robustSteganographySubtitle),
+                    value: _useRobustSteganography,
+                    contentPadding: EdgeInsets.zero,
+                    onChanged: (value) {
+                      final bool enabled = value ?? false;
+                      setDialogState(() {
+                        _useRobustSteganography = enabled;
+                      });
+                      setState(() {
+                        _useRobustSteganography = enabled;
+                      });
+                      _savePreference('useRobustSteganography', enabled);
                     },
                   ),
                   if (_useSteganography) ...[
@@ -2002,7 +2016,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                                 ),
                               ),
                             // Steganography verification badge
-                            if (_processedFiles[index].result.steganographyVerified)
+                            if (_processedFiles[index].result.steganographyVerified || _processedFiles[index].result.robustVerified)
                               Positioned(
                                 top: 12,
                                 right: 12,
@@ -2690,6 +2704,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
             filePrefix: _filePrefix,
             antiAiLevel: _antiAiLevel,
             useSteganography: shouldApplyStegano,
+            useRobustSteganography: _useRobustSteganography,
             steganographyPassword: _hidingPassword,
             hiddenFileName: _hideFileWithSteganography ? _hiddenFileName : null,
             hiddenFileBytes: _hideFileWithSteganography ? _hiddenFileBytes : null,
@@ -2740,12 +2755,12 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
           });
         } else {
           // Log steganography verification results
-          final verifiedCount = processedFiles.where((f) => f.result.steganographyVerified).length;
-          final steganographyFailed = _useSteganography && processedFiles.isNotEmpty && verifiedCount == 0;
+          final verifiedCount = processedFiles.where((f) => f.result.steganographyVerified || f.result.robustVerified).length;
+          final steganographyFailed = (_useSteganography || _useRobustSteganography) && processedFiles.isNotEmpty && verifiedCount == 0;
 
-          if (_useSteganography && verifiedCount > 0) {
+          if ((_useSteganography || _useRobustSteganography) && verifiedCount > 0) {
             _addLog('Steganography verified for $verifiedCount file(s)');
-          } else if (_useSteganography) {
+          } else if (_useSteganography || _useRobustSteganography) {
             _addLog('Steganography verification failed for all files');
           }
 
@@ -2755,7 +2770,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                   ? '' // No message if files are processed and no failures
                   : l10n.processingStatusMultiple(processedFiles.length, failedFiles.length);
 
-          if (_useSteganography && verifiedCount > 0) {
+          if ((_useSteganography || _useRobustSteganography) && verifiedCount > 0) {
             successMessage += ' (Steganography Verified ✓)';
           }
 

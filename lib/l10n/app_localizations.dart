@@ -419,8 +419,20 @@ abstract class AppLocalizations {
   /// No description provided for @steganographySubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Embed text secretly in pixels (Forces PNG output & flattened PDF)'**
+  /// **'Embed text secretly in pixels.'**
   String get steganographySubtitle;
+
+  /// No description provided for @robustSteganographyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Robust Watermarking (DCT Domain)'**
+  String get robustSteganographyTitle;
+
+  /// No description provided for @robustSteganographySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Experimental: Survives re-compression and resizing better than LSB.'**
+  String get robustSteganographySubtitle;
 
   /// No description provided for @filePrefixLabel.
   ///
@@ -607,6 +619,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'✅ Signature found: \"{message}\"'**
   String signatureFound(String message);
+
+  /// No description provided for @robustSignatureFound.
+  ///
+  /// In en, this message translates to:
+  /// **'💪 Robust signature found: \"{message}\"'**
+  String robustSignatureFound(String message);
 
   /// No description provided for @noSignatureFound.
   ///

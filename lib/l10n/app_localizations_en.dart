@@ -224,8 +224,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get steganographyTitle => 'Steganography (Invisible Signature)';
 
   @override
-  String get steganographySubtitle =>
-      'Embed text secretly in pixels (Forces PNG output & flattened PDF)';
+  String get steganographySubtitle => 'Embed text secretly in pixels.';
+
+  @override
+  String get robustSteganographyTitle => 'Robust Watermarking (DCT Domain)';
+
+  @override
+  String get robustSteganographySubtitle =>
+      'Experimental: Survives re-compression and resizing better than LSB.';
 
   @override
   String get filePrefixLabel => 'File Prefix';
@@ -332,6 +338,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String signatureFound(String message) {
     return '✅ Signature found: \"$message\"';
+  }
+
+  @override
+  String robustSignatureFound(String message) {
+    return '💪 Robust signature found: \"$message\"';
   }
 
   @override
