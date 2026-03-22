@@ -161,8 +161,14 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
   // QR Code Configuration
   bool _qrVisible = false;
   bool _qrInvisible = false;
+  QrType _qrType = QrType.metadata;
   String _qrAuthor = '';
   String _qrUrl = '';
+  String _vCardFirstName = '';
+  String _vCardLastName = '';
+  String _vCardPhone = '';
+  String _vCardEmail = '';
+  String _vCardOrg = '';
   QrPosition _qrPosition = QrPosition.bottomRight;
   double _qrSize = 100.0;
   double _qrOpacity = 0.8;
@@ -269,8 +275,17 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
           // Load QR watermark preferences
           _qrVisible = prefs.getBool('qrVisible') ?? false;
           _qrInvisible = prefs.getBool('qrInvisible') ?? false;
+          final qrTypeIndex = prefs.getInt('qrType');
+          if (qrTypeIndex != null && qrTypeIndex >= 0 && qrTypeIndex < QrType.values.length) {
+            _qrType = QrType.values[qrTypeIndex];
+          }
           _qrAuthor = prefs.getString('qrAuthor') ?? '';
           _qrUrl = prefs.getString('qrUrl') ?? '';
+          _vCardFirstName = prefs.getString('vCardFirstName') ?? '';
+          _vCardLastName = prefs.getString('vCardLastName') ?? '';
+          _vCardPhone = prefs.getString('vCardPhone') ?? '';
+          _vCardEmail = prefs.getString('vCardEmail') ?? '';
+          _vCardOrg = prefs.getString('vCardOrg') ?? '';
           _qrSize = prefs.getDouble('qrSize') ?? 100.0;
           _qrOpacity = prefs.getDouble('qrOpacity') ?? 0.8;
           final qrPosIndex = prefs.getInt('qrPosition');
@@ -1306,32 +1321,152 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
 
                     const SizedBox(height: 16),
 
-                    // Metadata fields
-                    TextField(
-                      decoration: InputDecoration(
-                        labelText: l10n.qrAuthorLabel,
-                        hintText: l10n.qrAuthorHint,
-                        border: const OutlineInputBorder(),
+                    // Content Type selection
+                    Text(l10n.qrContentType, style: theme.textTheme.titleSmall),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: theme.dividerColor),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      onChanged: (value) {
-                        setState(() => _qrAuthor = value);
-                        _savePreference('qrAuthor', value);
-                      },
-                      controller: TextEditingController(text: _qrAuthor),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      decoration: InputDecoration(
-                        labelText: l10n.qrUrlLabel,
-                        hintText: l10n.qrUrlHint,
-                        border: const OutlineInputBorder(),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<QrType>(
+                          value: _qrType,
+                          isExpanded: true,
+                          onChanged: (value) {
+                            if (value != null) {
+                              setDialogState(() => _qrType = value);
+                              setState(() => _qrType = value);
+                              _savePreference('qrType', value.index);
+                            }
+                          },
+                          items: [
+                            DropdownMenuItem(value: QrType.metadata, child: Text(l10n.qrTypeMetadata)),
+                            DropdownMenuItem(value: QrType.url, child: Text(l10n.qrTypeUrl)),
+                            DropdownMenuItem(value: QrType.vcard, child: Text(l10n.qrTypeVCard)),
+                          ],
+                        ),
                       ),
-                      onChanged: (value) {
-                        setState(() => _qrUrl = value);
-                        _savePreference('qrUrl', value);
-                      },
-                      controller: TextEditingController(text: _qrUrl),
                     ),
+
+                    const SizedBox(height: 16),
+
+                    // Content fields based on type
+                    if (_qrType == QrType.metadata) ...[
+                      TextField(
+                        decoration: InputDecoration(
+                          labelText: l10n.qrAuthorLabel,
+                          hintText: l10n.qrAuthorHint,
+                          border: const OutlineInputBorder(),
+                        ),
+                        onChanged: (value) {
+                          setState(() => _qrAuthor = value);
+                          _savePreference('qrAuthor', value);
+                        },
+                        controller: TextEditingController(text: _qrAuthor),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        decoration: InputDecoration(
+                          labelText: l10n.qrUrlLabel,
+                          hintText: l10n.qrUrlHint,
+                          border: const OutlineInputBorder(),
+                        ),
+                        onChanged: (value) {
+                          setState(() => _qrUrl = value);
+                          _savePreference('qrUrl', value);
+                        },
+                        controller: TextEditingController(text: _qrUrl),
+                      ),
+                    ] else if (_qrType == QrType.url) ...[
+                      TextField(
+                        decoration: InputDecoration(
+                          labelText: l10n.qrUrlLabel,
+                          hintText: l10n.qrUrlHint,
+                          border: const OutlineInputBorder(),
+                          errorText: _qrUrl.isNotEmpty && (Uri.tryParse(_qrUrl)?.hasScheme != true) 
+                              ? l10n.invalidUrlError : null,
+                        ),
+                        keyboardType: TextInputType.url,
+                        onChanged: (value) {
+                          setDialogState(() => _qrUrl = value);
+                          setState(() => _qrUrl = value);
+                          _savePreference('qrUrl', value);
+                        },
+                        controller: TextEditingController(text: _qrUrl),
+                      ),
+                    ] else if (_qrType == QrType.vcard) ...[
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              decoration: InputDecoration(
+                                labelText: l10n.vCardFirstName,
+                                border: const OutlineInputBorder(),
+                              ),
+                              onChanged: (value) {
+                                setState(() => _vCardFirstName = value);
+                                _savePreference('vCardFirstName', value);
+                              },
+                              controller: TextEditingController(text: _vCardFirstName),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextField(
+                              decoration: InputDecoration(
+                                labelText: l10n.vCardLastName,
+                                border: const OutlineInputBorder(),
+                              ),
+                              onChanged: (value) {
+                                setState(() => _vCardLastName = value);
+                                _savePreference('vCardLastName', value);
+                              },
+                              controller: TextEditingController(text: _vCardLastName),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        decoration: InputDecoration(
+                          labelText: l10n.vCardPhone,
+                          border: const OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.phone,
+                        onChanged: (value) {
+                          setState(() => _vCardPhone = value);
+                          _savePreference('vCardPhone', value);
+                        },
+                        controller: TextEditingController(text: _vCardPhone),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        decoration: InputDecoration(
+                          labelText: l10n.vCardEmail,
+                          border: const OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.emailAddress,
+                        onChanged: (value) {
+                          setState(() => _vCardEmail = value);
+                          _savePreference('vCardEmail', value);
+                        },
+                        controller: TextEditingController(text: _vCardEmail),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        decoration: InputDecoration(
+                          labelText: l10n.vCardOrg,
+                          border: const OutlineInputBorder(),
+                        ),
+                        onChanged: (value) {
+                          setState(() => _vCardOrg = value);
+                          _savePreference('vCardOrg', value);
+                        },
+                        controller: TextEditingController(text: _vCardOrg),
+                      ),
+                    ],
 
                     if (_qrVisible) ...[
                       const SizedBox(height: 16),
@@ -2516,8 +2651,14 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
         QrWatermarkConfig? qrConfig;
         if (_qrVisible || _qrInvisible) {
           qrConfig = QrWatermarkConfig(
+            type: _qrType,
             author: _qrAuthor.isNotEmpty ? _qrAuthor : null,
             url: _qrUrl.isNotEmpty ? _qrUrl : null,
+            vCardFirstName: _vCardFirstName.isNotEmpty ? _vCardFirstName : null,
+            vCardLastName: _vCardLastName.isNotEmpty ? _vCardLastName : null,
+            vCardPhone: _vCardPhone.isNotEmpty ? _vCardPhone : null,
+            vCardEmail: _vCardEmail.isNotEmpty ? _vCardEmail : null,
+            vCardOrg: _vCardOrg.isNotEmpty ? _vCardOrg : null,
             timestamp: DateTime.now(),
             position: _qrPosition,
             size: _qrSize,

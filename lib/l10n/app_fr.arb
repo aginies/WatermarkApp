@@ -300,6 +300,16 @@
       }
     }
   },
+  "qrContentType": "Type de contenu QR",
+  "qrTypeMetadata": "Métadonnées (JSON)",
+  "qrTypeUrl": "Redirection Site Web",
+  "qrTypeVCard": "Contact (vCard)",
+  "vCardFirstName": "Prénom",
+  "vCardLastName": "Nom",
+  "vCardPhone": "Numéro de téléphone",
+  "vCardEmail": "Adresse email",
+  "vCardOrg": "Organisation",
+  "invalidUrlError": "Veuillez entrer une URL valide (ex: https://exemple.fr)",
   "qrDataExtracted": "✅ QR Code trouvé : {data}",
   "@qrDataExtracted": {
     "placeholders": {

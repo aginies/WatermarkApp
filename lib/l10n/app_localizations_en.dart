@@ -465,6 +465,37 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get qrContentType => 'QR Content Type';
+
+  @override
+  String get qrTypeMetadata => 'Metadata (JSON)';
+
+  @override
+  String get qrTypeUrl => 'Website Redirect';
+
+  @override
+  String get qrTypeVCard => 'Contact (vCard)';
+
+  @override
+  String get vCardFirstName => 'First Name';
+
+  @override
+  String get vCardLastName => 'Last Name';
+
+  @override
+  String get vCardPhone => 'Phone Number';
+
+  @override
+  String get vCardEmail => 'Email Address';
+
+  @override
+  String get vCardOrg => 'Organization';
+
+  @override
+  String get invalidUrlError =>
+      'Please enter a valid URL (e.g., https://example.com)';
+
+  @override
   String qrDataExtracted(String data) {
     return '✅ QR Code found: $data';
   }

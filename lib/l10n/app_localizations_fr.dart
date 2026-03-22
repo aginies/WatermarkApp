@@ -469,6 +469,37 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get qrContentType => 'Type de contenu QR';
+
+  @override
+  String get qrTypeMetadata => 'Métadonnées (JSON)';
+
+  @override
+  String get qrTypeUrl => 'Redirection Site Web';
+
+  @override
+  String get qrTypeVCard => 'Contact (vCard)';
+
+  @override
+  String get vCardFirstName => 'Prénom';
+
+  @override
+  String get vCardLastName => 'Nom';
+
+  @override
+  String get vCardPhone => 'Numéro de téléphone';
+
+  @override
+  String get vCardEmail => 'Adresse email';
+
+  @override
+  String get vCardOrg => 'Organisation';
+
+  @override
+  String get invalidUrlError =>
+      'Veuillez entrer une URL valide (ex: https://exemple.fr)';
+
+  @override
   String qrDataExtracted(String data) {
     return '✅ QR Code trouvé : $data';
   }

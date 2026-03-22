@@ -836,6 +836,66 @@ abstract class AppLocalizations {
   /// **'QR Code Opacity: {value}%'**
   String qrOpacityValue(int value);
 
+  /// No description provided for @qrContentType.
+  ///
+  /// In en, this message translates to:
+  /// **'QR Content Type'**
+  String get qrContentType;
+
+  /// No description provided for @qrTypeMetadata.
+  ///
+  /// In en, this message translates to:
+  /// **'Metadata (JSON)'**
+  String get qrTypeMetadata;
+
+  /// No description provided for @qrTypeUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Website Redirect'**
+  String get qrTypeUrl;
+
+  /// No description provided for @qrTypeVCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact (vCard)'**
+  String get qrTypeVCard;
+
+  /// No description provided for @vCardFirstName.
+  ///
+  /// In en, this message translates to:
+  /// **'First Name'**
+  String get vCardFirstName;
+
+  /// No description provided for @vCardLastName.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Name'**
+  String get vCardLastName;
+
+  /// No description provided for @vCardPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone Number'**
+  String get vCardPhone;
+
+  /// No description provided for @vCardEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email Address'**
+  String get vCardEmail;
+
+  /// No description provided for @vCardOrg.
+  ///
+  /// In en, this message translates to:
+  /// **'Organization'**
+  String get vCardOrg;
+
+  /// No description provided for @invalidUrlError.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid URL (e.g., https://example.com)'**
+  String get invalidUrlError;
+
   /// No description provided for @qrDataExtracted.
   ///
   /// In en, this message translates to:

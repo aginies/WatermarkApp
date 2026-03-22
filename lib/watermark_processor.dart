@@ -1333,7 +1333,7 @@ class WatermarkProcessor {
     } catch (e) { return img.Image(width: size, height: size, numChannels: 4); }
   }
 
-  static String _buildQrMetadata(QrWatermarkConfig config) => config.toJsonString();
+  static String _buildQrMetadata(QrWatermarkConfig config) => config.toQrString();
 
   static (int, int) _calculateQrPosition({required int imageWidth, required int imageHeight, required int qrSize, required QrPosition position}) {
     const margin = 20;
