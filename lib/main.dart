@@ -268,6 +268,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
           _antiAiLevel = prefs.getDouble('antiAiLevel') ?? 50.0;
           _useSteganography = prefs.getBool('useSteganography') ?? false;
           _useRobustSteganography = prefs.getBool('useRobustSteganography') ?? false;
+          _hideFileWithSteganography = prefs.getBool('hideFileWithSteganography') ?? false;
           _zipOutputs = prefs.getBool('zipOutputs') ?? false;
           _useRandomColor = prefs.getBool('useRandomColor') ?? true;
           _filePrefix = prefs.getString('filePrefix') ?? 'securemark-';
@@ -318,6 +319,16 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
 
           _hidingPassword = prefs.getString('hidingPassword') ?? '';
           _hidingPasswordController.text = _hidingPassword;
+
+          _hiddenFileName = prefs.getString('hiddenFileName');
+          final hiddenFileB64 = prefs.getString('hiddenFileBytes');
+          if (hiddenFileB64 != null) {
+            try {
+              _hiddenFileBytes = base64Decode(hiddenFileB64);
+            } catch (_) {
+              _hiddenFileBytes = null;
+            }
+          }
         });
       }
     } catch (e) {
@@ -351,11 +362,23 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _setupPlatformCallHandler();
     _loadPreferences();
     _loadShader();
     _handleSharedContent();
     _initPackageInfo();
     _initOutputDirectory();
+  }
+
+  void _setupPlatformCallHandler() {
+    _platform.setMethodCallHandler((call) async {
+      if (call.method == 'onSharedFilesReceived') {
+        _addLog('Received notification: ${call.arguments} files shared');
+        // Give Android a moment to finish processing
+        await Future.delayed(const Duration(milliseconds: 100));
+        _handleSharedContent();
+      }
+    });
   }
 
   Future<void> _initOutputDirectory() async {
@@ -419,36 +442,59 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
     _addLog('Checking for shared content...');
     try {
       final List<dynamic>? sharedFiles = await _platform.invokeMethod('getSharedFiles');
+      _addLog('getSharedFiles returned: ${sharedFiles?.length ?? 0} items');
+
       if (sharedFiles != null && sharedFiles.isNotEmpty) {
         _addLog('Received ${sharedFiles.length} shared files');
-        final List<String> validFiles = sharedFiles
-            .where((file) => file is String && File(file).existsSync())
-            .map((file) => file as String)
-            .where((path) {
-          final extension = p.extension(path).toLowerCase();
+
+        final List<String> validFiles = [];
+
+        for (final file in sharedFiles) {
+          if (file is! String) {
+            _addLog('Skipping non-string item: $file');
+            continue;
+          }
+
+          final filePath = file as String;
+          _addLog('Checking file: $filePath');
+
+          if (!File(filePath).existsSync()) {
+            _addLog('File does not exist: $filePath');
+            continue;
+          }
+
+          final extension = p.extension(filePath).toLowerCase();
           final isValid = ['.jpg', '.jpeg', '.png', '.webp', '.pdf', '.heic', '.heif'].contains(extension);
-          if (!isValid) _addLog('Unsupported extension: $extension for file $path');
-          return isValid;
-        }).toList();
+
+          if (!isValid) {
+            _addLog('Unsupported extension: $extension for file $filePath');
+            continue;
+          }
+
+          _addLog('Valid file: $filePath');
+          validFiles.add(filePath);
+        }
 
         if (validFiles.isNotEmpty) {
           _addLog('Found ${validFiles.length} valid shared files');
           // Reset the app state before processing new shared files
           _reset();
-          
+
           setState(() {
             _selectedPaths = validFiles;
             _processedFiles.clear();
             _previewIndex = 0;
           });
+          _addLog('Shared files loaded successfully');
         } else {
-          _addLog('No valid shared files found');
+          _addLog('No valid shared files found after filtering');
         }
       } else {
-        _addLog('No shared content received');
+        _addLog('No shared content available');
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       _addLog('Error handling shared content: $e');
+      _addLog('Stack trace: $stackTrace');
     }
   }
 
@@ -1166,6 +1212,23 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                     },
                   ),
                   const SizedBox(height: 8),
+                  CheckboxListTile(
+                    title: Text(l10n.qrInvisibleMode),
+                    subtitle: Text(l10n.qrInvisibleModeDesc),
+                    value: _qrInvisible,
+                    contentPadding: EdgeInsets.zero,
+                    onChanged: (value) {
+                      final bool enabled = value ?? false;
+                      setDialogState(() {
+                        _qrInvisible = enabled;
+                      });
+                      setState(() {
+                        _qrInvisible = enabled;
+                      });
+                      _savePreference('qrInvisible', enabled);
+                    },
+                  ),
+                  const SizedBox(height: 8),
 
                   CheckboxListTile(
                     title: Text(l10n.hideFileWithSteganographyTitle),
@@ -1339,21 +1402,10 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                         _savePreference('qrVisible', value ?? false);
                       },
                     ),
-                    CheckboxListTile(
-                      title: Text(l10n.qrInvisibleMode),
-                      subtitle: Text(l10n.qrInvisibleModeDesc),
-                      value: _qrInvisible,
-                      contentPadding: EdgeInsets.zero,
-                      onChanged: (value) {
-                        final enabled = value ?? false;
-                        setDialogState(() {
-                          _qrInvisible = enabled;
-                        });
-                        setState(() {
-                          _qrInvisible = enabled;
-                        });
-                        _savePreference('qrInvisible', enabled);
-                      },
+                    const SizedBox(height: 8),
+                    Text(
+                      'Note: To hide the QR code invisibly (LSB), use the Steganography menu.',
+                      style: theme.textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
                     ),
 
                     const SizedBox(height: 16),

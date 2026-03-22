@@ -122,5 +122,28 @@ void main() {
       expect(analysis.file?.fileBytes, dummyFileBytes);
       expect(analysis.signature, isNotNull, reason: 'LSB Signature always contains at least a timestamp if useSteganography is true');
     });
+
+    test('Scenario: Hidden File + Invisible QR', () async {
+      final result = await WatermarkProcessor.processFile(
+        file: appJpgCopy,
+        watermarkText: '',
+        useSteganography: true,
+        hiddenFileName: 'combined.zip',
+        hiddenFileBytes: dummyFileBytes,
+        qrConfig: testQrConfig.copyWith(invisibleQr: true),
+        transparency: 100,
+        density: 0,
+        useRandomColor: false,
+        selectedColorValue: 0,
+        fontSize: 20,
+      );
+
+      expect(result.steganographyVerified, true);
+      
+      final analysis = await WatermarkProcessor.analyzeImageAsync(result.outputBytes);
+      expect(analysis.file?.fileName, 'combined.zip');
+      expect(analysis.file?.fileBytes, dummyFileBytes);
+      expect(analysis.qrData, contains('Antoine Giniès'));
+    });
   });
 }

@@ -1610,9 +1610,6 @@ class WatermarkProcessor {
           watermarked = _embedLSB(watermarked, watermarkText, password: steganographyPassword, channel: 'b');
         }
         if (qrConfig != null && qrConfig.invisibleQr) {
-          watermarked = _embedRobustSignature(watermarked, watermarkText);
-        }
-        if (qrConfig != null && qrConfig.invisibleQr) {
           watermarked = _embedQrCodeLSB(watermarked, _buildQrMetadata(qrConfig), channel: 'r');
         }
         final encoded = _encodePngForSharing(watermarked); preview ??= encoded;
