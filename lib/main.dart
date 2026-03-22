@@ -118,6 +118,16 @@ class WatermarkPage extends StatefulWidget {
 
 class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserver {
   final TextEditingController _textController = TextEditingController();
+  final TextEditingController _qrAuthorController = TextEditingController();
+  final TextEditingController _qrUrlController = TextEditingController();
+  final TextEditingController _vCardFirstNameController = TextEditingController();
+  final TextEditingController _vCardLastNameController = TextEditingController();
+  final TextEditingController _vCardPhoneController = TextEditingController();
+  final TextEditingController _vCardEmailController = TextEditingController();
+  final TextEditingController _vCardOrgController = TextEditingController();
+  final TextEditingController _hidingPasswordController = TextEditingController();
+  final TextEditingController _extractionPasswordController = TextEditingController();
+  final TextEditingController _filePrefixController = TextEditingController();
   final TransformationController _transformationController = TransformationController();
   final PageController _previewController = PageController();
   double _transparency = 75;
@@ -260,6 +270,9 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
           _useRobustSteganography = prefs.getBool('useRobustSteganography') ?? false;
           _zipOutputs = prefs.getBool('zipOutputs') ?? false;
           _useRandomColor = prefs.getBool('useRandomColor') ?? true;
+          _filePrefix = prefs.getString('filePrefix') ?? 'securemark-';
+          _filePrefixController.text = _filePrefix;
+          
           final colorValue = prefs.getInt('selectedColor');
           if (colorValue != null) {
             _selectedColor = Color(colorValue);
@@ -287,12 +300,24 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
           _vCardPhone = prefs.getString('vCardPhone') ?? '';
           _vCardEmail = prefs.getString('vCardEmail') ?? '';
           _vCardOrg = prefs.getString('vCardOrg') ?? '';
+          
+          _qrAuthorController.text = _qrAuthor;
+          _qrUrlController.text = _qrUrl;
+          _vCardFirstNameController.text = _vCardFirstName;
+          _vCardLastNameController.text = _vCardLastName;
+          _vCardPhoneController.text = _vCardPhone;
+          _vCardEmailController.text = _vCardEmail;
+          _vCardOrgController.text = _vCardOrg;
+
           _qrSize = prefs.getDouble('qrSize') ?? 100.0;
           _qrOpacity = prefs.getDouble('qrOpacity') ?? 0.8;
           final qrPosIndex = prefs.getInt('qrPosition');
           if (qrPosIndex != null && qrPosIndex >= 0 && qrPosIndex < QrPosition.values.length) {
             _qrPosition = QrPosition.values[qrPosIndex];
           }
+
+          _hidingPassword = prefs.getString('hidingPassword') ?? '';
+          _hidingPasswordController.text = _hidingPassword;
         });
       }
     } catch (e) {
@@ -366,6 +391,16 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
     _cleanupTempFiles();
     WidgetsBinding.instance.removeObserver(this);
     _textController.dispose();
+    _qrAuthorController.dispose();
+    _qrUrlController.dispose();
+    _vCardFirstNameController.dispose();
+    _vCardLastNameController.dispose();
+    _vCardPhoneController.dispose();
+    _vCardEmailController.dispose();
+    _vCardOrgController.dispose();
+    _hidingPasswordController.dispose();
+    _extractionPasswordController.dispose();
+    _filePrefixController.dispose();
     _transformationController.dispose();
     _previewController.dispose();
     super.dispose();
@@ -835,6 +870,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
     // Clear extraction password when opening analyzer to ensure manual entry
     setState(() {
       _extractionPassword = '';
+      _extractionPasswordController.text = '';
     });
 
     showDialog(
@@ -868,7 +904,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                       _extractionPassword = value;
                     });
                   },
-                  controller: TextEditingController(text: _extractionPassword)..selection = TextSelection.fromPosition(TextPosition(offset: _extractionPassword.length)),
+                  controller: _extractionPasswordController,
                 ),
                 const SizedBox(height: 24),
                 if (_analyzingFile)
@@ -1236,7 +1272,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                     if (_hiddenFileBytes != null && _hiddenFileBytes!.isNotEmpty) ...[
                       const SizedBox(height: 8),
                       TextField(
-                        controller: TextEditingController(text: _hidingPassword),
+                        controller: _hidingPasswordController,
                         decoration: InputDecoration(
                           labelText: l10n.steganographyPasswordLabel,
                           hintText: l10n.steganographyPasswordHint,
@@ -1365,7 +1401,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                           setState(() => _qrAuthor = value);
                           _savePreference('qrAuthor', value);
                         },
-                        controller: TextEditingController(text: _qrAuthor),
+                        controller: _qrAuthorController,
                       ),
                       const SizedBox(height: 12),
                       TextField(
@@ -1378,7 +1414,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                           setState(() => _qrUrl = value);
                           _savePreference('qrUrl', value);
                         },
-                        controller: TextEditingController(text: _qrUrl),
+                        controller: _qrUrlController,
                       ),
                     ] else if (_qrType == QrType.url) ...[
                       TextField(
@@ -1395,7 +1431,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                           setState(() => _qrUrl = value);
                           _savePreference('qrUrl', value);
                         },
-                        controller: TextEditingController(text: _qrUrl),
+                        controller: _qrUrlController,
                       ),
                     ] else if (_qrType == QrType.vcard) ...[
                       Row(
@@ -1410,7 +1446,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                                 setState(() => _vCardFirstName = value);
                                 _savePreference('vCardFirstName', value);
                               },
-                              controller: TextEditingController(text: _vCardFirstName),
+                              controller: _vCardFirstNameController,
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -1424,7 +1460,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                                 setState(() => _vCardLastName = value);
                                 _savePreference('vCardLastName', value);
                               },
-                              controller: TextEditingController(text: _vCardLastName),
+                              controller: _vCardLastNameController,
                             ),
                           ),
                         ],
@@ -1440,7 +1476,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                           setState(() => _vCardPhone = value);
                           _savePreference('vCardPhone', value);
                         },
-                        controller: TextEditingController(text: _vCardPhone),
+                        controller: _vCardPhoneController,
                       ),
                       const SizedBox(height: 12),
                       TextField(
@@ -1453,7 +1489,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                           setState(() => _vCardEmail = value);
                           _savePreference('vCardEmail', value);
                         },
-                        controller: TextEditingController(text: _vCardEmail),
+                        controller: _vCardEmailController,
                       ),
                       const SizedBox(height: 12),
                       TextField(
@@ -1465,7 +1501,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                           setState(() => _vCardOrg = value);
                           _savePreference('vCardOrg', value);
                         },
-                        controller: TextEditingController(text: _vCardOrg),
+                        controller: _vCardOrgController,
                       ),
                     ],
 
@@ -1585,7 +1621,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
                         });
                         _savePreference('filePrefix', value);
                       },
-                      controller: TextEditingController(text: _filePrefix),
+                      controller: _filePrefixController,
                     ),
                     const SizedBox(height: 16),
                     Text(l10n.fontSizeValue(_fontSize.round()), style: theme.textTheme.titleSmall),
