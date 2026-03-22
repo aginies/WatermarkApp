@@ -24,9 +24,15 @@ class MainActivity : FlutterActivity() {
             when (call.method) {
                 "getSharedFiles" -> {
                     Log.d("SecureMark", "Flutter requested shared files: ${sharedFiles.size} files")
-                    result.success(sharedFiles)
+                    val filesToReturn = sharedFiles
+                    result.success(filesToReturn)
                     // Clear after returning so we don't return the same files again
                     sharedFiles = listOf()
+                }
+                "clearSharedFiles" -> {
+                    Log.d("SecureMark", "Clearing shared files")
+                    sharedFiles = listOf()
+                    result.success(true)
                 }
                 else -> {
                     result.notImplemented()
@@ -34,8 +40,11 @@ class MainActivity : FlutterActivity() {
             }
         }
 
-        // Process any pending intent
-        handleSharedIntent(intent)
+        Log.d("SecureMark", "Flutter engine configured, method channel ready")
+        // Process any pending intent - but wait a bit for Flutter to be ready
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            handleSharedIntent(intent)
+        }, 500)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -108,10 +117,36 @@ class MainActivity : FlutterActivity() {
             // Clear the intent action so we don't process it again
             intent.action = null
 
-            // Notify Flutter that new files are available
-            methodChannel?.invokeMethod("onSharedFilesReceived", files.size)
+            // Notify Flutter that new files are available (with retry)
+            notifyFlutter(files.size, 0)
         } else {
             Log.w("SecureMark", "No files extracted from share intent")
+        }
+    }
+
+    private fun notifyFlutter(fileCount: Int, retryCount: Int) {
+        if (methodChannel != null) {
+            Log.d("SecureMark", "Notifying Flutter: $fileCount files ready")
+            try {
+                methodChannel?.invokeMethod("onSharedFilesReceived", fileCount)
+            } catch (e: Exception) {
+                Log.e("SecureMark", "Error notifying Flutter", e)
+                if (retryCount < 3) {
+                    Log.d("SecureMark", "Retrying notification in 500ms...")
+                    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                        notifyFlutter(fileCount, retryCount + 1)
+                    }, 500)
+                }
+            }
+        } else {
+            Log.w("SecureMark", "Method channel not ready, retrying...")
+            if (retryCount < 5) {
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                    notifyFlutter(fileCount, retryCount + 1)
+                }, 500)
+            } else {
+                Log.e("SecureMark", "Failed to notify Flutter after 5 retries")
+            }
         }
     }
 

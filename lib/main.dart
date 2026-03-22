@@ -247,6 +247,8 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
   int _previewIndex = 0;
   CancellationToken? _cancellationToken;
   static const MethodChannel _platform = MethodChannel('secure_mark/sharing');
+  Timer? _shareCheckTimer1;
+  Timer? _shareCheckTimer2;
 
   Future<void> _loadPreferences() async {
     try {
@@ -365,20 +367,32 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
     _setupPlatformCallHandler();
     _loadPreferences();
     _loadShader();
-    _handleSharedContent();
     _initPackageInfo();
     _initOutputDirectory();
+
+    // Check for shared content multiple times to handle race conditions
+    _handleSharedContent();
+    _shareCheckTimer1 = Timer(const Duration(milliseconds: 500), () {
+      if (mounted) _handleSharedContent();
+    });
+    _shareCheckTimer2 = Timer(const Duration(milliseconds: 1000), () {
+      if (mounted) _handleSharedContent();
+    });
   }
 
   void _setupPlatformCallHandler() {
+    _addLog('Setting up platform method call handler...');
     _platform.setMethodCallHandler((call) async {
+      _addLog('Received platform call: ${call.method} with arguments: ${call.arguments}');
       if (call.method == 'onSharedFilesReceived') {
-        _addLog('Received notification: ${call.arguments} files shared');
+        final fileCount = call.arguments;
+        _addLog('⭐ Received share notification: $fileCount files available');
         // Give Android a moment to finish processing
-        await Future.delayed(const Duration(milliseconds: 100));
-        _handleSharedContent();
+        await Future.delayed(const Duration(milliseconds: 300));
+        await _handleSharedContent();
       }
     });
+    _addLog('Platform method call handler ready');
   }
 
   Future<void> _initOutputDirectory() async {
@@ -412,6 +426,8 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
   @override
   void dispose() {
     _cleanupTempFiles();
+    _shareCheckTimer1?.cancel();
+    _shareCheckTimer2?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _textController.dispose();
     _qrAuthorController.dispose();
@@ -486,8 +502,28 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
             _previewIndex = 0;
           });
           _addLog('Shared files loaded successfully');
+
+          // Show user-friendly notification
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('📥 Received ${validFiles.length} file${validFiles.length > 1 ? 's' : ''} from sharing'),
+                duration: const Duration(seconds: 3),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
         } else {
           _addLog('No valid shared files found after filtering');
+          if (mounted && sharedFiles.isNotEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('⚠️ Shared files are not in a supported format (JPG, PNG, WebP, PDF, HEIC/HEIF)'),
+                duration: Duration(seconds: 4),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
         }
       } else {
         _addLog('No shared content available');
