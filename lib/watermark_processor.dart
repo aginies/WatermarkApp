@@ -24,7 +24,6 @@ final Random _random = Random();
 const double _angleStepDegrees = 15;
 const int _randomColorPoolSize = 6;
 const int _maxFileSize = 100 * 1024 * 1024; // 100MiB
-const int _maxFilesInBatch = 100;
 
 /// Specific error types for better error handling
 enum WatermarkErrorType {
@@ -208,7 +207,7 @@ class WatermarkProcessor {
     required double fontSize,
     WatermarkFont font = WatermarkFont.arial,
     int jpegQuality = 75,
-    int? targetSize = 1280,
+    int? targetSize,
     bool includeTimestamp = false,
     bool preserveMetadata = false,
     bool rasterizePdf = false,
@@ -470,75 +469,6 @@ class WatermarkProcessor {
     _resultCache[key] = result;
   }
 
-  /// Process multiple files with progress reporting and cancellation support
-  static Future<List<ProcessResult>> processMultipleFiles({
-    required List<File> files,
-    required double transparency,
-    required double density,
-    required String watermarkText,
-    required bool useRandomColor,
-    required int selectedColorValue,
-    required double fontSize,
-    int jpegQuality = 75,
-    int? targetSize = 1280,
-    bool includeTimestamp = false,
-    bool preserveMetadata = false,
-    ProgressCallback? onProgress,
-    CancellationToken? cancellationToken,
-  }) async {
-    if (files.length > _maxFilesInBatch) {
-      throw const WatermarkError(
-        type: WatermarkErrorType.unknownError,
-        message: 'Too many files in batch (max $_maxFilesInBatch)',
-      );
-    }
-
-    final results = <ProcessResult>[];
-    final totalFiles = files.length;
-
-    for (var i = 0; i < totalFiles; i++) {
-      if (cancellationToken?.isCancelled == true) {
-        throw const WatermarkError(
-          type: WatermarkErrorType.operationCancelled,
-          message: 'Batch processing was cancelled',
-        );
-      }
-
-      try {
-        final fileProgress = i / totalFiles;
-        onProgress?.call(fileProgress, 'Processing file ${i + 1} of $totalFiles...');
-
-        final result = await processFile(
-          file: files[i],
-          transparency: transparency,
-          density: density,
-          watermarkText: watermarkText,
-          useRandomColor: useRandomColor,
-          selectedColorValue: selectedColorValue,
-          fontSize: fontSize,
-          jpegQuality: jpegQuality,
-          targetSize: targetSize,
-          includeTimestamp: includeTimestamp,
-          preserveMetadata: preserveMetadata,
-          onProgress: (progress, message) {
-            final totalProgress = fileProgress + (progress / totalFiles);
-            onProgress?.call(totalProgress, message);
-          },
-          cancellationToken: cancellationToken,
-        );
-
-        results.add(result);
-      } catch (e) {
-        // Continue processing other files even if one fails
-        debugPrint('Failed to process ${files[i].path}: $e');
-        continue;
-      }
-    }
-
-    onProgress?.call(1.0, 'Batch processing complete');
-    return results;
-  }
-
   /// Clear the result cache
   static void clearCache() {
     _resultCache.clear();
@@ -786,6 +716,7 @@ class WatermarkProcessor {
           filePrefix: filePrefix,
           antiAiLevel: antiAiLevel,
           useSteganography: useSteganography,
+          steganographyPassword: steganographyPassword,
           hiddenFileName: hiddenFileName,
           hiddenFileBytes: hiddenFileBytes,
           qrConfig: qrConfig,
@@ -806,7 +737,6 @@ class WatermarkProcessor {
       final outputPath = _outputPath(file.path, '.pdf', includeTimestamp, filePrefix);
 
       // Generate a preview of the first page using the existing Printing logic
-      // Note: Printing.raster must be called on the main isolate as it uses platform channels
       final preview = await Printing.raster(outputBytes, pages: [0], dpi: 72).first;
       final previewBytes = await preview.toPng();
 
@@ -843,7 +773,6 @@ class WatermarkProcessor {
     try {
       document = sync.PdfDocument(inputBytes: inputBytes);
     } catch (e) {
-      // If direct loading fails, try repairing common cross-reference issues
       throw WatermarkError(
         type: WatermarkErrorType.invalidPdfData,
         message: 'The PDF file appears to be malformed or corrupted. Error: $e',
@@ -851,7 +780,6 @@ class WatermarkProcessor {
       );
     }
 
-    // Sanitize metadata if requested, or add our app tag
     if (!preserveMetadata) {
       document.documentInformation.author = '';
       document.documentInformation.creator = 'SecureMark (https://github.com/aginies/SecureMark)';
@@ -860,15 +788,12 @@ class WatermarkProcessor {
       document.documentInformation.subject = '';
       document.documentInformation.title = '';
     } else {
-      // Even if preserving, add our tag to creator if it's empty
       if (document.documentInformation.creator.isEmpty) {
         document.documentInformation.creator = 'SecureMark (https://github.com/aginies/SecureMark)';
       }
     }
     
     final pageCount = document.pages.count;
-
-    // Color and transparency
     final alpha = (100 - transparency).clamp(10, 90) / 100;
     final pdfFont = sync.PdfStandardFont(sync.PdfFontFamily.helvetica, fontSize);
 
@@ -877,7 +802,6 @@ class WatermarkProcessor {
       final pageSize = page.size;
       final graphics = page.graphics;
 
-      // Draw multiple watermarks based on density
       final targetCount = _watermarkCount(pageSize.width.toInt(), pageSize.height.toInt(), density);
       final columns = max<int>(2, sqrt(targetCount * (pageSize.width / max<double>(1.0, pageSize.height))).round());
       final rows = max<int>(2, (targetCount / columns).ceil());
@@ -888,29 +812,21 @@ class WatermarkProcessor {
       for (var row = 0; row < rows; row++) {
         for (var col = 0; col < columns; col++) {
           graphics.save();
-          
-          // Resolve color for this instance (opaque, transparency handled by graphics state)
           final color = _resolveSyncfusionColor(useRandomColor, selectedColorValue);
           final brush = sync.PdfSolidBrush(color);
 
-          // Anti-AI Jitter: Randomize position and rotation further based on antiAiLevel
           final jitterX = (antiAiLevel / 100.0) * (cellWidth * 0.2) * (_random.nextDouble() - 0.5);
           final jitterY = (antiAiLevel / 100.0) * (cellHeight * 0.2) * (_random.nextDouble() - 0.5);
           final jitterAngle = (antiAiLevel / 100.0) * 15.0 * (_random.nextDouble() - 0.5);
 
-          // Randomize position within cell slightly + jitter
           final x = (col * cellWidth) + (_random.nextDouble() * (cellWidth * 0.3)) + jitterX;
           final y = (row * cellHeight) + (_random.nextDouble() * (cellHeight * 0.3)) + jitterY;
           final angle = _randomAngle() + jitterAngle;
 
           graphics.translateTransform(x, y);
           graphics.rotateTransform(angle);
-          
-          // Apply transparency globally to the graphics state
           graphics.setTransparency(alpha);
-          
           graphics.drawString(watermarkText, pdfFont, brush: brush);
-          
           graphics.restore();
         }
       }
@@ -987,7 +903,6 @@ class WatermarkProcessor {
         outputImage.exif = decoded.exif.clone();
       }
 
-      // Add our app tag to the image metadata
       outputImage.textData ??= {};
       outputImage.textData!['Description'] = 'SecureMark (https://github.com/aginies/SecureMark)';
       outputImage.textData!['Software'] = 'SecureMark';
@@ -1006,10 +921,8 @@ class WatermarkProcessor {
         qrConfig: qrConfig,
       );
 
-      // Apply steganography if requested (LSB embedding)
       if (useSteganography) {
         if (hiddenFileName != null && hiddenFileBytes != null) {
-          // Embed a hidden file
           outputImage = _embedFileIntoImage(
             outputImage, 
             hiddenFileName, 
@@ -1017,7 +930,6 @@ class WatermarkProcessor {
             password: steganographyPassword,
           );
         } else {
-          // Embed text watermark signature
           outputImage = _embedLSB(
             outputImage, 
             watermarkText,
@@ -1026,20 +938,16 @@ class WatermarkProcessor {
         }
       }
 
-      // Apply invisible QR if configured
       var forcePng = useSteganography;
       if (qrConfig != null && qrConfig.invisibleQr) {
         final qrData = _buildQrMetadata(qrConfig);
         outputImage = _embedQrCodeLSB(outputImage, qrData);
-        forcePng = true; // QR LSB requires PNG
+        forcePng = true;
       }
 
-      // Encode in the original format (or force PNG if steganography/QR is used)
       return _encodeImageInOriginalFormat(outputImage, originalExtension, jpegQuality, forcePng);
     } catch (e) {
-      if (e is WatermarkError) {
-        rethrow;
-      }
+      if (e is WatermarkError) rethrow;
       throw WatermarkError(
         type: WatermarkErrorType.invalidImageData,
         message: 'Failed to render watermarked image',
@@ -1049,239 +957,110 @@ class WatermarkProcessor {
     }
   }
 
-  /// Render text using Flutter canvas with TTF fonts (high quality)
-  /// This must be called outside of isolates since it uses Flutter rendering
   static Future<Uint8List> _renderTextWithFlutterCanvas({
     required String text,
     required WatermarkFont font,
     required int fontSize,
     required ui.Color color,
   }) async {
-    // Create text painter with the specified font
     final textStyle = font.getTextStyle(
       fontSize: fontSize.toDouble(),
       fontWeight: FontWeight.normal,
     );
-
-    final textSpan = TextSpan(
-      text: text,
-      style: textStyle.copyWith(color: color),
-    );
-
-    final textPainter = TextPainter(
-      text: textSpan,
-      textAlign: TextAlign.left,
-      textDirection: TextDirection.ltr,
-    );
-
+    final textSpan = TextSpan(text: text, style: textStyle.copyWith(color: color));
+    final textPainter = TextPainter(text: textSpan, textAlign: TextAlign.left, textDirection: TextDirection.ltr);
     textPainter.layout();
-
-    // Create a picture recorder and canvas
     final recorder = ui.PictureRecorder();
     final canvas = ui.Canvas(recorder);
-
-    // Paint the text on the canvas
     textPainter.paint(canvas, ui.Offset.zero);
-
-    // Convert to image
     final picture = recorder.endRecording();
-    final image = await picture.toImage(
-      textPainter.width.ceil(),
-      textPainter.height.ceil(),
-    );
-
-    // Convert to PNG bytes
+    final image = await picture.toImage(textPainter.width.ceil(), textPainter.height.ceil());
     final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
     return byteData!.buffer.asUint8List();
   }
 
-  /// Embeds a file into an image using LSB steganography
-  /// Format: 'SF' (2 bytes) + FilenameLen (2 bytes) + FileSize (4 bytes) + Filename + File + CRC16 (2 bytes)
-  /// Embeds an entire file into an image
-  static img.Image _embedFileIntoImage(
-    img.Image image, 
-    String fileName, 
-    Uint8List fileBytes, {
-    String? password,
-  }) {
+  static img.Image _embedFileIntoImage(img.Image image, String fileName, Uint8List fileBytes, {String? password}) {
     final bool encrypt = password != null && password.isNotEmpty;
     Uint8List dataToEmbed = fileBytes;
-    
-    // Calculate CRC on ORIGINAL bytes for better password validation during extraction
     final crc = _crc16(fileBytes);
-
-    if (encrypt) {
-      dataToEmbed = _encryptBytes(fileBytes, password);
-    }
-
+    if (encrypt) dataToEmbed = _encryptBytes(fileBytes, password);
     final filenameBytes = utf8.encode(fileName);
-    if (filenameBytes.length > 255) {
-      debugPrint('Filename too long, truncating');
-      return image; // Skip if filename is too long
-    }
-
-    final headerBytes = utf8.encode(encrypt ? 'SE' : 'SF'); // SF=Plain, SE=Encrypted
-
+    if (filenameBytes.length > 255) return image;
+    final headerBytes = utf8.encode(encrypt ? 'SE' : 'SF');
     final fullPayload = BytesBuilder();
     fullPayload.add(headerBytes);
-
-    // Add filename length as 2 bytes (16-bit big endian)
-    fullPayload.add([
-      (filenameBytes.length >> 8) & 0xFF,
-      filenameBytes.length & 0xFF,
-    ]);
-
-    // Add file size as 4 bytes (32-bit big endian)
+    fullPayload.add([(filenameBytes.length >> 8) & 0xFF, filenameBytes.length & 0xFF]);
     final fileSize = dataToEmbed.length;
-    fullPayload.add([
-      (fileSize >> 24) & 0xFF,
-      (fileSize >> 16) & 0xFF,
-      (fileSize >> 8) & 0xFF,
-      fileSize & 0xFF,
-    ]);
-
+    fullPayload.add([(fileSize >> 24) & 0xFF, (fileSize >> 16) & 0xFF, (fileSize >> 8) & 0xFF, fileSize & 0xFF]);
     fullPayload.add(filenameBytes);
     fullPayload.add(dataToEmbed);
-
-    // Add CRC (of original bytes)
-    fullPayload.add([
-      (crc >> 8) & 0xFF,
-      crc & 0xFF,
-    ]);
-
+    fullPayload.add([(crc >> 8) & 0xFF, crc & 0xFF]);
     final payload = fullPayload.toBytes();
     final totalBits = payload.length * 8;
     final int width = image.width;
-    final int height = image.height;
-    final int totalPixels = width * height;
-
-    if (totalBits > totalPixels) {
-      debugPrint('Image too small for this file (${payload.length} bytes needed, ${totalPixels ~/ 8} bytes available)');
-      return image;
-    }
-
-    // Header (64 bits = 8 bytes) is sequential at the beginning
+    final int totalPixels = width * image.height;
+    if (totalBits > totalPixels) return image;
     const int headerBits = 64;
     for (var i = 0; i < headerBits && i < totalBits; i++) {
-      final byteIdx = i ~/ 8;
-      final bitOffset = 7 - (i % 8);
-      final bit = (payload[byteIdx] >> bitOffset) & 1;
-
+      final bit = (payload[i ~/ 8] >> (7 - (i % 8))) & 1;
       final pixel = image.getPixel(i % width, i ~/ width);
       pixel.b = (pixel.b.toInt() & ~1) | bit;
     }
-
-    // Payload is spread across the remaining pixels
     final int remainingBits = totalBits - headerBits;
     if (remainingBits > 0) {
-      final int remainingPixels = totalPixels - headerBits;
-      final int stride = (remainingPixels ~/ remainingBits).clamp(1, 1000);
-
+      final int stride = ((totalPixels - headerBits) ~/ remainingBits).clamp(1, 1000);
       for (var i = 0; i < remainingBits; i++) {
         final bitIdx = headerBits + i;
-        final byteIdx = bitIdx ~/ 8;
-        final bitOffset = 7 - (bitIdx % 8);
-        final bit = (payload[byteIdx] >> bitOffset) & 1;
-
+        final bit = (payload[bitIdx ~/ 8] >> (7 - (bitIdx % 8))) & 1;
         final pixelIdx = headerBits + (i * stride);
         if (pixelIdx >= totalPixels) break;
-
         final pixel = image.getPixel(pixelIdx % width, pixelIdx ~/ width);
         pixel.b = (pixel.b.toInt() & ~1) | bit;
       }
     }
-
     return image;
   }
 
-  /// Embeds a text message into an image using LSB (Least Significant Bit) steganography
-  /// Uses the Blue channel for embedding with spreading to improve invisibility.
-  static img.Image _embedLSB(
-    img.Image image, 
-    String message, {
-    String? password,
-  }) {
-    if (message.isEmpty) return image; // Don't embed empty message
-    
-    // 1. Prepare the data: Magic Header ('SM' or 'SX') + Length (32-bit) + Message + CRC16 (16-bit)
+  static img.Image _embedLSB(img.Image image, String message, {String? password}) {
+    if (message.isEmpty) return image;
     final bool encrypt = password != null && password.isNotEmpty;
     final Uint8List originalMessageBytes = Uint8List.fromList(utf8.encode(message));
     Uint8List messageBytes = originalMessageBytes;
-    
-    // Calculate CRC on ORIGINAL bytes
     final crc = _crc16(originalMessageBytes);
-
-    if (encrypt) {
-      messageBytes = _encryptBytes(originalMessageBytes, password);
-    }
-
-    final headerBytes = utf8.encode(encrypt ? 'SX' : 'SM'); // SecureMark Identifier
-    
+    if (encrypt) messageBytes = _encryptBytes(originalMessageBytes, password);
+    final headerBytes = utf8.encode(encrypt ? 'SX' : 'SM');
     final fullPayload = BytesBuilder();
     fullPayload.add(headerBytes);
-    
-    // Add length as 4 bytes (32-bit big endian)
     final length = messageBytes.length;
-    fullPayload.add([
-      (length >> 24) & 0xFF,
-      (length >> 16) & 0xFF,
-      (length >> 8) & 0xFF,
-      length & 0xFF,
-    ]);
+    fullPayload.add([(length >> 24) & 0xFF, (length >> 16) & 0xFF, (length >> 8) & 0xFF, length & 0xFF]);
     fullPayload.add(messageBytes);
-    
-    // Add CRC (of original bytes)
-    fullPayload.add([
-      (crc >> 8) & 0xFF,
-      crc & 0xFF,
-    ]);
-    
+    fullPayload.add([(crc >> 8) & 0xFF, crc & 0xFF]);
     final payload = fullPayload.toBytes();
     final totalBits = payload.length * 8;
     final int width = image.width;
-    final int height = image.height;
-    final int totalPixels = width * height;
-    
-    if (totalBits > totalPixels) {
-      // Image too small for this message, skip
-      return image;
-    }
-
-    // Header (48 bits) is sequential at the beginning
+    final int totalPixels = width * image.height;
+    if (totalBits > totalPixels) return image;
     const int headerBits = 48;
     for (var i = 0; i < headerBits && i < totalBits; i++) {
-      final byteIdx = i ~/ 8;
-      final bitOffset = 7 - (i % 8);
-      final bit = (payload[byteIdx] >> bitOffset) & 1;
-      
+      final bit = (payload[i ~/ 8] >> (7 - (i % 8))) & 1;
       final pixel = image.getPixel(i % width, i ~/ width);
       pixel.b = (pixel.b.toInt() & ~1) | bit;
     }
-    
-    // Payload is spread across the remaining pixels
     final int remainingBits = totalBits - headerBits;
     if (remainingBits > 0) {
-      final int remainingPixels = totalPixels - headerBits;
-      final int stride = (remainingPixels ~/ remainingBits).clamp(1, 1000);
-      
+      final int stride = ((totalPixels - headerBits) ~/ remainingBits).clamp(1, 1000);
       for (var i = 0; i < remainingBits; i++) {
         final bitIdx = headerBits + i;
-        final byteIdx = bitIdx ~/ 8;
-        final bitOffset = 7 - (bitIdx % 8);
-        final bit = (payload[byteIdx] >> bitOffset) & 1;
-        
+        final bit = (payload[bitIdx ~/ 8] >> (7 - (bitIdx % 8))) & 1;
         final pixelIdx = headerBits + (i * stride);
         if (pixelIdx >= totalPixels) break;
-        
         final pixel = image.getPixel(pixelIdx % width, pixelIdx ~/ width);
         pixel.b = (pixel.b.toInt() & ~1) | bit;
       }
     }
-    
     return image;
   }
 
-  /// Combined extraction result
   static Future<AnalysisResult> analyzeImageAsync(Uint8List bytes, {String? password}) async {
     return await Isolate.run(() => analyzeImage(bytes, password: password));
   }
@@ -1290,47 +1069,23 @@ class WatermarkProcessor {
     try {
       final image = img.decodeImage(imageBytes);
       if (image == null) return const AnalysisResult();
-
       final int width = image.width;
-      final int height = image.height;
-      final int totalPixels = width * height;
-
+      final int totalPixels = width * image.height;
       if (totalPixels < 64) return const AnalysisResult();
-
-      // 1. Peek at magic header (16 bits)
       final List<int> headerBytes = <int>[];
       var currentByte = 0;
       for (var i = 0; i < 16; i++) {
         final pixel = image.getPixel(i % width, i ~/ width);
-        final bit = pixel.b.toInt() & 1;
-        currentByte = (currentByte << 1) | bit;
-        if ((i + 1) % 8 == 0) {
-          headerBytes.add(currentByte);
-          currentByte = 0;
-        }
+        currentByte = (currentByte << 1) | (pixel.b.toInt() & 1);
+        if ((i + 1) % 8 == 0) { headerBytes.add(currentByte); currentByte = 0; }
       }
-
-      if (headerBytes[0] != 83) return const AnalysisResult(); // Must start with 'S' (0x53)
-
+      if (headerBytes[0] != 83) return const AnalysisResult();
       final type = headerBytes[1];
-      
-      // Handle based on type
-      if (type == 77 || type == 88) { // 'M' or 'X' (Text Signature)
-        final text = _extractTextFromImage(image, type == 88, password);
-        return AnalysisResult(signature: text);
-      } else if (type == 70 || type == 69) { // 'F' or 'E' (Hidden File)
-        final file = _extractFileFromImage(image, type == 69, password);
-        return AnalysisResult(file: file);
-      } else if (type == 81) { // 'Q' (QR Code)
-        final qr = _extractQrFromImage(image);
-        return AnalysisResult(qrData: qr);
-      }
-
+      if (type == 77 || type == 88) return AnalysisResult(signature: _extractTextFromImage(image, type == 88, password));
+      if (type == 70 || type == 69) return AnalysisResult(file: _extractFileFromImage(image, type == 69, password));
+      if (type == 81) return AnalysisResult(qrData: _extractQrFromImage(image));
       return const AnalysisResult();
-    } catch (e) {
-      debugPrint('Analysis error: $e');
-      return const AnalysisResult();
-    }
+    } catch (e) { return const AnalysisResult(); }
   }
 
   static String? _extractTextFromImage(img.Image image, bool isEncrypted, String? password) {
@@ -1339,219 +1094,74 @@ class WatermarkProcessor {
       final int totalPixels = width * image.height;
       final List<int> bytes = <int>[];
       var currentByte = 0;
-
-      // Extract length (already have 2 bytes of magic, need 4 more for length)
       for (var i = 16; i < 48; i++) {
         final pixel = image.getPixel(i % width, i ~/ width);
-        final bit = pixel.b.toInt() & 1;
-        currentByte = (currentByte << 1) | bit;
-        if ((i + 1) % 8 == 0) {
-          bytes.add(currentByte);
-          currentByte = 0;
-        }
+        currentByte = (currentByte << 1) | (pixel.b.toInt() & 1);
+        if ((i + 1) % 8 == 0) { bytes.add(currentByte); currentByte = 0; }
       }
-
-      // Parse length
       final int payloadLength = (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3];
       if (payloadLength <= 0 || payloadLength > 1024 * 1024) return null;
-
-      // Extract payload + CRC
       final int payloadBytesNeeded = payloadLength + 2;
-      final int payloadBitsNeeded = payloadBytesNeeded * 8;
       final int remainingPixels = totalPixels - 48;
-      if (payloadBitsNeeded > remainingPixels) return null;
-
-      final int stride = (remainingPixels ~/ payloadBitsNeeded).clamp(1, 1000);
-      currentByte = 0;
-      bytes.clear();
-
-      for (var i = 0; i < payloadBitsNeeded; i++) {
+      if (payloadBytesNeeded * 8 > remainingPixels) return null;
+      final int stride = (remainingPixels ~/ (payloadBytesNeeded * 8)).clamp(1, 1000);
+      currentByte = 0; bytes.clear();
+      for (var i = 0; i < payloadBytesNeeded * 8; i++) {
         final pixelIdx = 48 + (i * stride);
         final pixel = image.getPixel(pixelIdx % width, pixelIdx ~/ width);
         currentByte = (currentByte << 1) | (pixel.b.toInt() & 1);
-        if ((i + 1) % 8 == 0) {
-          bytes.add(currentByte);
-          currentByte = 0;
-        }
+        if ((i + 1) % 8 == 0) { bytes.add(currentByte); currentByte = 0; }
       }
-
       Uint8List payloadBytes = Uint8List.fromList(bytes.sublist(0, payloadLength));
       final extractedCrc = (bytes[payloadLength] << 8) | bytes[payloadLength + 1];
-
       if (isEncrypted) {
         if (password == null || password.isEmpty) return '[ENCRYPTED] (Password required)';
-        final decrypted = _decryptBytes(Uint8List.fromList(bytes.sublist(0, payloadLength)), password);
+        final decrypted = _decryptBytes(payloadBytes, password);
         if (decrypted == null) return '[ENCRYPTED] (Wrong password)';
         payloadBytes = decrypted;
       }
-
-      if (_crc16(payloadBytes) != extractedCrc) {
-        return isEncrypted ? '[ENCRYPTED] (Wrong password)' : null;
-      }
-
+      if (_crc16(payloadBytes) != extractedCrc) return isEncrypted ? '[ENCRYPTED] (Wrong password)' : null;
       return utf8.decode(payloadBytes, allowMalformed: true);
-    } catch (_) {
-      return null;
-    }
+    } catch (_) { return null; }
   }
 
-  /// Extracts a hidden file from an image using LSB steganography
-  /// Returns ExtractedFileResult with filename and file bytes, or null if no file found
-  static Future<ExtractedFileResult?> extractFileAsync(Uint8List imageBytes, {String? password}) async {
-    return await Isolate.run(() => extractFile(imageBytes, password: password));
-  }
-
-  static ExtractedFileResult? extractFile(Uint8List imageBytes, {String? password}) {
+  static ExtractedFileResult? _extractFileFromImage(img.Image image, bool isEncrypted, String? password) {
     try {
-      final image = img.decodeImage(imageBytes);
-      if (image == null) return null;
-
       final int width = image.width;
-      final int height = image.height;
-      final int totalPixels = width * height;
-
-      // We need at least SF/SE (16 bits) + FilenameLen (16 bits) + FileSize (32 bits) = 64 bits to start
-      if (totalPixels < 64) return null;
-
+      final int totalPixels = width * image.height;
       final List<int> bytes = <int>[];
       var currentByte = 0;
-
-      // 1. Extract initial magic header first (16 bits)
-      for (var i = 0; i < 16; i++) {
+      for (var i = 16; i < 64; i++) {
         final pixel = image.getPixel(i % width, i ~/ width);
-        final bit = pixel.b.toInt() & 1;
-        currentByte = (currentByte << 1) | bit;
-        if ((i + 1) % 8 == 0) {
-          bytes.add(currentByte);
-          currentByte = 0;
-        }
+        currentByte = (currentByte << 1) | (pixel.b.toInt() & 1);
+        if ((i + 1) % 8 == 0) { bytes.add(currentByte); currentByte = 0; }
       }
-
-      // Check magic header for file ('SF' = Plain, 'SE' = Encrypted)
-      final String magic = utf8.decode(bytes, allowMalformed: true);
-      
-      // If we see a text signature magic, return null so extractLSB can handle it
-      if (magic == 'SM' || magic == 'SX') return null;
-      
-      final bool isEncrypted = magic == 'SE';
-      if (magic != 'SF' && magic != 'SE') return null;
-
-      // 2. Extract the rest of the initial header bits (Total header: 64 bits = 8 bytes)
-      const int initialHeaderBits = 64;
-      for (var i = 16; i < initialHeaderBits; i++) {
-        final pixel = image.getPixel(i % width, i ~/ width);
-        final bit = pixel.b.toInt() & 1;
-
-        currentByte = (currentByte << 1) | bit;
-        if ((i + 1) % 8 == 0) {
-          bytes.add(currentByte);
-          currentByte = 0;
-        }
-      }
-
-      // Parse filename length (2 bytes)
-      final int filenameLength = (bytes[2] << 8) | bytes[3];
-      if (filenameLength <= 0 || filenameLength > 255) return null;
-
-      // Parse file size (4 bytes)
-      final int fileSize = (bytes[4] << 24) | (bytes[5] << 16) | (bytes[6] << 8) | bytes[7];
-      // Safety limit: 50MB max
-      if (fileSize <= 0 || fileSize > 50 * 1024 * 1024) return null;
-
-      // 3. Extract filename + file data + CRC
-      final int totalDataBytes = filenameLength + fileSize + 2; // filename + file + CRC16
-      final int dataBitsNeeded = totalDataBytes * 8;
-      final int remainingPixels = totalPixels - initialHeaderBits;
-
-      if (dataBitsNeeded > remainingPixels) return null;
-
-      final int stride = (remainingPixels ~/ dataBitsNeeded).clamp(1, 1000);
-      currentByte = 0;
-
-      for (var i = 0; i < dataBitsNeeded; i++) {
-        final pixelIdx = initialHeaderBits + (i * stride);
-        if (pixelIdx >= totalPixels) break;
-
+      final int filenameLength = (bytes[0] << 8) | bytes[1];
+      final int fileSize = (bytes[2] << 24) | (bytes[3] << 16) | (bytes[4] << 8) | bytes[5];
+      if (filenameLength <= 0 || filenameLength > 255 || fileSize <= 0 || fileSize > 50 * 1024 * 1024) return null;
+      final int totalDataBytes = filenameLength + fileSize + 2;
+      final int remainingPixels = totalPixels - 64;
+      if (totalDataBytes * 8 > remainingPixels) return null;
+      final int stride = (remainingPixels ~/ (totalDataBytes * 8)).clamp(1, 1000);
+      currentByte = 0; bytes.clear();
+      for (var i = 0; i < totalDataBytes * 8; i++) {
+        final pixelIdx = 64 + (i * stride);
         final pixel = image.getPixel(pixelIdx % width, pixelIdx ~/ width);
-        final bit = pixel.b.toInt() & 1;
-
-        currentByte = (currentByte << 1) | bit;
-        if ((i + 1) % 8 == 0) {
-          bytes.add(currentByte);
-          currentByte = 0;
-        }
+        currentByte = (currentByte << 1) | (pixel.b.toInt() & 1);
+        if ((i + 1) % 8 == 0) { bytes.add(currentByte); currentByte = 0; }
       }
-
-      if (bytes.length < 8 + totalDataBytes) return null;
-
-      // Extract components
-      final filenameBytes = bytes.sublist(8, 8 + filenameLength);
-      Uint8List fileBytes = Uint8List.fromList(bytes.sublist(8 + filenameLength, 8 + filenameLength + fileSize));
-      final extractedCrc = (bytes[8 + filenameLength + fileSize] << 8) |
-                          bytes[8 + filenameLength + fileSize + 1];
-
-      // Verify CRC (of original bytes)
-      if (_crc16(fileBytes) != extractedCrc) {
-        if (isEncrypted) {
-          // If CRC fails for encrypted file, it might be wrong password
-          // but we haven't decrypted yet. Let's proceed to decryption.
-        } else {
-          return null; // For plain files, CRC failure means corruption
-        }
-      }
-
-      // Decrypt if necessary
-      if (isEncrypted) {
-        if (password == null || password.isEmpty) {
-          // Password required but not provided
-          return ExtractedFileResult(
-            fileName: utf8.decode(filenameBytes, allowMalformed: true),
-            fileBytes: Uint8List(0),
-            isEncrypted: true,
-          );
-        }
-        final decrypted = _decryptBytes(fileBytes, password);
-        if (decrypted == null) {
-          // Wrong password
-          return ExtractedFileResult(
-            fileName: utf8.decode(filenameBytes, allowMalformed: true),
-            fileBytes: Uint8List(0),
-            isEncrypted: true,
-          );
-        }
-        fileBytes = decrypted;
-        
-        // RE-VERIFY CRC after decryption
-        if (_crc16(fileBytes) != extractedCrc) {
-          // Still doesn't match? Wrong password or corrupted
-          return ExtractedFileResult(
-            fileName: utf8.decode(filenameBytes, allowMalformed: true),
-            fileBytes: Uint8List(0),
-            isEncrypted: true,
-          );
-        }
-      }
-
       final filename = utf8.decode(bytes.sublist(0, filenameLength), allowMalformed: true);
       Uint8List fileBytes = Uint8List.fromList(bytes.sublist(filenameLength, filenameLength + fileSize));
       final extractedCrc = (bytes[filenameLength + fileSize] << 8) | bytes[filenameLength + fileSize + 1];
-
       if (isEncrypted) {
         if (password == null || password.isEmpty) return ExtractedFileResult(fileName: filename, fileBytes: Uint8List(0), isEncrypted: true);
         final decrypted = _decryptBytes(fileBytes, password);
         if (decrypted == null) return ExtractedFileResult(fileName: filename, fileBytes: Uint8List(0), isEncrypted: true);
         fileBytes = decrypted;
       }
-
-      // Verify CRC (of decrypted/plain bytes)
-      if (_crc16(fileBytes) != extractedCrc) {
-        return isEncrypted ? ExtractedFileResult(fileName: filename, fileBytes: Uint8List(0), isEncrypted: true) : null;
-      }
-
+      if (_crc16(fileBytes) != extractedCrc) return isEncrypted ? ExtractedFileResult(fileName: filename, fileBytes: Uint8List(0), isEncrypted: true) : null;
       return ExtractedFileResult(fileName: filename, fileBytes: fileBytes, isEncrypted: isEncrypted);
-    } catch (_) {
-      return null;
-    }
+    } catch (_) { return null; }
   }
 
   static String? _extractQrFromImage(img.Image image) {
@@ -1560,51 +1170,40 @@ class WatermarkProcessor {
       final int totalPixels = width * image.height;
       final List<int> bytes = <int>[];
       var currentByte = 0;
-
-      // Extract length (already have 2 bytes, need 4 more)
       for (var i = 16; i < 48; i++) {
         final pixel = image.getPixel(i % width, i ~/ width);
-        final bit = pixel.b.toInt() & 1;
-        currentByte = (currentByte << 1) | bit;
-        if ((i + 1) % 8 == 0) {
-          bytes.add(currentByte);
-          currentByte = 0;
-        }
+        currentByte = (currentByte << 1) | (pixel.b.toInt() & 1);
+        if ((i + 1) % 8 == 0) { bytes.add(currentByte); currentByte = 0; }
       }
-
       final int qrLength = (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3];
       if (qrLength <= 0 || qrLength > 10240) return null;
-
-      final int dataBytesNeeded = qrLength + 2;
-      final int dataBitsNeeded = dataBytesNeeded * 8;
-      final remainingPixels = totalPixels - 48;
-      if (dataBitsNeeded > remainingPixels) return null;
-
-      final int stride = (remainingPixels ~/ dataBitsNeeded).clamp(1, 1000);
-      currentByte = 0;
-      bytes.clear();
-
-      for (var i = 0; i < dataBitsNeeded; i++) {
+      final int totalDataBytes = qrLength + 2;
+      final int remainingPixels = totalPixels - 48;
+      if (totalDataBytes * 8 > remainingPixels) return null;
+      final int stride = (remainingPixels ~/ (totalDataBytes * 8)).clamp(1, 1000);
+      currentByte = 0; bytes.clear();
+      for (var i = 0; i < totalDataBytes * 8; i++) {
         final pixelIdx = 48 + (i * stride);
         final pixel = image.getPixel(pixelIdx % width, pixelIdx ~/ width);
         currentByte = (currentByte << 1) | (pixel.b.toInt() & 1);
-        if ((i + 1) % 8 == 0) {
-          bytes.add(currentByte);
-          currentByte = 0;
-        }
+        if ((i + 1) % 8 == 0) { bytes.add(currentByte); currentByte = 0; }
       }
-
       final qrBytes = bytes.sublist(0, qrLength);
       final extractedCrc = (bytes[qrLength] << 8) | bytes[qrLength + 1];
       if (_crc16(qrBytes) != extractedCrc) return null;
-
       return utf8.decode(qrBytes, allowMalformed: true);
-    } catch (_) {
-      return null;
-    }
+    } catch (_) { return null; }
   }
 
-  /// Simple CRC16 (CCITT) implementation for data integrity
+  static Future<ExtractedFileResult?> extractFileAsync(Uint8List imageBytes, {String? password}) async {
+    return await Isolate.run(() => extractFile(imageBytes, password: password));
+  }
+
+  static ExtractedFileResult? extractFile(Uint8List imageBytes, {String? password}) {
+    final analysis = analyzeImage(imageBytes, password: password);
+    return analysis.file;
+  }
+
   static int _crc16(List<int> data) {
     var crc = 0xFFFF;
     for (var b in data) {
@@ -1620,21 +1219,18 @@ class WatermarkProcessor {
     return crc;
   }
 
-  /// Encrypts bytes using AES-256 with a password
   static Uint8List _encryptBytes(Uint8List data, String password) {
     final keyBytes = sha256.convert(utf8.encode(password)).bytes;
     final key = enc.Key(Uint8List.fromList(keyBytes));
     final iv = enc.IV.fromSecureRandom(16);
     final encrypter = enc.Encrypter(enc.AES(key, mode: enc.AESMode.cbc));
     final encrypted = encrypter.encryptBytes(data, iv: iv);
-    
     final result = BytesBuilder();
     result.add(iv.bytes);
     result.add(encrypted.bytes);
     return result.toBytes();
   }
 
-  /// Decrypts bytes using AES-256 with a password
   static Uint8List? _decryptBytes(Uint8List encryptedData, String password) {
     try {
       if (encryptedData.length < 16) return null;
@@ -1645,42 +1241,17 @@ class WatermarkProcessor {
       final encrypter = enc.Encrypter(enc.AES(key, mode: enc.AESMode.cbc));
       final decrypted = encrypter.decryptBytes(enc.Encrypted(data), iv: iv);
       return Uint8List.fromList(decrypted);
-    } catch (e) {
-      return null;
-    }
+    } catch (_) { return null; }
   }
 
-  /// Generates QR code as img.Image
-  static img.Image _generateQrCodeImage({
-    required String data,
-    required int size,
-  }) {
+  static img.Image _generateQrCodeImage({required String data, required int size}) {
     try {
-      // Create QR code using the correct API
-      final qrCode = QrCode.fromData(
-        data: data,
-        errorCorrectLevel: QrErrorCorrectLevel.H,
-      );
-
-      // Create QR image from QR code
+      final qrCode = QrCode.fromData(data: data, errorCorrectLevel: QrErrorCorrectLevel.H);
       final qrImage = QrImage(qrCode);
       final moduleCount = qrImage.moduleCount;
-
-      if (moduleCount == 0) {
-        debugPrint('QR code generation failed: moduleCount is 0');
-        // Return empty image
-        return img.Image(width: size, height: size, numChannels: 4);
-      }
-
-      // Create image with white background
-      final image = img.Image(
-        width: size,
-        height: size,
-        numChannels: 4,
-      );
+      if (moduleCount == 0) return img.Image(width: size, height: size, numChannels: 4);
+      final image = img.Image(width: size, height: size, numChannels: 4);
       image.clear(img.ColorRgba8(255, 255, 255, 255));
-
-      // Draw QR modules (scale matrix to image size)
       final moduleSize = size / moduleCount;
       for (var y = 0; y < moduleCount; y++) {
         for (var x = 0; x < moduleCount; x++) {
@@ -1689,8 +1260,6 @@ class WatermarkProcessor {
             final py = (y * moduleSize).round();
             final endX = ((x + 1) * moduleSize).round();
             final endY = ((y + 1) * moduleSize).round();
-
-            // Fill module with black
             for (var iy = py; iy < endY && iy < size; iy++) {
               for (var ix = px; ix < endX && ix < size; ix++) {
                 image.setPixel(ix, iy, img.ColorRgba8(0, 0, 0, 255));
@@ -1699,29 +1268,14 @@ class WatermarkProcessor {
           }
         }
       }
-
       return image;
-    } catch (e) {
-      debugPrint('QR code generation error: $e');
-      // Return empty image on error
-      return img.Image(width: size, height: size, numChannels: 4);
-    }
+    } catch (e) { return img.Image(width: size, height: size, numChannels: 4); }
   }
 
-  /// Prepares QR metadata string from QrWatermarkConfig
-  static String _buildQrMetadata(QrWatermarkConfig config) {
-    return config.toJsonString();
-  }
+  static String _buildQrMetadata(QrWatermarkConfig config) => config.toJsonString();
 
-  /// Calculates position for visible QR code
-  static (int, int) _calculateQrPosition({
-    required int imageWidth,
-    required int imageHeight,
-    required int qrSize,
-    required QrPosition position,
-  }) {
-    const margin = 20; // Pixels from edge
-
+  static (int, int) _calculateQrPosition({required int imageWidth, required int imageHeight, required int qrSize, required QrPosition position}) {
+    const margin = 20;
     return switch (position) {
       QrPosition.topLeft => (margin, margin),
       QrPosition.topRight => (imageWidth - qrSize - margin, margin),
@@ -1731,174 +1285,70 @@ class WatermarkProcessor {
     };
   }
 
-  /// Embeds QR code data into image using LSB steganography
-  /// Uses magic header 'SQ' (SecureMark QR)
   static img.Image _embedQrCodeLSB(img.Image image, String qrData) {
     try {
       final qrBytes = utf8.encode(qrData);
       final crc = _crc16(qrBytes);
-      final headerBytes = utf8.encode('SQ'); // SecureMark QR Identifier
-
+      final headerBytes = utf8.encode('SQ');
       final fullPayload = BytesBuilder();
       fullPayload.add(headerBytes);
-
-      // Add QR data length as 4 bytes (32-bit big endian)
       final length = qrBytes.length;
-      fullPayload.add([
-        (length >> 24) & 0xFF,
-        (length >> 16) & 0xFF,
-        (length >> 8) & 0xFF,
-        length & 0xFF,
-      ]);
-
+      fullPayload.add([(length >> 24) & 0xFF, (length >> 16) & 0xFF, (length >> 8) & 0xFF, length & 0xFF]);
       fullPayload.add(qrBytes);
-
-      // Add CRC16
-      fullPayload.add([
-        (crc >> 8) & 0xFF,
-        crc & 0xFF,
-      ]);
-
+      fullPayload.add([(crc >> 8) & 0xFF, crc & 0xFF]);
       final payload = fullPayload.toBytes();
       final totalBits = payload.length * 8;
       final totalPixels = image.width * image.height;
-
-      if (totalBits > totalPixels) {
-        debugPrint('Image too small for QR data (${payload.length} bytes needed, ${totalPixels ~/ 8} bytes available)');
-        return image;
-      }
-
-      // Header (48 bits) sequential at start
-      const headerBits = 48;
+      if (totalBits > totalPixels) return image;
+      const int headerBits = 48;
       for (var i = 0; i < headerBits && i < totalBits; i++) {
-        final byteIdx = i ~/ 8;
-        final bitOffset = 7 - (i % 8);
-        final bit = (payload[byteIdx] >> bitOffset) & 1;
-
+        final bit = (payload[i ~/ 8] >> (7 - (i % 8))) & 1;
         final pixel = image.getPixel(i % image.width, i ~/ image.width);
         pixel.b = (pixel.b.toInt() & ~1) | bit;
       }
-
-      // Spread remaining bits across image
       final remainingBits = totalBits - headerBits;
       if (remainingBits > 0) {
-        final remainingPixels = totalPixels - headerBits;
-        final stride = (remainingPixels ~/ remainingBits).clamp(1, 1000);
-
+        final stride = ((totalPixels - headerBits) ~/ remainingBits).clamp(1, 1000);
         for (var i = 0; i < remainingBits; i++) {
           final bitIdx = headerBits + i;
-          final byteIdx = bitIdx ~/ 8;
-          final bitOffset = 7 - (bitIdx % 8);
-          final bit = (payload[byteIdx] >> bitOffset) & 1;
-
+          final bit = (payload[bitIdx ~/ 8] >> (7 - (bitIdx % 8))) & 1;
           final pixelIdx = headerBits + (i * stride);
           if (pixelIdx >= totalPixels) break;
-
           final pixel = image.getPixel(pixelIdx % image.width, pixelIdx ~/ image.width);
           pixel.b = (pixel.b.toInt() & ~1) | bit;
         }
       }
-
       return image;
-    } catch (e) {
-      debugPrint('QR LSB embedding error: $e');
-      return image;
-    }
+    } catch (e) { return image; }
   }
 
-  static img.Image _buildWatermarkStamp(
-    String watermarkText,
-    _Placement placement,
-    Map<String, Uint8List>? preRenderedStamps,
-  ) {
+  static img.Image _buildWatermarkStamp(String watermarkText, _Placement placement, Map<String, Uint8List>? preRenderedStamps) {
     final baseTextWidth = max(1, (watermarkText.length * 18 * (placement.fontSize / 24)).round());
     final baseTextHeight = (48 * (placement.fontSize / 24)).round();
-    final textImage = img.Image(
-      width: baseTextWidth,
-      height: baseTextHeight,
-      numChannels: 4,
-    );
+    final textImage = img.Image(width: baseTextWidth, height: baseTextHeight, numChannels: 4);
     textImage.clear(img.ColorRgba8(0, 0, 0, 0));
-    textImage.backgroundColor = img.ColorRgba8(0, 0, 0, 0);
-
-    // Check if we have a pre-rendered TTF stamp for this font/size combo
     final stampKey = '${placement.font.fontFamily}-${placement.fontSize}';
     if (preRenderedStamps != null && preRenderedStamps.containsKey(stampKey)) {
-      // Use the pre-rendered TTF stamp
-      final stampBytes = preRenderedStamps[stampKey]!;
-      final ttfStamp = img.decodePng(stampBytes);
-
+      final ttfStamp = img.decodePng(preRenderedStamps[stampKey]!);
       if (ttfStamp != null) {
-        // Colorize the stamp with the placement color
         final colorized = img.Image.from(ttfStamp);
-        for (var y = 0; y < colorized.height; y++) {
-          for (var x = 0; x < colorized.width; x++) {
-            final pixel = colorized.getPixel(x, y);
-            final alpha = pixel.a;
-            if (alpha > 0) {
-              colorized.setPixel(x, y, img.ColorRgba8(
-                placement.color.r.toInt(),
-                placement.color.g.toInt(),
-                placement.color.b.toInt(),
-                (alpha * (placement.color.a / 255.0)).round(),
-              ));
-            }
+        for (final pixel in colorized) {
+          if (pixel.a > 0) {
+            pixel.r = placement.color.r; pixel.g = placement.color.g; pixel.b = placement.color.b;
+            pixel.a = (pixel.a * (placement.color.a / 255.0)).round();
           }
         }
-
-        // Composite onto text image (center it)
-        final offsetX = max(0, (baseTextWidth - colorized.width) ~/ 2);
-        final offsetY = max(0, (baseTextHeight - colorized.height) ~/ 2);
-        img.compositeImage(
-          textImage,
-          colorized,
-          dstX: offsetX,
-          dstY: offsetY,
-          blend: img.BlendMode.alpha,
-        );
-      } else {
-        // Fallback to bitmap if decoding failed
-        _drawBitmapText(textImage, watermarkText, placement);
-      }
-    } else {
-      // Use bitmap font (for Arial or when TTF not available)
-      _drawBitmapText(textImage, watermarkText, placement);
-    }
-
-    final rotated = img.copyRotate(
-      textImage,
-      angle: placement.angle,
-      interpolation: img.Interpolation.linear,
-    );
+        img.compositeImage(textImage, colorized, dstX: max(0, (baseTextWidth - colorized.width) ~/ 2), dstY: max(0, (baseTextHeight - colorized.height) ~/ 2), blend: img.BlendMode.alpha);
+      } else { _drawBitmapText(textImage, watermarkText, placement); }
+    } else { _drawBitmapText(textImage, watermarkText, placement); }
+    final rotated = img.copyRotate(textImage, angle: placement.angle, interpolation: img.Interpolation.linear);
     rotated.backgroundColor = img.ColorRgba8(0, 0, 0, 0);
     return rotated;
   }
 
-  /// Helper to draw text using bitmap fonts
   static void _drawBitmapText(img.Image textImage, String watermarkText, _Placement placement) {
-    if (placement.font.isBitmap) {
-      final bitmapFont = placement.font.getBitmapFont(placement.fontSize);
-      if (bitmapFont != null) {
-        img.drawString(
-          textImage,
-          watermarkText,
-          font: bitmapFont,
-          x: 0,
-          y: (12 * (placement.fontSize / 24)).round(),
-          color: placement.color,
-        );
-      }
-    } else {
-      final font = _getFontForSize(placement.fontSize);
-      img.drawString(
-        textImage,
-        watermarkText,
-        font: font,
-        x: 0,
-        y: (12 * (placement.fontSize / 24)).round(),
-        color: placement.color,
-      );
-    }
+    final bitmapFont = placement.font.isBitmap ? placement.font.getBitmapFont(placement.fontSize) : _getFontForSize(placement.fontSize);
+    if (bitmapFont != null) img.drawString(textImage, watermarkText, font: bitmapFont, x: 0, y: (12 * (placement.fontSize / 24)).round(), color: placement.color);
   }
 
   static img.BitmapFont _getFontForSize(int fontSize) {
@@ -1907,651 +1357,179 @@ class WatermarkProcessor {
     return img.arial48;
   }
 
-  static void _applyWatermarkField(
-    img.Image image,
-    String watermarkText,
-    double transparency,
-    double density,
-    bool useRandomColor,
-    int selectedColorValue,
-    double fontSize,
-    WatermarkFont font,
-    Map<String, Uint8List>? preRenderedStamps, {
-    double antiAiLevel = 0.0,
-    QrWatermarkConfig? qrConfig,
-  }) {
-    // If transparency is 100%, skip visible watermark rendering
+  static void _applyWatermarkField(img.Image image, String watermarkText, double transparency, double density, bool useRandomColor, int selectedColorValue, double fontSize, WatermarkFont font, Map<String, Uint8List>? preRenderedStamps, {double antiAiLevel = 0.0, QrWatermarkConfig? qrConfig}) {
     if (transparency >= 100) return;
-
-    final placements = _buildPlacements(
-      width: image.width,
-      height: image.height,
-      watermarkText: watermarkText,
-      transparency: transparency,
-      density: density,
-      useRandomColor: useRandomColor,
-      selectedColorValue: selectedColorValue,
-      fontSize: fontSize.round(),
-      font: font,
-    );
-
+    final placements = _buildPlacements(width: image.width, height: image.height, watermarkText: watermarkText, transparency: transparency, density: density, useRandomColor: useRandomColor, selectedColorValue: selectedColorValue, fontSize: fontSize.round(), font: font);
     final stampCache = <String, img.Image>{};
-
     for (final placement in placements) {
-      // Apply Anti-AI Jitter to each placement
       final jitterX = ((antiAiLevel / 100.0) * 10 * (_random.nextDouble() - 0.5)).round();
       final jitterY = ((antiAiLevel / 100.0) * 10 * (_random.nextDouble() - 0.5)).round();
-
-      final stampKey = '${placement.angle.round()}-${placement.colorKey}';
-      var stamp = stampCache.putIfAbsent(
-        stampKey,
-        () => _buildWatermarkStamp(watermarkText, placement, preRenderedStamps),
-      );
-
-      // Apply Anti-AI pixel noise to the stamp if level > 0
+      var stamp = stampCache.putIfAbsent('${placement.angle.round()}-${placement.colorKey}', () => _buildWatermarkStamp(watermarkText, placement, preRenderedStamps));
       if (antiAiLevel > 0) {
         stamp = stamp.clone();
-        for (final pixel in stamp) {
-          if (pixel.a > 0) {
-            // Randomly vary alpha and color slightly to confuse AI boundary detection
-            final noise = (antiAiLevel / 100.0) * 40 * (_random.nextDouble() - 0.5);
-            final newAlpha = (pixel.a + noise).clamp(0, 255).toInt();
-            pixel.a = newAlpha;
-          }
-        }
+        for (final pixel in stamp) { if (pixel.a > 0) pixel.a = (pixel.a + (antiAiLevel / 100.0) * 40 * (_random.nextDouble() - 0.5)).clamp(0, 255).toInt(); }
       }
-
-      img.compositeImage(
-        image,
-        stamp,
-        dstX: placement.x + jitterX,
-        dstY: placement.y + jitterY,
-        blend: img.BlendMode.alpha,
-      );
+      img.compositeImage(image, stamp, dstX: placement.x + jitterX, dstY: placement.y + jitterY, blend: img.BlendMode.alpha);
     }
-
-    // Apply visible QR code if configured
     if (qrConfig != null && qrConfig.visibleQr) {
-      final qrData = _buildQrMetadata(qrConfig);
       final qrSize = qrConfig.size.round();
-
-      final qrImage = _generateQrCodeImage(
-        data: qrData,
-        size: qrSize,
-      );
-
-      // Apply opacity to QR code
+      final qrImage = _generateQrCodeImage(data: _buildQrMetadata(qrConfig), size: qrSize);
       for (final pixel in qrImage) {
         pixel.a = (pixel.a * qrConfig.opacity).round();
       }
-
-      // Calculate position
-      final (x, y) = _calculateQrPosition(
-        imageWidth: image.width,
-        imageHeight: image.height,
-        qrSize: qrSize,
-        position: qrConfig.position,
-      );
-
-      // Ensure QR code fits within image bounds
+      final (x, y) = _calculateQrPosition(imageWidth: image.width, imageHeight: image.height, qrSize: qrSize, position: qrConfig.position);
       if (x >= 0 && y >= 0 && x + qrSize <= image.width && y + qrSize <= image.height) {
-        // Composite QR code onto image
-        img.compositeImage(
-          image,
-          qrImage,
-          dstX: x,
-          dstY: y,
-          blend: img.BlendMode.alpha,
-        );
-      } else {
-        debugPrint('QR code position out of bounds, skipping');
+        img.compositeImage(image, qrImage, dstX: x, dstY: y, blend: img.BlendMode.alpha);
       }
     }
   }
 
-  static List<_Placement> _buildPlacements({
-    required int width,
-    required int height,
-    required String watermarkText,
-    required double transparency,
-    required double density,
-    required bool useRandomColor,
-    required int selectedColorValue,
-    required int fontSize,
-    required WatermarkFont font,
-  }) {
-    final placements = <_Placement>[];
+  static List<_Placement> _buildPlacements({required int width, required int height, required String watermarkText, required double transparency, required double density, required bool useRandomColor, required int selectedColorValue, required int fontSize, required WatermarkFont font}) {
     final targetCount = _watermarkCount(width, height, density);
-    final alpha = _alphaFromTransparency(transparency);
-    final colorPool = _buildColorPool(useRandomColor, selectedColorValue, alpha);
+    final colorPool = _buildColorPool(useRandomColor, selectedColorValue, _alphaFromTransparency(transparency));
     final columns = max(2, sqrt(targetCount * (width / max(1, height))).round());
     final rows = max(2, (targetCount / columns).ceil());
-    final cellWidth = max(1.0, width / columns.toDouble());
-    final cellHeight = max(1.0, height / rows.toDouble());
-    final cells = <Point<int>>[];
-
-    for (var row = 0; row < rows; row++) {
-      for (var column = 0; column < columns; column++) {
-        cells.add(Point<int>(column, row));
-      }
-    }
-    cells.shuffle(_random);
-
+    final cellWidth = width / columns.toDouble(); final cellHeight = height / rows.toDouble();
+    final cells = List.generate(rows * columns, (i) => Point(i % columns, i ~/ columns))..shuffle(_random);
+    final placements = <_Placement>[];
     for (final cell in cells) {
-      if (placements.length >= targetCount) {
-        break;
-      }
-
-      final placement = _tryPlacementInCell(
-        width: width,
-        height: height,
-        watermarkText: watermarkText,
-        cellColumn: cell.x,
-        cellRow: cell.y,
-        cellWidth: cellWidth,
-        cellHeight: cellHeight,
-        colorPool: colorPool,
-        fontSize: fontSize,
-        font: font,
-      );
-
-      if (placement != null) {
-        placements.add(placement);
-      }
+      if (placements.length >= targetCount) break;
+      final p = _tryPlacementInCell(width: width, height: height, watermarkText: watermarkText, cellColumn: cell.x, cellRow: cell.y, cellWidth: cellWidth, cellHeight: cellHeight, colorPool: colorPool, fontSize: fontSize, font: font);
+      if (p != null) placements.add(p);
     }
-
-    var extraAttempts = targetCount * 4;
-    while (placements.length < targetCount && extraAttempts > 0) {
-      extraAttempts -= 1;
-      final placement = _tryPlacementAnywhere(
-        width: width,
-        height: height,
-        watermarkText: watermarkText,
-        colorPool: colorPool,
-        fontSize: fontSize,
-        font: font,
-      );
-      if (placement != null) {
-        placements.add(placement);
-      }
+    var extra = targetCount * 4;
+    while (placements.length < targetCount && extra-- > 0) {
+      final p = _tryPlacementAnywhere(width: width, height: height, watermarkText: watermarkText, colorPool: colorPool, fontSize: fontSize, font: font);
+      if (p != null) placements.add(p);
     }
-
     return placements;
   }
 
-  static _Placement? _tryPlacementInCell({
-    required int width,
-    required int height,
-    required String watermarkText,
-    required int cellColumn,
-    required int cellRow,
-    required double cellWidth,
-    required double cellHeight,
-    required List<_ResolvedColor> colorPool,
-    required int fontSize,
-    required WatermarkFont font,
-  }) {
-    for (var attempt = 0; attempt < 6; attempt++) {
-      final angle = _randomAngle();
-      final rotatedSize = _rotatedStampSize(watermarkText, fontSize, angle);
-      if (rotatedSize.$1 >= width || rotatedSize.$2 >= height) {
-        continue;
-      }
-
-      final minX = (cellColumn * cellWidth).floor();
-      final maxX = min(
-        width - 1,
-        (((cellColumn + 1) * cellWidth).floor() - 1).clamp(-rotatedSize.$1 + 1, width - 1),
-      );
-      final minY = (cellRow * cellHeight).floor();
-      final maxY = min(
-        height - 1,
-        (((cellRow + 1) * cellHeight).floor() - 1).clamp(-rotatedSize.$2 + 1, height - 1),
-      );
-
-      final relaxedMinX = max(-rotatedSize.$1 + 1, minX - (rotatedSize.$1 ~/ 3));
-      final relaxedMinY = max(-rotatedSize.$2 + 1, minY - (rotatedSize.$2 ~/ 3));
-
-      if (maxX < relaxedMinX || maxY < relaxedMinY) {
-        continue;
-      }
-
-      final x = relaxedMinX + _random.nextInt(maxX - relaxedMinX + 1);
-      final y = relaxedMinY + _random.nextInt(maxY - relaxedMinY + 1);
-      final resolvedColor = _pickColor(colorPool);
-      return _Placement(
-        x: x,
-        y: y,
-        fontSize: fontSize,
-        angle: angle,
-        colorKey: resolvedColor.key,
-        color: resolvedColor.color,
-        font: font,
-      );
+  static _Placement? _tryPlacementInCell({required int width, required int height, required String watermarkText, required int cellColumn, required int cellRow, required double cellWidth, required double cellHeight, required List<_ResolvedColor> colorPool, required int fontSize, required WatermarkFont font}) {
+    for (var i = 0; i < 6; i++) {
+      final angle = _randomAngle(); final size = _rotatedStampSize(watermarkText, fontSize, angle);
+      if (size.$1 >= width || size.$2 >= height) continue;
+      final minX = (cellColumn * cellWidth).floor(); final maxX = min(width - 1, ((cellColumn + 1) * cellWidth).floor() - 1);
+      final minY = (cellRow * cellHeight).floor(); final maxY = min(height - 1, ((cellRow + 1) * cellHeight).floor() - 1);
+      final rMinX = max(-size.$1 + 1, minX - (size.$1 ~/ 3)); final rMinY = max(-size.$2 + 1, minY - (size.$2 ~/ 3));
+      if (maxX < rMinX || maxY < rMinY) continue;
+      final x = rMinX + _random.nextInt(maxX - rMinX + 1); final y = rMinY + _random.nextInt(maxY - rMinY + 1);
+      final color = _pickColor(colorPool);
+      return _Placement(x: x, y: y, fontSize: fontSize, angle: angle, colorKey: color.key, color: color.color, font: font);
     }
-
     return null;
   }
 
-  static _Placement? _tryPlacementAnywhere({
-    required int width,
-    required int height,
-    required String watermarkText,
-    required List<_ResolvedColor> colorPool,
-    required int fontSize,
-    required WatermarkFont font,
-  }) {
-    for (var attempt = 0; attempt < 12; attempt++) {
-      final angle = _randomAngle();
-      final rotatedSize = _rotatedStampSize(watermarkText, fontSize, angle);
-      if (rotatedSize.$1 >= width || rotatedSize.$2 >= height) {
-        continue;
-      }
-
-      final minX = -rotatedSize.$1 + 1;
-      final maxX = width - 1;
-      final minY = -rotatedSize.$2 + 1;
-      final maxY = height - 1;
-      final x = minX + _random.nextInt(maxX - minX + 1);
-      final y = minY + _random.nextInt(maxY - minY + 1);
-      final resolvedColor = _pickColor(colorPool);
-      return _Placement(
-        x: x,
-        y: y,
-        fontSize: fontSize,
-        angle: angle,
-        colorKey: resolvedColor.key,
-        color: resolvedColor.color,
-        font: font,
-      );
+  static _Placement? _tryPlacementAnywhere({required int width, required int height, required String watermarkText, required List<_ResolvedColor> colorPool, required int fontSize, required WatermarkFont font}) {
+    for (var i = 0; i < 12; i++) {
+      final angle = _randomAngle(); final size = _rotatedStampSize(watermarkText, fontSize, angle);
+      if (size.$1 >= width || size.$2 >= height) continue;
+      final x = _random.nextInt(width + size.$1) - size.$1 + 1; final y = _random.nextInt(height + size.$2) - size.$2 + 1;
+      final color = _pickColor(colorPool);
+      return _Placement(x: x, y: y, fontSize: fontSize, angle: angle, colorKey: color.key, color: color.color, font: font);
     }
-
     return null;
   }
 
-  static (int, int) _rotatedStampSize(String watermarkText, int fontSize, double angle) {
-    final scale = fontSize / 24.0;
-    final baseWidth = max(1, (watermarkText.length * 18 * scale).round());
-    final baseHeight = (48 * scale).round();
-    final scaledWidth = max(1, baseWidth);
-    final scaledHeight = max(1, baseHeight);
-    final radians = angle * pi / 180.0;
-    final rotatedWidth =
-        (scaledWidth * cos(radians).abs() + scaledHeight * sin(radians).abs()).ceil();
-    final rotatedHeight =
-        (scaledWidth * sin(radians).abs() + scaledHeight * cos(radians).abs()).ceil();
-    return (rotatedWidth, rotatedHeight);
+  static (int, int) _rotatedStampSize(String text, int fontSize, double angle) {
+    final s = fontSize / 24.0; final w = max(1, (text.length * 18 * s).round()); final h = (48 * s).round();
+    final r = angle * pi / 180.0;
+    return ((w * cos(r).abs() + h * sin(r).abs()).ceil(), (w * sin(r).abs() + h * cos(r).abs()).ceil());
   }
 
-  static int _watermarkCount(int width, int height, double density) {
-    final area = width * height;
-    final baseDensity = area / 18000;
-    final densityFactor = (density / 50).clamp(0.4, 2.0);
-    return max(8, (baseDensity * 2.69 * densityFactor).round());
-  }
-
-  static int _alphaFromTransparency(double transparency) {
-    if (transparency >= 100) return 0; // Completely transparent
-    final opacity = (100 - transparency) / 100; // Allow 0-100%
-    return (opacity * 255).round();
-  }
+  static int _watermarkCount(int w, int h, double d) => max(8, ((w * h / 18000) * 2.69 * (d / 50).clamp(0.4, 2.0)).round());
+  static int _alphaFromTransparency(double t) => t >= 100 ? 0 : ((100 - t) / 100 * 255).round();
 
   static img.Image _resizeToTarget(img.Image image, int? targetSize) {
-    if (targetSize == null) {
-      return image;
-    }
+    if (targetSize == null || max(image.width, image.height) <= targetSize) return image;
+    final s = targetSize / max(image.width, image.height);
+    try { return img.copyResize(image, width: (image.width * s).round(), height: (image.height * s).round(), interpolation: img.Interpolation.average); }
+    catch (e) { throw WatermarkError(type: WatermarkErrorType.memoryLimitExceeded, message: 'Not enough memory to resize image', originalError: e); }
+  }
 
-    final width = image.width;
-    final height = image.height;
-    final longestSide = max(width, height);
+  static Uint8List _encodePngForSharing(img.Image image) => Uint8List.fromList(img.encodePng(image, level: 2));
 
-    if (longestSide <= targetSize) {
-      return image; // Do not upscale
-    }
+  static Uint8List _encodeImageInOriginalFormat(img.Image image, String ext, int q, bool stegan) {
+    if (stegan || ext.toLowerCase() == '.png' || ext.toLowerCase() == '.webp') return Uint8List.fromList(img.encodePng(image, level: 2));
+    return Uint8List.fromList(img.encodeJpg(image, quality: q));
+  }
 
-    // Downscale while preserving aspect ratio
-    final scale = targetSize / longestSide;
-    final newWidth = (width * scale).round();
-    final newHeight = (height * scale).round();
+  static double _randomAngle() => _random.nextInt((360 / _angleStepDegrees).round()) * _angleStepDegrees;
 
+  static List<_ResolvedColor> _buildColorPool(bool rnd, int val, int a) => rnd ? List.generate(_randomColorPoolSize, (i) => _ResolvedColor(key: i, color: _randomWatermarkColor(a))) : [_ResolvedColor(key: (a << 24) | (val & 0xFFFFFF), color: _resolveWatermarkColor(false, val, a))];
+
+  static _ResolvedColor _pickColor(List<_ResolvedColor> pool) => pool[_random.nextInt(pool.length)];
+
+  static img.Color _randomWatermarkColor(int a) {
+    final h = _random.nextDouble() * 360;
+    const s = 0.8;
+    const v = 0.95;
+    const c = v * s;
+    final x = c * (1 - (((h / 60) % 2) - 1).abs());
+    const m = v - c;
+    double r, g, b;
+    if (h < 60) { r=c; g=x; b=0; } else if (h < 120) { r=x; g=c; b=0; } else if (h < 180) { r=0; g=c; b=x; } else if (h < 240) { r=0; g=x; b=c; } else if (h < 300) { r=x; g=0; b=c; } else { r=c; g=0; b=x; }
+    return img.ColorRgba8(((r+m)*255).round(), ((g+m)*255).round(), ((b+m)*255).round(), a);
+  }
+
+  static img.Color _resolveWatermarkColor(bool rnd, int val, int a) => rnd ? _randomWatermarkColor(a) : img.ColorRgba8((val >> 16) & 0xFF, (val >> 8) & 0xFF, val & 0xFF, a);
+
+  static Future<ProcessResult> _processPdfRasterFallback({required Uint8List inputBytes, required File file, required double transparency, required double density, required String watermarkText, required bool useRandomColor, required int selectedColorValue, required double fontSize, required WatermarkFont font, required int jpegQuality, bool includeTimestamp = false, String filePrefix = 'securemark-', double antiAiLevel = 0.0, bool useSteganography = false, String? steganographyPassword, String? hiddenFileName, Uint8List? hiddenFileBytes, QrWatermarkConfig? qrConfig, ProgressCallback? onProgress, CancellationToken? cancellationToken}) async {
     try {
-      return img.copyResize(
-        image,
-        width: newWidth,
-        height: newHeight,
-        interpolation: img.Interpolation.average,
-      );
-    } catch (e) {
-      throw WatermarkError(
-        type: WatermarkErrorType.memoryLimitExceeded,
-        message: 'Not enough memory to resize image',
-        originalError: e,
-      );
-    }
-  }
-
-  static Uint8List _encodePngForSharing(img.Image image) {
-    return Uint8List.fromList(img.encodePng(image, level: 2));
-  }
-
-  /// Encode image in the original format to preserve file type
-  static Uint8List _encodeImageInOriginalFormat(img.Image image, String extension, int jpegQuality, bool useSteganography) {
-    if (useSteganography) {
-      // Always force PNG for steganography as JPEG/WebP (lossy) destroys LSB data
-      return Uint8List.fromList(img.encodePng(image, level: 2));
-    }
-
-    switch (extension.toLowerCase()) {
-      case '.jpg':
-      case '.jpeg':
-        return Uint8List.fromList(img.encodeJpg(image, quality: jpegQuality));
-      case '.png':
-        return Uint8List.fromList(img.encodePng(image, level: 2));
-      case '.webp':
-        // WebP encoding may not be available in current image package version
-        // Fall back to PNG encoding for WebP files
-        return Uint8List.fromList(img.encodePng(image, level: 2));
-      default:
-        // Default to PNG for unsupported formats
-        return Uint8List.fromList(img.encodePng(image, level: 2));
-    }
-  }
-
-  static double _randomAngle() {
-    final stepCount = (360 / _angleStepDegrees).round();
-    return _random.nextInt(stepCount) * _angleStepDegrees;
-  }
-
-  static List<_ResolvedColor> _buildColorPool(
-    bool useRandomColor,
-    int selectedColorValue,
-    int alpha,
-  ) {
-    if (!useRandomColor) {
-      final color = _resolveWatermarkColor(false, selectedColorValue, alpha);
-      return <_ResolvedColor>[
-        _ResolvedColor(key: (alpha << 24) | (selectedColorValue & 0x00FFFFFF), color: color),
-      ];
-    }
-
-    return List<_ResolvedColor>.generate(_randomColorPoolSize, (index) {
-      return _ResolvedColor(
-        key: index,
-        color: _randomWatermarkColor(alpha),
-      );
-    });
-  }
-
-  static _ResolvedColor _pickColor(List<_ResolvedColor> colorPool) {
-    return colorPool[_random.nextInt(colorPool.length)];
-  }
-
-  static img.Color _randomWatermarkColor(int alpha) {
-    final hue = _random.nextDouble() * 360;
-    const double saturation = 0.8;
-    const double value = 0.95;
-    const double chroma = value * saturation;
-    final x = chroma * (1 - (((hue / 60) % 2) - 1).abs());
-    const double m = value - chroma;
-
-    double red;
-    double green;
-    double blue;
-
-    if (hue < 60) {
-      red = chroma;
-      green = x;
-      blue = 0;
-    } else if (hue < 120) {
-      red = x;
-      green = chroma;
-      blue = 0;
-    } else if (hue < 180) {
-      red = 0;
-      green = chroma;
-      blue = x;
-    } else if (hue < 240) {
-      red = 0;
-      green = x;
-      blue = chroma;
-    } else if (hue < 300) {
-      red = x;
-      green = 0;
-      blue = chroma;
-    } else {
-      red = chroma;
-      green = 0;
-      blue = x;
-    }
-
-    return img.ColorRgba8(
-      ((red + m) * 255).round(),
-      ((green + m) * 255).round(),
-      ((blue + m) * 255).round(),
-      alpha,
-    );
-  }
-
-  static img.Color _resolveWatermarkColor(
-    bool useRandomColor,
-    int selectedColorValue,
-    int alpha,
-  ) {
-    if (useRandomColor) {
-      return _randomWatermarkColor(alpha);
-    }
-
-    final red = (selectedColorValue >> 16) & 0xFF;
-    final green = (selectedColorValue >> 8) & 0xFF;
-    final blue = selectedColorValue & 0xFF;
-    return img.ColorRgba8(red, green, blue, alpha);
-  }
-
-  static Future<ProcessResult> _processPdfRasterFallback({
-    required Uint8List inputBytes,
-    required File file,
-    required double transparency,
-    required double density,
-    required String watermarkText,
-    required bool useRandomColor,
-    required int selectedColorValue,
-    required double fontSize,
-    required WatermarkFont font,
-    required int jpegQuality,
-    bool includeTimestamp = false,
-    String filePrefix = 'securemark-',
-    double antiAiLevel = 0.0,
-    bool useSteganography = false,
-    String? steganographyPassword,
-    String? hiddenFileName,
-    Uint8List? hiddenFileBytes,
-    QrWatermarkConfig? qrConfig,
-    ProgressCallback? onProgress,
-    CancellationToken? cancellationToken,
-  }) async {
-    try {
-      final doc = pw.Document();
-      Uint8List? preview;
-      var hasPages = false;
-      var pageCount = 0;
-      var processedPages = 0;
-      Uint8List? firstPageOriginalBytes; // Declare here
-
-      // Use a safe DPI for fallback processing
-      const double fallbackDpi = 150;
-
-      await for (final page in Printing.raster(inputBytes, dpi: fallbackDpi)) {
+      final doc = pw.Document(); Uint8List? preview; var hasPages = false; var pageCount = 0; var processed = 0; Uint8List? firstPageOriginal;
+      await for (final page in Printing.raster(inputBytes, dpi: 150)) {
         if (cancellationToken?.isCancelled == true) {
-          throw const WatermarkError(
-            type: WatermarkErrorType.operationCancelled,
-            message: 'Operation cancelled during PDF fallback processing',
-          );
+          throw const WatermarkError(type: WatermarkErrorType.operationCancelled, message: 'Operation cancelled');
         }
-
-        hasPages = true;
-        pageCount++;
-
-        final pngBytes = await page.toPng();
-        firstPageOriginalBytes ??= pngBytes; // Use null-aware assignment
-        final decoded = img.decodeImage(pngBytes);
-
-        var watermarked = img.Image.from(decoded!);
-
-        // For PDF processing, we can pre-render the stamp here (not in isolate)
-        Map<String, Uint8List>? pdfStamps;
+        hasPages = true; pageCount++; final png = await page.toPng(); firstPageOriginal ??= png;
+        final decoded = img.decodeImage(png); var watermarked = img.Image.from(decoded!);
+        Map<String, Uint8List>? stamps;
         if (!font.isBitmap) {
-          final stampKey = '${font.fontFamily}-${fontSize.round()}';
-          final stampBytes = await _renderTextWithFlutterCanvas(
-            text: watermarkText,
-            font: font,
-            fontSize: fontSize.round(),
-            color: const ui.Color.fromARGB(255, 255, 255, 255), // White base, will be colorized
-          );
-          pdfStamps = {stampKey: stampBytes};
+          final bytes = await _renderTextWithFlutterCanvas(text: watermarkText, font: font, fontSize: fontSize.round(), color: const ui.Color.fromARGB(255, 255, 255, 255));
+          stamps = {'${font.fontFamily}-${fontSize.round()}': bytes};
         }
-
-        _applyWatermarkField(
-          watermarked,
-          watermarkText,
-          transparency,
-          density,
-          useRandomColor,
-          selectedColorValue,
-          fontSize,
-          font,
-          pdfStamps,
-          antiAiLevel: antiAiLevel,
-          qrConfig: qrConfig,
-        );
-
-        // Apply steganography if requested (LSB embedding)
+        _applyWatermarkField(watermarked, watermarkText, transparency, density, useRandomColor, selectedColorValue, fontSize, font, stamps, antiAiLevel: antiAiLevel, qrConfig: qrConfig);
         if (useSteganography) {
           if (hiddenFileName != null && hiddenFileBytes != null) {
-            // Embed a hidden file
-            watermarked = _embedFileIntoImage(
-              watermarked, 
-              hiddenFileName, 
-              hiddenFileBytes,
-              password: steganographyPassword,
-            );
+            watermarked = _embedFileIntoImage(watermarked, hiddenFileName, hiddenFileBytes, password: steganographyPassword);
           } else {
-            // Embed text watermark signature
-            watermarked = _embedLSB(
-              watermarked, 
-              watermarkText,
-              password: steganographyPassword,
-            );
+            watermarked = _embedLSB(watermarked, watermarkText, password: steganographyPassword);
           }
         }
-
-        // Apply invisible QR if configured
         if (qrConfig != null && qrConfig.invisibleQr) {
-          final qrData = _buildQrMetadata(qrConfig);
-          watermarked = _embedQrCodeLSB(watermarked, qrData);
+          watermarked = _embedQrCodeLSB(watermarked, _buildQrMetadata(qrConfig));
         }
-
-        final encoded = _encodePngForSharing(watermarked);
-        preview ??= encoded;
-
-        final provider = pw.MemoryImage(encoded);
-        final format = PdfPageFormat(
-          page.width.toDouble(),
-          page.height.toDouble(),
-        );
-
-        doc.addPage(
-          pw.Page(
-            pageFormat: format,
-            margin: pw.EdgeInsets.zero,
-            build: (_) => pw.SizedBox.expand(
-              child: pw.Image(provider, fit: pw.BoxFit.fill),
-            ),
-          ),
-        );
-
-        processedPages++;
-        onProgress?.call(0.3 + (processedPages / (pageCount + 1)) * 0.6, 'Processing page $processedPages (fallback)...');
+        final encoded = _encodePngForSharing(watermarked); preview ??= encoded;
+        doc.addPage(pw.Page(pageFormat: PdfPageFormat(page.width.toDouble(), page.height.toDouble()), margin: pw.EdgeInsets.zero, build: (_) => pw.SizedBox.expand(child: pw.Image(pw.MemoryImage(encoded), fit: pw.BoxFit.fill))));
+        processed++; onProgress?.call(0.3 + (processed / (pageCount + 1)) * 0.6, 'Page $processed...');
       }
-
       if (!hasPages) {
-        throw WatermarkError(
-          type: WatermarkErrorType.invalidPdfData,
-          message: 'PDF contains no readable pages in fallback mode',
-          filePath: file.path,
-        );
+        throw WatermarkError(type: WatermarkErrorType.invalidPdfData, message: 'No readable pages', filePath: file.path);
       }
-
-      final outputBytes = await doc.save();
-      final outputPath = _outputPath(file.path, '.pdf', includeTimestamp, filePrefix);
-
-      // Verify steganography if enabled (check first page preview)
+      final out = await doc.save(); final path = _outputPath(file.path, '.pdf', includeTimestamp, filePrefix);
       bool verified = false;
       if ((useSteganography || hiddenFileName != null || (qrConfig?.invisibleQr == true)) && preview != null) {
-        onProgress?.call(0.95, 'Verifying steganography...');
-
-        // Use the new combined analyzer for verification
         final analysis = analyzeImage(preview, password: steganographyPassword);
-
         if (hiddenFileName != null) {
           verified = analysis.file != null && analysis.file!.fileName == hiddenFileName;
         } else if (qrConfig?.invisibleQr == true) {
-          verified = analysis.qrData != null && analysis.qrData!.isNotEmpty;
+          verified = analysis.qrData != null;
         } else {
           verified = analysis.signature == watermarkText;
         }
-
-        if (verified) {
-          onProgress?.call(0.98, 'Steganography verified');
-        } else {
-          onProgress?.call(0.98, 'Steganography verification failed');
-        }
       }
-
-      return ProcessResult(
-        outputPath: outputPath,
-        outputBytes: outputBytes,
-        previewBytes: preview,
-        originalBytes: firstPageOriginalBytes, // Use the stored original bytes
-        steganographyVerified: verified,
-      );
-    } catch (e) {
-      throw WatermarkError(
-        type: WatermarkErrorType.invalidPdfData,
-        message: 'Completely failed to process PDF (both vector and raster engines)',
-        filePath: file.path,
-        originalError: e,
-      );
-    }
+      return ProcessResult(outputPath: path, outputBytes: out, previewBytes: preview, originalBytes: firstPageOriginal, steganographyVerified: verified);
+    } catch (e) { throw WatermarkError(type: WatermarkErrorType.invalidPdfData, message: 'Failed PDF raster', filePath: file.path, originalError: e); }
   }
 
-  static String _outputPath(String originalPath, String targetExtension, [bool includeTimestamp = false, String filePrefix = 'securemark-']) {
-    final directory = p.dirname(originalPath);
-    final baseName = p.basenameWithoutExtension(originalPath);
-
-    String suffix = '';
-    if (includeTimestamp) {
-      final now = DateTime.now();
-      suffix = '-${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}'
-               '-${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
-    }
-
-    // Ensure output extension is .png if steganography is used
-    if (targetExtension != '.pdf' && WatermarkProcessor.isSteganographyEnabled) { // Access static flag
-      targetExtension = '.png';
-    }
-
-    return p.join(directory, '$filePrefix$baseName$suffix$targetExtension');
+  static String _outputPath(String path, String ext, [bool ts = false, String pref = 'securemark-']) {
+    String s = ''; if (ts) { final n = DateTime.now(); s = '-${n.year}${n.month.toString().padLeft(2,'0')}${n.day.toString().padLeft(2,'0')}-${n.hour.toString().padLeft(2,'0')}${n.minute.toString().padLeft(2,'0')}'; }
+    if (ext != '.pdf' && WatermarkProcessor.isSteganographyEnabled) ext = '.png';
+    return p.join(p.dirname(path), '$pref${p.basenameWithoutExtension(path)}$s$ext');
   }
 
-  static String _resolvedWatermarkText(String userText) {
-    final now = DateTime.now();
-    final date = '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-    final time = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
-    final trimmed = userText.trim();
-    if (trimmed.isEmpty) {
-      return '$date $time';
-    }
-    return '$trimmed $date $time';
+  static String _resolvedWatermarkText(String t) {
+    final n = DateTime.now(); final d = '${n.year}-${n.month.toString().padLeft(2,'0')}-${n.day.toString().padLeft(2,'0')}'; final s = '${n.hour.toString().padLeft(2,'0')}:${n.minute.toString().padLeft(2,'0')}:${n.second.toString().padLeft(2,'0')}';
+    return t.trim().isEmpty ? '$d $s' : '${t.trim()} $d $s';
   }
 }
-
