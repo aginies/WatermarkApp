@@ -1061,6 +1061,24 @@ class WatermarkProcessor {
     return image;
   }
 
+  static Future<AnalysisResult> analyzeFileAsync(Uint8List bytes, String fileName, {String? password}) async {
+    final ext = p.extension(fileName).toLowerCase();
+    
+    if (ext == '.pdf') {
+      try {
+        await for (final page in Printing.raster(bytes, dpi: 150, pages: [0])) {
+          final png = await page.toPng();
+          return await analyzeImageAsync(png, password: password);
+        }
+      } catch (e) {
+        debugPrint('Error analyzing PDF: $e');
+      }
+      return const AnalysisResult();
+    } else {
+      return await analyzeImageAsync(bytes, password: password);
+    }
+  }
+
   static Future<AnalysisResult> analyzeImageAsync(Uint8List bytes, {String? password}) async {
     return await Isolate.run(() => analyzeImage(bytes, password: password));
   }

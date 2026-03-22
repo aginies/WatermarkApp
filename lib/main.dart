@@ -941,7 +941,8 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
     
     final result = await FilePicker.platform.pickFiles(
       allowMultiple: false,
-      type: FileType.image,
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'jpeg', 'png', 'webp', 'pdf', 'heic', 'heif'],
       withData: true, // Crucial for cloud providers
     );
 
@@ -959,7 +960,7 @@ class _WatermarkPageState extends State<WatermarkPage> with WidgetsBindingObserv
       final password = _extractionPassword.isNotEmpty ? _extractionPassword : null;
 
       // Check for all types of hidden data in a single pass
-      final analysis = await WatermarkProcessor.analyzeImageAsync(bytes, password: password);
+      final analysis = await WatermarkProcessor.analyzeFileAsync(bytes, pickedFile.name, password: password);
 
       // Build combined result
       final results = <String>[];
