@@ -2824,7 +2824,10 @@ class _WatermarkPageState extends State<WatermarkPage>
           runSpacing: 12,
           children: [
             FilledButton.icon(
-              onPressed: _processing || _selectedPaths.isEmpty
+              onPressed: _processing ||
+                      _selectedPaths.isEmpty ||
+                      (_watermarkType == WatermarkType.image &&
+                          _watermarkImageBytes == null)
                   ? null
                   : _applyWatermark,
               icon: const Icon(Icons.auto_fix_high),
