@@ -3,7 +3,6 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:secure_mark/qr_config.dart';
 import 'package:secure_mark/watermark_processor.dart';
 
 void main() {
@@ -12,7 +11,6 @@ void main() {
     late String dummyFileContent;
     late String testText;
     late String testPassword;
-    late QrWatermarkConfig testQrConfig;
     late File appJpgCopy;
 
     setUpAll(() async {
@@ -31,13 +29,6 @@ void main() {
       dummyFileContent = 'This is a test file for steganography.';
       dummyFileBytes = Uint8List.fromList(utf8.encode(dummyFileContent));
       testPassword = 'test-password-2026';
-
-      testQrConfig = QrWatermarkConfig(
-        timestamp: DateTime.now(),
-        type: QrType.metadata,
-        author: 'Antoine Giniès',
-        url: 'https://github.com/aginies/WatermarkApp',
-      );
     });
 
     tearDownAll(() async {
