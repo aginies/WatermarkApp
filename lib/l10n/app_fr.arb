@@ -352,6 +352,7 @@
       }
     }
   },
+  "antiAiProtectionNote": "Note : une protection élevée augmente significativement le temps de génération de l'image.",
   "qrContentType": "Type de contenu QR",
   "qrTypeMetadata": "Métadonnées (JSON)",
   "qrTypeUrl": "Redirection Site Web",

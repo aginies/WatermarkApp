@@ -39,44 +39,45 @@ void main() {
       // (processFile usually saves them near the source)
     });
 
-        test('Ultimate Scenario: ALL TOGETHER (LSB Signature + Robust DCT + Hidden File)',
-            () async {
-          final result = await WatermarkProcessor.processFile(
-            file: appJpgCopy,
-            watermarkText: testText,
-            useSteganography: true, // For LSB Signature & File
-            useRobustSteganography: true, // For DCT Signature
-            hiddenFileName: 'test_hidden.txt',
-            hiddenFileBytes: dummyFileBytes,
-            steganographyPassword: testPassword,
-            transparency: 50,
-            density: 15,
-            useRandomColor: true,
-            selectedColorValue: 0xFFFF0000,
-            fontSize: 24,
-          );
-    
-          // 1. Verify internal verification flags in ProcessResult
-          expect(result.steganographyVerified, true,
-              reason: 'LSB/File verification failed during processing');
-          expect(result.robustVerified, true,
-              reason: 'Robust DCT verification failed during processing');
-    
-          // 2. Perform manual extraction for deeper verification
-          final analysis = await WatermarkProcessor.analyzeImageAsync(
-            result.outputBytes,
-            password: testPassword,
-          );
-    
-          expect(analysis.signature, startsWith(testText),
-              reason: 'LSB Signature extraction mismatch');
-          expect(analysis.robustSignature, startsWith(testText),
-              reason: 'Robust DCT Signature extraction mismatch');
-          expect(analysis.file?.fileName, 'test_hidden.txt',
-              reason: 'Hidden File name mismatch');
-          expect(utf8.decode(analysis.file!.fileBytes), dummyFileContent,
-              reason: 'Hidden File content mismatch');
-        });
+    test(
+        'Ultimate Scenario: ALL TOGETHER (LSB Signature + Robust DCT + Hidden File)',
+        () async {
+      final result = await WatermarkProcessor.processFile(
+        file: appJpgCopy,
+        watermarkText: testText,
+        useSteganography: true, // For LSB Signature & File
+        useRobustSteganography: true, // For DCT Signature
+        hiddenFileName: 'test_hidden.txt',
+        hiddenFileBytes: dummyFileBytes,
+        steganographyPassword: testPassword,
+        transparency: 50,
+        density: 15,
+        useRandomColor: true,
+        selectedColorValue: 0xFFFF0000,
+        fontSize: 24,
+      );
+
+      // 1. Verify internal verification flags in ProcessResult
+      expect(result.steganographyVerified, true,
+          reason: 'LSB/File verification failed during processing');
+      expect(result.robustVerified, true,
+          reason: 'Robust DCT verification failed during processing');
+
+      // 2. Perform manual extraction for deeper verification
+      final analysis = await WatermarkProcessor.analyzeImageAsync(
+        result.outputBytes,
+        password: testPassword,
+      );
+
+      expect(analysis.signature, startsWith(testText),
+          reason: 'LSB Signature extraction mismatch');
+      expect(analysis.robustSignature, startsWith(testText),
+          reason: 'Robust DCT Signature extraction mismatch');
+      expect(analysis.file?.fileName, 'test_hidden.txt',
+          reason: 'Hidden File name mismatch');
+      expect(utf8.decode(analysis.file!.fileBytes), dummyFileContent,
+          reason: 'Hidden File content mismatch');
+    });
 
     test('Scenario: Only Robust Watermark', () async {
       final result = await WatermarkProcessor.processFile(
@@ -120,10 +121,9 @@ void main() {
           await WatermarkProcessor.analyzeImageAsync(result.outputBytes);
       expect(analysis.file?.fileName, 'only_file.dat');
       expect(analysis.file?.fileBytes, dummyFileBytes);
-            expect(analysis.signature,
-                isNotNull,
-                reason:
-                    'LSB Signature always contains at least a timestamp if useSteganography is true');
-          });
-        });
-      }
+      expect(analysis.signature, isNotNull,
+          reason:
+              'LSB Signature always contains at least a timestamp if useSteganography is true');
+    });
+  });
+}

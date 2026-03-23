@@ -512,6 +512,10 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get antiAiProtectionNote =>
+      'Note : une protection élevée augmente significativement le temps de génération de l\'image.';
+
+  @override
   String get qrContentType => 'Type de contenu QR';
 
   @override

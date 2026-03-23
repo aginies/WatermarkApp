@@ -1112,8 +1112,6 @@ class _WatermarkPageState extends State<WatermarkPage>
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(l10n.fileAnalyzerDescription),
-                const SizedBox(height: 16),
                 TextField(
                   obscureText: true,
                   decoration: InputDecoration(
@@ -1123,12 +1121,17 @@ class _WatermarkPageState extends State<WatermarkPage>
                     prefixIcon: const Icon(Icons.lock_outline),
                   ),
                   onChanged: (value) {
+                    setDialogState(() {
+                      _extractionPassword = value;
+                    });
                     setState(() {
                       _extractionPassword = value;
                     });
                   },
                   controller: _extractionPasswordController,
                 ),
+                const SizedBox(height: 16),
+                Text(l10n.fileAnalyzerDescription),
                 const SizedBox(height: 24),
                 if (_analyzingFile)
                   const CircularProgressIndicator()
@@ -1395,25 +1398,24 @@ class _WatermarkPageState extends State<WatermarkPage>
                     },
                   ),
                   const SizedBox(height: 8),
-                                    CheckboxListTile(
-                                      title: Text(l10n.robustSteganographyTitle),
-                                      subtitle: Text(l10n.robustSteganographySubtitle),
-                                      value: _useRobustSteganography,
-                                      contentPadding: EdgeInsets.zero,
-                                      onChanged: (value) {
-                                        final bool enabled = value ?? false;
-                                        setDialogState(() {
-                                          _useRobustSteganography = enabled;
-                                        });
-                                        setState(() {
-                                          _useRobustSteganography = enabled;
-                                        });
-                                        _savePreference('useRobustSteganography', enabled);
-                                      },
-                                    ),
-                                    const SizedBox(height: 8),
-                  
-                                    CheckboxListTile(
+                  CheckboxListTile(
+                    title: Text(l10n.robustSteganographyTitle),
+                    subtitle: Text(l10n.robustSteganographySubtitle),
+                    value: _useRobustSteganography,
+                    contentPadding: EdgeInsets.zero,
+                    onChanged: (value) {
+                      final bool enabled = value ?? false;
+                      setDialogState(() {
+                        _useRobustSteganography = enabled;
+                      });
+                      setState(() {
+                        _useRobustSteganography = enabled;
+                      });
+                      _savePreference('useRobustSteganography', enabled);
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  CheckboxListTile(
                     title: Text(l10n.hideFileWithSteganographyTitle),
                     subtitle: Text(l10n.hideFileWithSteganographySubtitle),
                     value: _hideFileWithSteganography,
@@ -2020,6 +2022,17 @@ class _WatermarkPageState extends State<WatermarkPage>
                         _savePreference('antiAiLevel', value);
                       },
                     ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: Text(
+                        l10n.antiAiProtectionNote,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontStyle: FontStyle.italic,
+                          color: theme.textTheme.bodySmall?.color
+                              ?.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       l10n.imageResizingLabel('').replaceAll(': ', ''),
@@ -2603,30 +2616,51 @@ class _WatermarkPageState extends State<WatermarkPage>
                     const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
               ),
             ),
-            if (_useSteganography &&
-                !_steganographyVerificationFailed) // Show "Verified" icon when steganography is enabled
-              Tooltip(
-                message: l10n.steganographyEnabledHint,
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 4.0),
-                  child:
-                      Icon(Icons.verified_user_outlined, color: Colors.green),
-                ),
-              ),
-            if (_steganographyVerificationFailed) // Show warning icon when verification failed
-              Tooltip(
-                message: l10n.steganographyVerificationFailed,
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 4.0),
-                  child: Icon(Icons.warning_outlined, color: Colors.red),
-                ),
-              ),
-            if (_qrVisible) // Show QR icon if QR is enabled
-              Tooltip(
-                message: l10n.qrWatermarkTitle,
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 4.0),
-                  child: Icon(Icons.qr_code_2, color: Colors.blue),
+            // Status icons group
+            if ((_useSteganography && !_steganographyVerificationFailed) ||
+                _useRobustSteganography ||
+                _steganographyVerificationFailed ||
+                _qrVisible)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_useSteganography && !_steganographyVerificationFailed)
+                      Tooltip(
+                        message: l10n.steganographyEnabledHint,
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 2.0),
+                          child: Icon(Icons.verified_user_outlined,
+                              color: Colors.green),
+                        ),
+                      ),
+                    if (_useRobustSteganography)
+                      Tooltip(
+                        message: l10n.robustSteganographyTitle,
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 2.0),
+                          child:
+                              Icon(Icons.shield_outlined, color: Colors.indigo),
+                        ),
+                      ),
+                    if (_steganographyVerificationFailed)
+                      Tooltip(
+                        message: l10n.steganographyVerificationFailed,
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 2.0),
+                          child: Icon(Icons.warning_outlined, color: Colors.red),
+                        ),
+                      ),
+                    if (_qrVisible)
+                      Tooltip(
+                        message: l10n.qrWatermarkTitle,
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 2.0),
+                          child: Icon(Icons.qr_code_2, color: Colors.blue),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             // Hide Save button on mobile platforms (iOS/Android)
@@ -2914,6 +2948,9 @@ class _WatermarkPageState extends State<WatermarkPage>
 
   Future<void> _processPaths(List<String> paths) async {
     if (_processing || paths.isEmpty) return;
+
+    // Clear cache to force regeneration
+    WatermarkProcessor.clearCache();
 
     _addLog('Processing ${paths.length} paths');
     final l10n = AppLocalizations.of(context)!;

@@ -352,6 +352,7 @@
       }
     }
   },
+  "antiAiProtectionNote": "Note: higher protection significantly increases the time to generate the securemarked image.",
   "qrContentType": "QR Content Type",
   "qrTypeMetadata": "Metadata (JSON)",
   "qrTypeUrl": "Website Redirect",

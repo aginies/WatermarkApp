@@ -896,6 +896,12 @@ abstract class AppLocalizations {
   /// **'Anti-AI Protection: {value}%'**
   String antiAiProtectionValue(int value);
 
+  /// No description provided for @antiAiProtectionNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note: higher protection significantly increases the time to generate the securemarked image.'**
+  String get antiAiProtectionNote;
+
   /// No description provided for @qrContentType.
   ///
   /// In en, this message translates to:

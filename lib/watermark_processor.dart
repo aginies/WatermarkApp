@@ -595,25 +595,29 @@ class WatermarkProcessor {
       final outputPath =
           _outputPath(file.path, outputExtension, includeTimestamp, filePrefix);
 
-            // Verify steganography if enabled
-            bool verified = false;
-            bool robustVerified = false;
-            if (useSteganography || useRobustSteganography || hiddenFileName != null) {
-              onProgress?.call(0.95, 'Verifying steganography...');
-      
-              // Use the new combined analyzer for verification
-              final analysis = analyzeImage(outputBytes, password: steganographyPassword);
-              
-              if (useSteganography || hiddenFileName != null) {
-                bool allVerified = true;
-                if (hiddenFileName != null) {
-                  allVerified &= (analysis.file != null && analysis.file!.fileName == hiddenFileName);
-                }
-                if (useSteganography) {
-                  allVerified &= (analysis.signature == watermarkText);
-                }
-                verified = allVerified;
-              }
+      // Verify steganography if enabled
+      bool verified = false;
+      bool robustVerified = false;
+      if (useSteganography ||
+          useRobustSteganography ||
+          hiddenFileName != null) {
+        onProgress?.call(0.95, 'Verifying steganography...');
+
+        // Use the new combined analyzer for verification
+        final analysis =
+            analyzeImage(outputBytes, password: steganographyPassword);
+
+        if (useSteganography || hiddenFileName != null) {
+          bool allVerified = true;
+          if (hiddenFileName != null) {
+            allVerified &= (analysis.file != null &&
+                analysis.file!.fileName == hiddenFileName);
+          }
+          if (useSteganography) {
+            allVerified &= (analysis.signature == watermarkText);
+          }
+          verified = allVerified;
+        }
 
         if (useRobustSteganography) {
           robustVerified = analysis.robustSignature == watermarkText;
@@ -1238,9 +1242,7 @@ class WatermarkProcessor {
       final robustSignature = _extractRobustSignature(image);
 
       return AnalysisResult(
-          signature: signature,
-          robustSignature: robustSignature,
-          file: file);
+          signature: signature, robustSignature: robustSignature, file: file);
     } catch (e) {
       return const AnalysisResult();
     }
@@ -1598,42 +1600,43 @@ class WatermarkProcessor {
       Map<String, Uint8List>? preRenderedStamps,
       {double antiAiLevel = 0.0,
       QrWatermarkConfig? qrConfig}) {
-    if (transparency >= 100) return;
-    final placements = _buildPlacements(
-        width: image.width,
-        height: image.height,
-        watermarkText: watermarkText,
-        transparency: transparency,
-        density: density,
-        useRandomColor: useRandomColor,
-        selectedColorValue: selectedColorValue,
-        fontSize: fontSize.round(),
-        font: font);
-    final stampCache = <String, img.Image>{};
-    for (final placement in placements) {
-      final jitterX =
-          ((antiAiLevel / 100.0) * 10 * (_random.nextDouble() - 0.5)).round();
-      final jitterY =
-          ((antiAiLevel / 100.0) * 10 * (_random.nextDouble() - 0.5)).round();
-      var stamp = stampCache.putIfAbsent(
-          '${placement.angle.round()}-${placement.colorKey}',
-          () => _buildWatermarkStamp(
-              watermarkText, placement, preRenderedStamps));
-      if (antiAiLevel > 0) {
-        stamp = stamp.clone();
-        for (final pixel in stamp) {
-          if (pixel.a > 0) {
-            pixel.a = (pixel.a +
-                    (antiAiLevel / 100.0) * 40 * (_random.nextDouble() - 0.5))
-                .clamp(0, 255)
-                .toInt();
+    if (transparency < 100) {
+      final placements = _buildPlacements(
+          width: image.width,
+          height: image.height,
+          watermarkText: watermarkText,
+          transparency: transparency,
+          density: density,
+          useRandomColor: useRandomColor,
+          selectedColorValue: selectedColorValue,
+          fontSize: fontSize.round(),
+          font: font);
+      final stampCache = <String, img.Image>{};
+      for (final placement in placements) {
+        final jitterX =
+            ((antiAiLevel / 100.0) * 10 * (_random.nextDouble() - 0.5)).round();
+        final jitterY =
+            ((antiAiLevel / 100.0) * 10 * (_random.nextDouble() - 0.5)).round();
+        var stamp = stampCache.putIfAbsent(
+            '${placement.angle.round()}-${placement.colorKey}',
+            () => _buildWatermarkStamp(
+                watermarkText, placement, preRenderedStamps));
+        if (antiAiLevel > 0) {
+          stamp = stamp.clone();
+          for (final pixel in stamp) {
+            if (pixel.a > 0) {
+              pixel.a = (pixel.a +
+                      (antiAiLevel / 100.0) * 40 * (_random.nextDouble() - 0.5))
+                  .clamp(0, 255)
+                  .toInt();
+            }
           }
         }
+        img.compositeImage(image, stamp,
+            dstX: placement.x + jitterX,
+            dstY: placement.y + jitterY,
+            blend: img.BlendMode.alpha);
       }
-      img.compositeImage(image, stamp,
-          dstX: placement.x + jitterX,
-          dstY: placement.y + jitterY,
-          blend: img.BlendMode.alpha);
     }
     if (qrConfig != null && qrConfig.visibleQr) {
       final qrSize = qrConfig.size.round();

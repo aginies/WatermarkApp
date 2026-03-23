@@ -507,6 +507,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get antiAiProtectionNote =>
+      'Note: higher protection significantly increases the time to generate the securemarked image.';
+
+  @override
   String get qrContentType => 'QR Content Type';
 
   @override
