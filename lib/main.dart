@@ -741,6 +741,7 @@ class _WatermarkPageState extends State<WatermarkPage>
         const SizedBox(height: 16),
         _buildColorCard(),
         const SizedBox(height: 16),
+        _buildStatusIconsBox(),
         _buildActionButtons(),
         const SizedBox(height: 16),
         Row(
@@ -2673,6 +2674,122 @@ class _WatermarkPageState extends State<WatermarkPage>
     );
   }
 
+  Widget _buildStatusIconsBox() {
+    final l10n = AppLocalizations.of(context)!;
+
+    if (!((_useSteganography && !_steganographyVerificationFailed) ||
+        _useRobustSteganography ||
+        _steganographyVerificationFailed ||
+        _qrVisible ||
+        _targetSize != null ||
+        _zipOutputs ||
+        _antiAiLevel > 0 ||
+        (_hideFileWithSteganography && _hiddenFileBytes != null))) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_useSteganography && !_steganographyVerificationFailed)
+                GestureDetector(
+                  onDoubleTap: _showSteganographyOptions,
+                  child: Tooltip(
+                    message: l10n.steganographyEnabledHint,
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8.0),
+                      child:
+                          Icon(Icons.verified_user_outlined, color: Colors.green),
+                    ),
+                  ),
+                ),
+              if (_useRobustSteganography)
+                GestureDetector(
+                  onDoubleTap: _showSteganographyOptions,
+                  child: Tooltip(
+                    message: l10n.robustSteganographyTitle,
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Icon(Icons.shield_outlined, color: Colors.indigo),
+                    ),
+                  ),
+                ),
+              if (_targetSize != null)
+                GestureDetector(
+                  onDoubleTap: _showExpertOptions,
+                  child: Tooltip(
+                    message: l10n.imageResizingEnabledHint,
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8.0),
+                      child:
+                          Icon(Icons.photo_size_select_large, color: Colors.orange),
+                    ),
+                  ),
+                ),
+              if (_steganographyVerificationFailed)
+                GestureDetector(
+                  onDoubleTap: _showSteganographyOptions,
+                  child: Tooltip(
+                    message: l10n.steganographyVerificationFailed,
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Icon(Icons.warning_outlined, color: Colors.red),
+                    ),
+                  ),
+                ),
+              if (_qrVisible)
+                GestureDetector(
+                  onDoubleTap: _showQrWatermarkOptions,
+                  child: Tooltip(
+                    message: l10n.qrWatermarkTitle,
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Icon(Icons.qr_code_2, color: Colors.blue),
+                    ),
+                  ),
+                ),
+              if (_hideFileWithSteganography && _hiddenFileBytes != null)
+                GestureDetector(
+                  onDoubleTap: _showSteganographyOptions,
+                  child: Tooltip(
+                    message: l10n.hideFileEnabledHint,
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Icon(Icons.attachment, color: Colors.brown),
+                    ),
+                  ),
+                ),
+              if (_zipOutputs)
+                Tooltip(
+                  message: l10n.zipEnabledHint,
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Icon(Icons.folder_zip, color: Colors.amber),
+                  ),
+                ),
+              if (_antiAiLevel > 0)
+                GestureDetector(
+                  onDoubleTap: _showExpertOptions,
+                  child: Tooltip(
+                    message: l10n.antiAiEnabledHint,
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Icon(Icons.auto_awesome, color: Colors.purple),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildActionButtons() {
     final l10n = AppLocalizations.of(context)!;
     final isMobile = !kIsWeb && (Platform.isIOS || Platform.isAndroid);
@@ -2695,54 +2812,6 @@ class _WatermarkPageState extends State<WatermarkPage>
                     const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
               ),
             ),
-            // Status icons group
-            if ((_useSteganography && !_steganographyVerificationFailed) ||
-                _useRobustSteganography ||
-                _steganographyVerificationFailed ||
-                _qrVisible)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (_useSteganography && !_steganographyVerificationFailed)
-                      Tooltip(
-                        message: l10n.steganographyEnabledHint,
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 2.0),
-                          child: Icon(Icons.verified_user_outlined,
-                              color: Colors.green),
-                        ),
-                      ),
-                    if (_useRobustSteganography)
-                      Tooltip(
-                        message: l10n.robustSteganographyTitle,
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 2.0),
-                          child:
-                              Icon(Icons.shield_outlined, color: Colors.indigo),
-                        ),
-                      ),
-                    if (_steganographyVerificationFailed)
-                      Tooltip(
-                        message: l10n.steganographyVerificationFailed,
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 2.0),
-                          child:
-                              Icon(Icons.warning_outlined, color: Colors.red),
-                        ),
-                      ),
-                    if (_qrVisible)
-                      Tooltip(
-                        message: l10n.qrWatermarkTitle,
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 2.0),
-                          child: Icon(Icons.qr_code_2, color: Colors.blue),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
             // Hide Save button on mobile platforms (iOS/Android)
             if (!isMobile)
               FilledButton.icon(

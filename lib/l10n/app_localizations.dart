@@ -420,6 +420,12 @@ abstract class AppLocalizations {
   /// **'Image Resizing: {size}'**
   String imageResizingLabel(String size);
 
+  /// No description provided for @imageResizingEnabledHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Image resizing is enabled'**
+  String get imageResizingEnabledHint;
+
   /// No description provided for @resizeNone.
   ///
   /// In en, this message translates to:
@@ -672,6 +678,24 @@ abstract class AppLocalizations {
   /// **'Pick and Analyze'**
   String get pickAndAnalyze;
 
+  /// No description provided for @encryptedFileDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'🔐 Encrypted file detected: {name}. Please provide the correct password.'**
+  String encryptedFileDetected(Object name);
+
+  /// No description provided for @hiddenFileDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'📁 Hidden file detected: {name} ({size})'**
+  String hiddenFileDetected(Object name, Object size);
+
+  /// No description provided for @encryptedSignatureDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'🔐 Encrypted signature detected. Please provide the correct password.'**
+  String get encryptedSignatureDetected;
+
   /// No description provided for @signatureFound.
   ///
   /// In en, this message translates to:
@@ -731,6 +755,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Embed an entire file within the image (might increase output size)'**
   String get hideFileWithSteganographySubtitle;
+
+  /// No description provided for @hideFileEnabledHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A hidden file will be embedded'**
+  String get hideFileEnabledHint;
 
   /// No description provided for @selectFileToHide.
   ///
@@ -947,6 +977,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Note: higher protection significantly increases the time to generate the securemarked image.'**
   String get antiAiProtectionNote;
+
+  /// No description provided for @antiAiEnabledHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Anti-AI protection is enabled'**
+  String get antiAiEnabledHint;
 
   /// No description provided for @qrContentType.
   ///

@@ -225,6 +225,10 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get imageResizingEnabledHint =>
+      'Il ridimensionamento dell\'immagine è abilitato';
+
+  @override
   String get resizeNone => 'Nessuno (Originale)';
 
   @override
@@ -370,6 +374,20 @@ class AppLocalizationsIt extends AppLocalizations {
   String get pickAndAnalyze => 'Scegli e analizza';
 
   @override
+  String encryptedFileDetected(Object name) {
+    return '🔐 Rilevato file crittografato: $name. Inserisci la password corretta.';
+  }
+
+  @override
+  String hiddenFileDetected(Object name, Object size) {
+    return '📁 Rilevato file nascosto: $name ($size)';
+  }
+
+  @override
+  String get encryptedSignatureDetected =>
+      '🔐 Rilevata firma crittografata. Inserisci la password corretta.';
+
+  @override
   String signatureFound(String message) {
     return '✅ Firma trovata: \"$message\"';
   }
@@ -409,6 +427,9 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get hideFileWithSteganographySubtitle =>
       'Incorpora un intero file all\'interno dell\'immagine (potrebbe aumentare le dimensioni dell\'output)';
+
+  @override
+  String get hideFileEnabledHint => 'Un file nascosto verrà incorporato';
 
   @override
   String get selectFileToHide => 'Seleziona il file da nascondere';
@@ -536,6 +557,9 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get antiAiProtectionNote =>
       'Nota: una protezione più elevata aumenta significativamente il tempo necessario per generare l\'immagine protetta.';
+
+  @override
+  String get antiAiEnabledHint => 'La protezione Anti-IA è abilitata';
 
   @override
   String get qrContentType => 'Tipo di contenuto QR';

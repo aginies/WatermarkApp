@@ -181,6 +181,7 @@
       }
     }
   },
+  "imageResizingEnabledHint": "Le redimensionnement d'image est activé",
   "resizeNone": "Aucun (Original)",
   "pixelUnit": "{value} px",
   "@pixelUnit": {
@@ -292,6 +293,7 @@
   "steganographyEnabledHint": "La stéganographie est activée et sera appliquée",
   "hideFileWithSteganographyTitle": "Cacher un fichier (expérimental)",
   "hideFileWithSteganographySubtitle": "Incorporer un fichier entier dans l'image (peut augmenter la taille de sortie)",
+  "hideFileEnabledHint": "Un fichier caché sera incorporé",
   "selectFileToHide": "Sélectionner un fichier à cacher",
   "selectedHiddenFile": "Fichier caché : {name}",
   "@selectedHiddenFile": {
@@ -377,6 +379,7 @@
     }
   },
   "antiAiProtectionNote": "Note : une protection élevée augmente significativement le temps de génération de l'image.",
+  "antiAiEnabledHint": "La protection Anti-IA est activée",
   "qrContentType": "Type de contenu QR",
   "qrTypeMetadata": "Métadonnées (JSON)",
   "qrTypeUrl": "Redirection Site Web",
