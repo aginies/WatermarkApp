@@ -290,8 +290,6 @@
   "qrMode": "QR Code Mode",
   "qrVisibleMode": "Visible QR Code",
   "qrVisibleModeDesc": "Show QR code on the image",
-  "qrInvisibleMode": "Invisible QR Code (LSB)",
-  "qrInvisibleModeDesc": "Hide QR data in pixels (requires PNG output)",
   "qrAuthorLabel": "Author Name",
   "qrAuthorHint": "e.g., John Doe",
   "qrUrlLabel": "URL or Website",
@@ -319,7 +317,6 @@
       }
     }
   },
-  "qrInvisibleNote": "Note: To hide the QR code invisibly (LSB), use the Steganography menu.",
   "receivedFilesFromSharing": "📥 Received {count} file(s) from sharing",
   "@receivedFilesFromSharing": {
     "placeholders": {
@@ -365,14 +362,6 @@
   "vCardEmail": "Email Address",
   "vCardOrg": "Organization",
   "invalidUrlError": "Please enter a valid URL (e.g., https://example.com)",
-  "qrDataExtracted": "✅ QR Code found: {data}",
-  "@qrDataExtracted": {
-    "placeholders": {
-      "data": {
-        "type": "String"
-      }
-    }
-  },
   "noQrFound": "❌ No QR code detected",
   "abToggleTooltipOriginal": "Show Original",
   "abToggleTooltipProcessed": "Show Processed",

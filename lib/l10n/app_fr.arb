@@ -290,8 +290,6 @@
   "qrMode": "Mode QR Code",
   "qrVisibleMode": "QR Code Visible",
   "qrVisibleModeDesc": "Afficher le QR code sur l'image",
-  "qrInvisibleMode": "QR Code Invisible (LSB)",
-  "qrInvisibleModeDesc": "Cacher les données QR dans les pixels (nécessite sortie PNG)",
   "qrAuthorLabel": "Nom de l'auteur",
   "qrAuthorHint": "ex: Jean Dupont",
   "qrUrlLabel": "URL ou Site Web",
@@ -319,7 +317,6 @@
       }
     }
   },
-  "qrInvisibleNote": "Note : Pour cacher le QR code de façon invisible (LSB), utilisez le menu Stéganographie.",
   "receivedFilesFromSharing": "📥 {count} fichier(s) reçu(s) depuis le partage",
   "@receivedFilesFromSharing": {
     "placeholders": {
@@ -365,15 +362,6 @@
   "vCardEmail": "Adresse email",
   "vCardOrg": "Organisation",
   "invalidUrlError": "Veuillez entrer une URL valide (ex: https://exemple.fr)",
-  "qrDataExtracted": "✅ QR Code trouvé : {data}",
-  "@qrDataExtracted": {
-    "placeholders": {
-      "data": {
-        "type": "String"
-      }
-    }
-  },
-  "noQrFound": "❌ Aucun QR code détecté",
   "abToggleTooltipOriginal": "Afficher l'original",
   "abToggleTooltipProcessed": "Afficher le traité",
   "processingCancelled": "Traitement annulé",

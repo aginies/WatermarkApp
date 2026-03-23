@@ -434,13 +434,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get qrVisibleModeDesc => 'Show QR code on the image';
 
   @override
-  String get qrInvisibleMode => 'Invisible QR Code (LSB)';
-
-  @override
-  String get qrInvisibleModeDesc =>
-      'Hide QR data in pixels (requires PNG output)';
-
-  @override
   String get qrAuthorLabel => 'Author Name';
 
   @override
@@ -482,10 +475,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String qrOpacityValue(int value) {
     return 'QR Code Opacity: $value%';
   }
-
-  @override
-  String get qrInvisibleNote =>
-      'Note: To hide the QR code invisibly (LSB), use the Steganography menu.';
 
   @override
   String receivedFilesFromSharing(int count) {
@@ -547,11 +536,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get invalidUrlError =>
       'Please enter a valid URL (e.g., https://example.com)';
-
-  @override
-  String qrDataExtracted(String data) {
-    return '✅ QR Code found: $data';
-  }
 
   @override
   String get noQrFound => '❌ No QR code detected';

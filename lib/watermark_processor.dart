@@ -127,13 +127,11 @@ class AnalysisResult {
     this.signature,
     this.robustSignature,
     this.file,
-    this.qrData,
   });
 
   final String? signature;
   final String? robustSignature;
   final ExtractedFileResult? file;
-  final String? qrData;
 }
 
 /// Progress callback for reporting processing progress
@@ -473,7 +471,7 @@ class WatermarkProcessor {
     final hiddenFileHash =
         hiddenFileBytes != null ? hiddenFileBytes.length.toString() : 'none';
     final qrHash = qrConfig != null
-        ? '${qrConfig.visibleQr}-${qrConfig.invisibleQr}-${qrConfig.author}-${qrConfig.url}-${qrConfig.position}-${qrConfig.size}'
+        ? '${qrConfig.visibleQr}-${qrConfig.author}-${qrConfig.url}-${qrConfig.position}-${qrConfig.size}'
         : 'none';
     return '$filePath-$transparency-$density-$watermarkText-$useRandomColor-$selectedColorValue-$fontSize-${font.fontFamily}-$jpegQuality-$targetSize-$includeTimestamp-$preserveMetadata-$rasterizePdf-$filePrefix-$antiAiLevel-$useSteganography-$useRobustSteganography-$steganographyPassword-$hiddenFileName-$hiddenFileHash-$qrHash';
   }
@@ -597,36 +595,25 @@ class WatermarkProcessor {
       final outputPath =
           _outputPath(file.path, outputExtension, includeTimestamp, filePrefix);
 
-      // Verify steganography if enabled
-      bool verified = false;
-      bool robustVerified = false;
-      if (useSteganography ||
-          useRobustSteganography ||
-          hiddenFileName != null ||
-          (qrConfig?.invisibleQr == true)) {
-        onProgress?.call(0.95, 'Verifying steganography...');
-
-        // Use the new combined analyzer for verification
-        final analysis =
-            analyzeImage(outputBytes, password: steganographyPassword);
-
-        if (useSteganography ||
-            hiddenFileName != null ||
-            (qrConfig?.invisibleQr == true)) {
-          bool allVerified = true;
-          if (hiddenFileName != null) {
-            allVerified &= (analysis.file != null &&
-                analysis.file!.fileName == hiddenFileName);
-          }
-          if (qrConfig?.invisibleQr == true) {
-            allVerified &=
-                (analysis.qrData != null && analysis.qrData!.isNotEmpty);
-          }
-          if (useSteganography) {
-            allVerified &= (analysis.signature == watermarkText);
-          }
-          verified = allVerified;
-        }
+            // Verify steganography if enabled
+            bool verified = false;
+            bool robustVerified = false;
+            if (useSteganography || useRobustSteganography || hiddenFileName != null) {
+              onProgress?.call(0.95, 'Verifying steganography...');
+      
+              // Use the new combined analyzer for verification
+              final analysis = analyzeImage(outputBytes, password: steganographyPassword);
+              
+              if (useSteganography || hiddenFileName != null) {
+                bool allVerified = true;
+                if (hiddenFileName != null) {
+                  allVerified &= (analysis.file != null && analysis.file!.fileName == hiddenFileName);
+                }
+                if (useSteganography) {
+                  allVerified &= (analysis.signature == watermarkText);
+                }
+                verified = allVerified;
+              }
 
         if (useRobustSteganography) {
           robustVerified = analysis.robustSignature == watermarkText;
@@ -1034,13 +1021,7 @@ class WatermarkProcessor {
         );
       }
 
-      var forcePng = useSteganography || useRobustSteganography;
-      if (qrConfig != null && qrConfig.invisibleQr) {
-        final qrData = _buildQrMetadata(qrConfig);
-        outputImage = _embedQrCodeLSB(outputImage, qrData,
-            channel: 'r'); // Use Red channel for QR
-        forcePng = true;
-      }
+      final forcePng = useSteganography || useRobustSteganography;
 
       return _encodeImageInOriginalFormat(
           outputImage, originalExtension, jpegQuality, forcePng);
@@ -1242,14 +1223,16 @@ class WatermarkProcessor {
 
       String? signature;
       ExtractedFileResult? file;
-      String? qrData;
 
       // Check each channel (B, G, R) for any of our steganography types
       for (final channel in ['b', 'g', 'r']) {
         final result = _checkChannel(image, channel, password);
-        if (result.signature != null) signature = result.signature;
-        if (result.file != null) file = result.file;
-        if (result.qrData != null) qrData = result.qrData;
+        if (result.signature != null) {
+          signature = result.signature;
+        }
+        if (result.file != null) {
+          file = result.file;
+        }
       }
 
       final robustSignature = _extractRobustSignature(image);
@@ -1257,8 +1240,7 @@ class WatermarkProcessor {
       return AnalysisResult(
           signature: signature,
           robustSignature: robustSignature,
-          file: file,
-          qrData: qrData);
+          file: file);
     } catch (e) {
       return const AnalysisResult();
     }
@@ -1293,10 +1275,6 @@ class WatermarkProcessor {
       return AnalysisResult(
           file: _extractFileFromImage(image, type == 69, password,
               channel: channel));
-    }
-    if (type == 81) {
-      return AnalysisResult(
-          qrData: _extractQrFromImage(image, channel: channel));
     }
 
     return const AnalysisResult();
@@ -1438,54 +1416,6 @@ class WatermarkProcessor {
     }
   }
 
-  static String? _extractQrFromImage(img.Image image, {String channel = 'r'}) {
-    try {
-      final int width = image.width;
-      final int totalPixels = width * image.height;
-      final List<int> bytes = <int>[];
-      var currentByte = 0;
-      for (var i = 16; i < 48; i++) {
-        final pixel = image.getPixel(i % width, i ~/ width);
-        currentByte = (currentByte << 1) | _getChannelBit(pixel, channel);
-        if ((i + 1) % 8 == 0) {
-          bytes.add(currentByte);
-          currentByte = 0;
-        }
-      }
-      final int qrLength =
-          (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3];
-      if (qrLength <= 0 || qrLength > 10240) {
-        return null;
-      }
-      final int totalDataBytes = qrLength + 2;
-      final int remainingPixels = totalPixels - 48;
-      if (totalDataBytes * 8 > remainingPixels) {
-        return null;
-      }
-      final int stride =
-          (remainingPixels ~/ (totalDataBytes * 8)).clamp(1, 1000);
-      currentByte = 0;
-      bytes.clear();
-      for (var i = 0; i < totalDataBytes * 8; i++) {
-        final pixelIdx = 48 + (i * stride);
-        final pixel = image.getPixel(pixelIdx % width, pixelIdx ~/ width);
-        currentByte = (currentByte << 1) | _getChannelBit(pixel, channel);
-        if ((i + 1) % 8 == 0) {
-          bytes.add(currentByte);
-          currentByte = 0;
-        }
-      }
-      final qrBytes = bytes.sublist(0, qrLength);
-      final extractedCrc = (bytes[qrLength] << 8) | bytes[qrLength + 1];
-      if (_crc16(qrBytes) != extractedCrc) {
-        return null;
-      }
-      return utf8.decode(qrBytes, allowMalformed: true);
-    } catch (_) {
-      return null;
-    }
-  }
-
   static Future<ExtractedFileResult?> extractFileAsync(Uint8List imageBytes,
       {String? password}) async {
     return await Isolate.run(() => extractFile(imageBytes, password: password));
@@ -1597,53 +1527,6 @@ class WatermarkProcessor {
           (imageHeight - qrSize) ~/ 2
         ),
     };
-  }
-
-  static img.Image _embedQrCodeLSB(img.Image image, String qrData,
-      {String channel = 'r'}) {
-    try {
-      final qrBytes = utf8.encode(qrData);
-      final crc = _crc16(qrBytes);
-      final headerBytes = utf8.encode('SQ');
-      final fullPayload = BytesBuilder();
-      fullPayload.add(headerBytes);
-      final length = qrBytes.length;
-      fullPayload.add([
-        (length >> 24) & 0xFF,
-        (length >> 16) & 0xFF,
-        (length >> 8) & 0xFF,
-        length & 0xFF
-      ]);
-      fullPayload.add(qrBytes);
-      fullPayload.add([(crc >> 8) & 0xFF, crc & 0xFF]);
-      final payload = fullPayload.toBytes();
-      final totalBits = payload.length * 8;
-      final totalPixels = image.width * image.height;
-      if (totalBits > totalPixels) return image;
-      const int headerBits = 48;
-      for (var i = 0; i < headerBits && i < totalBits; i++) {
-        final bit = (payload[i ~/ 8] >> (7 - (i % 8))) & 1;
-        final pixel = image.getPixel(i % image.width, i ~/ image.width);
-        _setChannelBit(pixel, channel, bit);
-      }
-      final remainingBits = totalBits - headerBits;
-      if (remainingBits > 0) {
-        final stride =
-            ((totalPixels - headerBits) ~/ remainingBits).clamp(1, 1000);
-        for (var i = 0; i < remainingBits; i++) {
-          final bitIdx = headerBits + i;
-          final bit = (payload[bitIdx ~/ 8] >> (7 - (bitIdx % 8))) & 1;
-          final pixelIdx = headerBits + (i * stride);
-          if (pixelIdx >= totalPixels) break;
-          final pixel =
-              image.getPixel(pixelIdx % image.width, pixelIdx ~/ image.width);
-          _setChannelBit(pixel, channel, bit);
-        }
-      }
-      return image;
-    } catch (e) {
-      return image;
-    }
   }
 
   static img.Image _buildWatermarkStamp(String watermarkText,
@@ -2056,10 +1939,6 @@ class WatermarkProcessor {
           watermarked = _embedLSB(watermarked, watermarkText,
               password: steganographyPassword, channel: 'b');
         }
-        if (qrConfig != null && qrConfig.invisibleQr) {
-          watermarked = _embedQrCodeLSB(watermarked, _buildQrMetadata(qrConfig),
-              channel: 'r');
-        }
         final encoded = _encodePngForSharing(watermarked);
         preview ??= encoded;
         doc.addPage(pw.Page(
@@ -2085,22 +1964,15 @@ class WatermarkProcessor {
       bool robustVerified = false;
       if ((useSteganography ||
               useRobustSteganography ||
-              hiddenFileName != null ||
-              (qrConfig?.invisibleQr == true)) &&
+              hiddenFileName != null) &&
           preview != null) {
         final analysis = analyzeImage(preview, password: steganographyPassword);
 
-        if (useSteganography ||
-            hiddenFileName != null ||
-            (qrConfig?.invisibleQr == true)) {
+        if (useSteganography || hiddenFileName != null) {
           bool allVerified = true;
           if (hiddenFileName != null) {
             allVerified &= (analysis.file != null &&
                 analysis.file!.fileName == hiddenFileName);
-          }
-          if (qrConfig?.invisibleQr == true) {
-            allVerified &=
-                (analysis.qrData != null && analysis.qrData!.isNotEmpty);
           }
           if (useSteganography) {
             allVerified &= (analysis.signature == watermarkText);

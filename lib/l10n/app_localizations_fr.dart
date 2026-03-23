@@ -439,13 +439,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get qrVisibleModeDesc => 'Afficher le QR code sur l\'image';
 
   @override
-  String get qrInvisibleMode => 'QR Code Invisible (LSB)';
-
-  @override
-  String get qrInvisibleModeDesc =>
-      'Cacher les données QR dans les pixels (nécessite sortie PNG)';
-
-  @override
   String get qrAuthorLabel => 'Nom de l\'auteur';
 
   @override
@@ -487,10 +480,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String qrOpacityValue(int value) {
     return 'Opacité du QR Code : $value%';
   }
-
-  @override
-  String get qrInvisibleNote =>
-      'Note : Pour cacher le QR code de façon invisible (LSB), utilisez le menu Stéganographie.';
 
   @override
   String receivedFilesFromSharing(int count) {
@@ -554,12 +543,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Veuillez entrer une URL valide (ex: https://exemple.fr)';
 
   @override
-  String qrDataExtracted(String data) {
-    return '✅ QR Code trouvé : $data';
-  }
-
-  @override
-  String get noQrFound => '❌ Aucun QR code détecté';
+  String get noQrFound => '❌ No QR code detected';
 
   @override
   String get abToggleTooltipOriginal => 'Afficher l\'original';

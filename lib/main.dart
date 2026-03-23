@@ -177,7 +177,6 @@ class _WatermarkPageState extends State<WatermarkPage>
 
   // QR Code Configuration
   bool _qrVisible = false;
-  bool _qrInvisible = false;
   QrType _qrType = QrType.metadata;
   String _qrAuthor = '';
   String _qrUrl = '';
@@ -303,7 +302,6 @@ class _WatermarkPageState extends State<WatermarkPage>
 
           // Load QR watermark preferences
           _qrVisible = prefs.getBool('qrVisible') ?? false;
-          _qrInvisible = prefs.getBool('qrInvisible') ?? false;
           final qrTypeIndex = prefs.getInt('qrType');
           if (qrTypeIndex != null &&
               qrTypeIndex >= 0 &&
@@ -399,7 +397,8 @@ class _WatermarkPageState extends State<WatermarkPage>
   void _setupPlatformCallHandler() {
     _addLog('📡 Setting up platform method call handler...');
     _platform.setMethodCallHandler((call) async {
-      _addLog('🔔 Received platform call: ${call.method} with arguments: ${call.arguments}');
+      _addLog(
+          '🔔 Received platform call: ${call.method} with arguments: ${call.arguments}');
       if (call.method == 'onSharedFilesReceived') {
         final fileCount = call.arguments;
         _addLog('⭐⭐⭐ SHARE NOTIFICATION: $fileCount files available');
@@ -485,7 +484,8 @@ class _WatermarkPageState extends State<WatermarkPage>
       _addLog('📦 getSharedFiles returned: ${sharedFiles?.length ?? 0} items');
 
       if (sharedFiles != null && sharedFiles.isNotEmpty) {
-        _addLog('📋 Processing ${sharedFiles.length} shared files from Android...');
+        _addLog(
+            '📋 Processing ${sharedFiles.length} shared files from Android...');
 
         final List<String> validFiles = [];
 
@@ -533,7 +533,8 @@ class _WatermarkPageState extends State<WatermarkPage>
           validFiles.add(filePath);
         }
 
-        _addLog('📊 Validation complete: ${validFiles.length}/${sharedFiles.length} files valid');
+        _addLog(
+            '📊 Validation complete: ${validFiles.length}/${sharedFiles.length} files valid');
 
         if (validFiles.isNotEmpty) {
           _addLog('✅ Found ${validFiles.length} valid shared files');
@@ -550,7 +551,8 @@ class _WatermarkPageState extends State<WatermarkPage>
               _processedFiles.clear();
               _previewIndex = 0;
             });
-            _addLog('🎯 State updated: ${_selectedPaths.length} files selected');
+            _addLog(
+                '🎯 State updated: ${_selectedPaths.length} files selected');
             _addLog('📍 Current _selectedPaths: ${_selectedPaths.join(", ")}');
           }
 
@@ -561,7 +563,8 @@ class _WatermarkPageState extends State<WatermarkPage>
             try {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('📥 Received ${validFiles.length} file${validFiles.length > 1 ? 's' : ''} from sharing'),
+                  content: Text(
+                      '📥 Received ${validFiles.length} file${validFiles.length > 1 ? 's' : ''} from sharing'),
                   duration: const Duration(seconds: 3),
                   backgroundColor: Colors.green,
                 ),
@@ -576,7 +579,8 @@ class _WatermarkPageState extends State<WatermarkPage>
             try {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('⚠️ Shared files are not in a supported format (JPG, PNG, WebP, PDF, HEIC/HEIF)'),
+                  content: Text(
+                      '⚠️ Shared files are not in a supported format (JPG, PNG, WebP, PDF, HEIC/HEIF)'),
                   duration: Duration(seconds: 4),
                   backgroundColor: Colors.orange,
                 ),
@@ -1270,10 +1274,6 @@ class _WatermarkPageState extends State<WatermarkPage>
         }
       }
 
-      if (analysis.qrData != null && analysis.qrData!.isNotEmpty) {
-        results.add(l10n.qrDataExtracted(analysis.qrData!));
-      }
-
       if (analysis.signature != null && analysis.signature!.isNotEmpty) {
         final textResult = analysis.signature!;
         if (textResult.contains('[ENCRYPTED]')) {
@@ -1395,41 +1395,25 @@ class _WatermarkPageState extends State<WatermarkPage>
                     },
                   ),
                   const SizedBox(height: 8),
-                  CheckboxListTile(
-                    title: Text(l10n.robustSteganographyTitle),
-                    subtitle: Text(l10n.robustSteganographySubtitle),
-                    value: _useRobustSteganography,
-                    contentPadding: EdgeInsets.zero,
-                    onChanged: (value) {
-                      final bool enabled = value ?? false;
-                      setDialogState(() {
-                        _useRobustSteganography = enabled;
-                      });
-                      setState(() {
-                        _useRobustSteganography = enabled;
-                      });
-                      _savePreference('useRobustSteganography', enabled);
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  CheckboxListTile(
-                    title: Text(l10n.qrInvisibleMode),
-                    subtitle: Text(l10n.qrInvisibleModeDesc),
-                    value: _qrInvisible,
-                    contentPadding: EdgeInsets.zero,
-                    onChanged: (value) {
-                      final bool enabled = value ?? false;
-                      setDialogState(() {
-                        _qrInvisible = enabled;
-                      });
-                      setState(() {
-                        _qrInvisible = enabled;
-                      });
-                      _savePreference('qrInvisible', enabled);
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  CheckboxListTile(
+                                    CheckboxListTile(
+                                      title: Text(l10n.robustSteganographyTitle),
+                                      subtitle: Text(l10n.robustSteganographySubtitle),
+                                      value: _useRobustSteganography,
+                                      contentPadding: EdgeInsets.zero,
+                                      onChanged: (value) {
+                                        final bool enabled = value ?? false;
+                                        setDialogState(() {
+                                          _useRobustSteganography = enabled;
+                                        });
+                                        setState(() {
+                                          _useRobustSteganography = enabled;
+                                        });
+                                        _savePreference('useRobustSteganography', enabled);
+                                      },
+                                    ),
+                                    const SizedBox(height: 8),
+                  
+                                    CheckboxListTile(
                     title: Text(l10n.hideFileWithSteganographyTitle),
                     subtitle: Text(l10n.hideFileWithSteganographySubtitle),
                     value: _hideFileWithSteganography,
@@ -1611,12 +1595,6 @@ class _WatermarkPageState extends State<WatermarkPage>
                         setState(() => _qrVisible = value ?? false);
                         _savePreference('qrVisible', value ?? false);
                       },
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      l10n.qrInvisibleNote,
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(fontStyle: FontStyle.italic),
                     ),
 
                     const SizedBox(height: 16),
@@ -2643,7 +2621,7 @@ class _WatermarkPageState extends State<WatermarkPage>
                   child: Icon(Icons.warning_outlined, color: Colors.red),
                 ),
               ),
-            if (_qrVisible || _qrInvisible) // Show QR icon if QR is enabled
+            if (_qrVisible) // Show QR icon if QR is enabled
               Tooltip(
                 message: l10n.qrWatermarkTitle,
                 child: const Padding(
@@ -3067,7 +3045,7 @@ class _WatermarkPageState extends State<WatermarkPage>
 
         // Build QR config if enabled
         QrWatermarkConfig? qrConfig;
-        if (_qrVisible || _qrInvisible) {
+        if (_qrVisible) {
           qrConfig = QrWatermarkConfig(
             type: _qrType,
             author: _qrAuthor.isNotEmpty ? _qrAuthor : null,
@@ -3082,7 +3060,6 @@ class _WatermarkPageState extends State<WatermarkPage>
             size: _qrSize,
             opacity: _qrOpacity,
             visibleQr: _qrVisible,
-            invisibleQr: _qrInvisible,
           );
         }
 

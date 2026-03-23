@@ -10,8 +10,8 @@ The project is designed for high-security document distribution: choose files, a
 
 - **Visible Watermarking**: Add text stamps to images and PDF files with control over transparency, density, and color.
 - **Robust Blind Watermarking**: Frequency-domain (DCT) signatures that survive image transformations like resizing and compression.
-- **Multi-Layer Steganography**: Simultaneously hide text signatures, entire files, and QR metadata within image pixels using independent RGB channels.
-- **Advanced QR Codes**: Generate visible or invisible QR codes for Metadata (JSON), Website Redirects, or vCard Contact sharing (cross-platform compatible).
+- **Multi-Layer Steganography**: Simultaneously hide text signatures and entire files within image pixels using independent RGB channels.
+- **Advanced QR Codes**: Generate visible QR codes for Metadata (JSON), Website Redirects, or vCard Contact sharing (cross-platform compatible).
 - **Anti-AI Protection**: Apply specialized visual noise to disrupt AI model training and unauthorized scraping.
 - **Batch Processing**: Secure multiple files in one operation with Isolate-based background processing.
 - **File Analyzer**: Built-in tool to detect and extract hidden signatures and files from protected documents.
@@ -31,7 +31,6 @@ The project is designed for high-security document distribution: choose files, a
 SecureMark provides multiple levels of hidden protection:
 - **LSB Signature (Blue Channel)**: Classical invisible text signature.
 - **Hidden File (Green Channel)**: Embed an entire secondary file (encrypted with AES-256).
-- **Invisible QR (Red Channel)**: Hidden metadata accessible only via the analyzer.
 - **Robust DCT**: Experimental frequency-domain marking for persistence against lossy compression.
 
 ## Font Options

@@ -776,18 +776,6 @@ abstract class AppLocalizations {
   /// **'Show QR code on the image'**
   String get qrVisibleModeDesc;
 
-  /// No description provided for @qrInvisibleMode.
-  ///
-  /// In en, this message translates to:
-  /// **'Invisible QR Code (LSB)'**
-  String get qrInvisibleMode;
-
-  /// No description provided for @qrInvisibleModeDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Hide QR data in pixels (requires PNG output)'**
-  String get qrInvisibleModeDesc;
-
   /// No description provided for @qrAuthorLabel.
   ///
   /// In en, this message translates to:
@@ -865,12 +853,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'QR Code Opacity: {value}%'**
   String qrOpacityValue(int value);
-
-  /// No description provided for @qrInvisibleNote.
-  ///
-  /// In en, this message translates to:
-  /// **'Note: To hide the QR code invisibly (LSB), use the Steganography menu.'**
-  String get qrInvisibleNote;
 
   /// No description provided for @receivedFilesFromSharing.
   ///
@@ -973,12 +955,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please enter a valid URL (e.g., https://example.com)'**
   String get invalidUrlError;
-
-  /// No description provided for @qrDataExtracted.
-  ///
-  /// In en, this message translates to:
-  /// **'✅ QR Code found: {data}'**
-  String qrDataExtracted(String data);
 
   /// No description provided for @noQrFound.
   ///

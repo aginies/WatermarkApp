@@ -26,7 +26,6 @@ class QrWatermarkConfig {
     this.size = 100.0,
     this.opacity = 0.8,
     this.visibleQr = true,
-    this.invisibleQr = false,
   });
 
   final QrType type;
@@ -53,7 +52,6 @@ class QrWatermarkConfig {
 
   // Mode selection
   final bool visibleQr;
-  final bool invisibleQr;
 
   /// Converts metadata to string for QR code content based on selected type
   String toQrString() {
@@ -115,7 +113,6 @@ class QrWatermarkConfig {
     double? size,
     double? opacity,
     bool? visibleQr,
-    bool? invisibleQr,
   }) {
     return QrWatermarkConfig(
       type: type ?? this.type,
@@ -134,7 +131,6 @@ class QrWatermarkConfig {
       size: size ?? this.size,
       opacity: opacity ?? this.opacity,
       visibleQr: visibleQr ?? this.visibleQr,
-      invisibleQr: invisibleQr ?? this.invisibleQr,
     );
   }
 }
