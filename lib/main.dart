@@ -397,19 +397,20 @@ class _WatermarkPageState extends State<WatermarkPage>
   }
 
   void _setupPlatformCallHandler() {
-    _addLog('Setting up platform method call handler...');
+    _addLog('📡 Setting up platform method call handler...');
     _platform.setMethodCallHandler((call) async {
-      _addLog(
-          'Received platform call: ${call.method} with arguments: ${call.arguments}');
+      _addLog('🔔 Received platform call: ${call.method} with arguments: ${call.arguments}');
       if (call.method == 'onSharedFilesReceived') {
         final fileCount = call.arguments;
-        _addLog('⭐ Received share notification: $fileCount files available');
-        // Give Android a moment to finish processing
+        _addLog('⭐⭐⭐ SHARE NOTIFICATION: $fileCount files available');
+        _addLog('⏳ Waiting 300ms for Android to finish...');
         await Future.delayed(const Duration(milliseconds: 300));
+        _addLog('⏰ Calling _handleSharedContent()...');
         await _handleSharedContent();
+        _addLog('✅ _handleSharedContent() completed');
       }
     });
-    _addLog('Platform method call handler ready');
+    _addLog('✅ Platform method call handler ready');
   }
 
   Future<void> _initOutputDirectory() async {
@@ -472,33 +473,45 @@ class _WatermarkPageState extends State<WatermarkPage>
   }
 
   Future<void> _handleSharedContent() async {
-    final l10n = AppLocalizations.of(context)!;
-    _addLog('Checking for shared content...');
+    _addLog('🔍 Checking for shared content...');
+    if (!mounted) {
+      _addLog('⚠️ Widget not mounted, skipping share check');
+      return;
+    }
+
     try {
       final List<dynamic>? sharedFiles =
           await _platform.invokeMethod('getSharedFiles');
-      _addLog('getSharedFiles returned: ${sharedFiles?.length ?? 0} items');
+      _addLog('📦 getSharedFiles returned: ${sharedFiles?.length ?? 0} items');
 
       if (sharedFiles != null && sharedFiles.isNotEmpty) {
-        _addLog('Received ${sharedFiles.length} shared files');
+        _addLog('📋 Processing ${sharedFiles.length} shared files from Android...');
 
         final List<String> validFiles = [];
 
-        for (final file in sharedFiles) {
+        for (var i = 0; i < sharedFiles.length; i++) {
+          final file = sharedFiles[i];
+          _addLog('[$i] Checking item type: ${file.runtimeType}');
+
           if (file is! String) {
-            _addLog('Skipping non-string item: $file');
+            _addLog('[$i] ❌ Skipping non-string item: $file');
             continue;
           }
 
           final filePath = file;
-          _addLog('Checking file: $filePath');
+          _addLog('[$i] 📄 File path: $filePath');
 
-          if (!File(filePath).existsSync()) {
-            _addLog('File does not exist: $filePath');
+          final fileExists = File(filePath).existsSync();
+          _addLog('[$i] File exists: $fileExists');
+
+          if (!fileExists) {
+            _addLog('[$i] ❌ File does not exist');
             continue;
           }
 
           final extension = p.extension(filePath).toLowerCase();
+          _addLog('[$i] Extension: $extension');
+
           final isValid = [
             '.jpg',
             '.jpeg',
@@ -509,47 +522,68 @@ class _WatermarkPageState extends State<WatermarkPage>
             '.heif'
           ].contains(extension);
 
+          _addLog('[$i] Extension valid: $isValid');
+
           if (!isValid) {
-            _addLog('Unsupported extension: $extension for file $filePath');
+            _addLog('[$i] ❌ Unsupported extension');
             continue;
           }
 
-          _addLog('Valid file: $filePath');
+          _addLog('[$i] ✅ VALID FILE - Adding to list');
           validFiles.add(filePath);
         }
 
-        if (validFiles.isNotEmpty) {
-          _addLog('Found ${validFiles.length} valid shared files');
-          // Reset the app state before processing new shared files
-          _reset();
+        _addLog('📊 Validation complete: ${validFiles.length}/${sharedFiles.length} files valid');
 
-          setState(() {
-            _selectedPaths = validFiles;
-            _processedFiles.clear();
-            _previewIndex = 0;
-          });
-          _addLog('Shared files loaded successfully');
+        if (validFiles.isNotEmpty) {
+          _addLog('✅ Found ${validFiles.length} valid shared files');
+          _addLog('📁 Files: ${validFiles.join(", ")}');
+
+          // Reset the app state before processing new shared files
+          _addLog('🔄 Calling _reset() to clear previous state...');
+          await _reset();
+          _addLog('🔄 Reset complete');
+
+          if (mounted) {
+            setState(() {
+              _selectedPaths = validFiles;
+              _processedFiles.clear();
+              _previewIndex = 0;
+            });
+            _addLog('🎯 State updated: ${_selectedPaths.length} files selected');
+            _addLog('📍 Current _selectedPaths: ${_selectedPaths.join(", ")}');
+          }
+
+          _addLog('✨ Shared files loaded successfully');
 
           // Show user-friendly notification
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(l10n.receivedFilesFromSharing(validFiles.length)),
-                duration: const Duration(seconds: 3),
-                backgroundColor: Colors.green,
-              ),
-            );
+            try {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('📥 Received ${validFiles.length} file${validFiles.length > 1 ? 's' : ''} from sharing'),
+                  duration: const Duration(seconds: 3),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            } catch (e) {
+              _addLog('⚠️ Could not show snackbar: $e');
+            }
           }
         } else {
-          _addLog('No valid shared files found after filtering');
+          _addLog('❌ No valid shared files found after filtering');
           if (mounted && sharedFiles.isNotEmpty) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(l10n.unsupportedSharedFormat),
-                duration: const Duration(seconds: 4),
-                backgroundColor: Colors.orange,
-              ),
-            );
+            try {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('⚠️ Shared files are not in a supported format (JPG, PNG, WebP, PDF, HEIC/HEIF)'),
+                  duration: Duration(seconds: 4),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+            } catch (e) {
+              _addLog('⚠️ Could not show error snackbar: $e');
+            }
           }
         }
       } else {
@@ -1908,6 +1942,9 @@ class _WatermarkPageState extends State<WatermarkPage>
                           isExpanded: true,
                           onChanged: (WatermarkFont? newFont) {
                             if (newFont != null) {
+                              setDialogState(() {
+                                _selectedFont = newFont;
+                              });
                               setState(() {
                                 _selectedFont = newFont;
                               });

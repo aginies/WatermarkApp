@@ -1,34 +1,38 @@
 # SecureMark
 
-SecureMark is a Flutter application for adding visible watermarks to images and PDF documents before sharing them, ensuring they are used only for their intended purpose.
+SecureMark is a professional Flutter application designed to secure documents and images with visible watermarks and advanced invisible steganography before sharing them.
 
-The project is designed for lightweight document distribution workflows: choose one or more files, preview the result, adjust watermark settings, then save or share the processed outputs.
+The project is designed for high-security document distribution: choose files, apply multi-layered protection, preview results, and securely share them.
 
 ![App Screenshot](app.jpg)
 
-Author: Antoine Ginies
-
 ## Features
 
-- Add watermarks to images and PDF files
-- Process multiple files in one batch
-- Preview processed results with swipe navigation
-- Adjust watermark transparency (default 75%), color, density, and font size
-- **Multiple font support**: Choose from 16 different fonts including Google Fonts and custom TTF fonts
-- **Extensive color palette**: 10 color options including red, blue, green, orange, pink, cyan, yellow, white, purple, and black
-- **Random or fixed color modes** for varied watermark appearances
-- Share generated files with available applications
-- Resize image output for faster sharing workflows
-- Desktop drag-and-drop support on supported platforms
-- **Expert settings** for fine-tuned control over watermark appearance
-- **Multilingual support** (English and French)
+- **Visible Watermarking**: Add text stamps to images and PDF files with control over transparency, density, and color.
+- **Robust Blind Watermarking**: Frequency-domain (DCT) signatures that survive image transformations like resizing and compression.
+- **Multi-Layer Steganography**: Simultaneously hide text signatures, entire files, and QR metadata within image pixels using independent RGB channels.
+- **Advanced QR Codes**: Generate visible or invisible QR codes for Metadata (JSON), Website Redirects, or vCard Contact sharing (cross-platform compatible).
+- **Anti-AI Protection**: Apply specialized visual noise to disrupt AI model training and unauthorized scraping.
+- **Batch Processing**: Secure multiple files in one operation with Isolate-based background processing.
+- **File Analyzer**: Built-in tool to detect and extract hidden signatures and files from protected documents.
+- **Multilingual support**: Full support for English and French.
+- **Log Management**: Integrated log viewer with the ability to export logs for auditing.
 
 ## Supported Input Formats
 
 - **PNG** - Lossless compression
 - **JPG / JPEG** - With adjustable quality control
 - **WebP** - Modern format with quality control
-- **PDF** - Rasterized processing
+- **HEIC / HEIF** - Native support for modern mobile photo formats
+- **PDF** - Vector or rasterized (flattened) processing
+
+## Security & Steganography
+
+SecureMark provides multiple levels of hidden protection:
+- **LSB Signature (Blue Channel)**: Classical invisible text signature.
+- **Hidden File (Green Channel)**: Embed an entire secondary file (encrypted with AES-256).
+- **Invisible QR (Red Channel)**: Hidden metadata accessible only via the analyzer.
+- **Robust DCT**: Experimental frequency-domain marking for persistence against lossy compression.
 
 ## Font Options
 
@@ -36,90 +40,49 @@ Author: Antoine Ginies
 - Arial (System Default)
 
 ### Google Fonts
-- Roboto (Modern)
-- Open Sans (Clean)
-- Lato (Professional)
-- Montserrat (Bold)
-- Poppins (Rounded)
-- Noto Sans (Universal)
-- Source Code Pro (Monospace)
-- Playfair Display (Elegant)
-- Oswald (Strong)
+- Roboto, Open Sans, Lato, Montserrat, Poppins, Noto Sans, Source Code Pro, Playfair Display, Oswald.
 
 ### Custom TTF Fonts
-Add your own fonts by placing TTF files in the `assets/fonts/` directory. Pre-configured support for:
-- Custom Roboto
-- Custom Open Sans
-- Charis SIL (Serif)
-- Liberation Mono (Monospace)
-- Liberation Serif (Traditional)
-- Bitstream Vera Sans
+Pre-configured support for Charis SIL, Liberation Mono/Serif, and Bitstream Vera Sans. Add your own by placing TTF files in `assets/fonts/`.
 
 ## How It Works
 
-1. Enter the watermark text
-2. Pick one or more image or PDF files (drag & drop supported)
-3. Choose your preferred font style and color
-4. Adjust watermark transparency (75% default), density, and other settings in Expert Options
-5. Click `Apply SecureMark`
-6. Swipe through previews to review results
-7. Save or share the generated files
+1. Enter the watermark text or configure a QR code.
+2. Pick files (images or PDFs) or drag and drop them.
+3. (Optional) Configure Steganography to hide secret data or files.
+4. Adjust visibility settings (Transparency, Density, Font).
+5. Click `Apply SecureMark`.
+6. Preview the result (with A/B comparison) and verify the hidden signatures.
+7. Save or share the protected outputs.
 
 ## Expert Settings
 
-Access advanced watermark customization:
-- **Font Style**: Choose from 16 different fonts
-- **Color Selection**: Fixed color or random color mode
-- **Watermark Transparency**: Adjust visibility (75% default)
-- **Font Size**: Control text size
-- **JPEG/WebP Quality**: Optimize file size vs quality
-- **Target Size**: Resize images for faster sharing
-- **Timestamp**: Add creation timestamp to filenames
+- **Anti-AI Level**: Disrupt AI scraping patterns.
+- **JPEG/WebP Quality**: Balance file size and protection.
+- **Target Size**: Auto-resize for mobile-friendly sharing.
+- **File Prefix & Timestamps**: Customize output naming conventions.
+- **Rasterization**: Flatten PDFs into images for maximum security.
 
-## Platforms
-
-This project is built with Flutter and can target multiple platforms, including:
-
-- Linux
-- Android
-- iOS / iPadOS
-- macOS
-- Windows
-- Web
-
-Platform support depends on your local Flutter toolchain and native SDK setup.
-
-## Development
+## Development & Testing
 
 Install dependencies:
-
 ```bash
 flutter pub get
 ```
 
-Run the app:
-
+Run the application:
 ```bash
 flutter run
 ```
 
-Example for Linux:
-
+Run security & steganography tests:
 ```bash
-flutter run -d linux
-```
-
-Build examples:
-
-```bash
-flutter build apk
-flutter build appbundle
-flutter build ios
+flutter test test/unit/steganography_test.dart
 ```
 
 ## Project Goal
 
-The application focuses on fast, practical watermarking for shared documents rather than archival-quality rendering. It favors smaller output size, quicker previews, and simple distribution through save and share actions.
+SecureMark focuses on providing verifiable proof of ownership and secure distribution for shared documents. It bridges the gap between simple visual watermarking and advanced forensic steganography.
 
 ## License
 
