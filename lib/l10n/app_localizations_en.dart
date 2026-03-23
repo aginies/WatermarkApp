@@ -540,6 +540,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signatureCopied => 'Signature copied to clipboard';
 
   @override
+  String get copySignature => 'Copy signature';
+
+  @override
   String get saveHiddenFile => 'Save Hidden File';
 
   @override

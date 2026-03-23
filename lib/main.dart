@@ -1115,10 +1115,11 @@ class _WatermarkPageState extends State<WatermarkPage>
                 Text(l10n.fileAnalyzerTitle),
               ],
             ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
                   obscureText: true,
                   decoration: InputDecoration(
                     labelText: l10n.steganographyPasswordLabel,
@@ -1167,7 +1168,7 @@ class _WatermarkPageState extends State<WatermarkPage>
                                 icon: const Icon(Icons.copy_rounded, size: 18),
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(),
-                                tooltip: 'Copy signature',
+                                tooltip: l10n.copySignature,
                                 onPressed: () {
                                   // Extract the actual signature text from the result message
                                   // The result message is usually l10n.signatureFound(result)
@@ -1218,7 +1219,8 @@ class _WatermarkPageState extends State<WatermarkPage>
                 ),
               ],
             ),
-            actions: [
+          ),
+          actions: [
               TextButton(
                 onPressed: () {
                   _analysisResult = null;
@@ -1381,11 +1383,12 @@ class _WatermarkPageState extends State<WatermarkPage>
           builder: (context, setDialogState) {
             return AlertDialog(
               title: Text(l10n.steganographyTitle),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  CheckboxListTile(
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    CheckboxListTile(
                     title: Text(l10n.steganographyTitle),
                     subtitle: Text(l10n.steganographySubtitle),
                     value: _useSteganography,
@@ -1554,7 +1557,8 @@ class _WatermarkPageState extends State<WatermarkPage>
                   ],
                 ],
               ),
-              actions: [
+            ),
+            actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
                   child: Text(l10n.close),
@@ -3150,6 +3154,7 @@ class _WatermarkPageState extends State<WatermarkPage>
   }
 
   Future<void> _takePhoto() async {
+    final l10n = AppLocalizations.of(context)!;
     try {
       final ImagePicker picker = ImagePicker();
       final XFile? photo = await picker.pickImage(
@@ -3169,7 +3174,7 @@ class _WatermarkPageState extends State<WatermarkPage>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text(l10n.errorPrefix(e.toString())),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );

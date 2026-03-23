@@ -355,6 +355,7 @@
   },
   "unsupportedSharedFormat": "⚠️ Shared files are not in a supported format (JPG, PNG, WebP, PDF, HEIC/HEIF)",
   "signatureCopied": "Signature copied to clipboard",
+  "copySignature": "Copy signature",
   "saveHiddenFile": "Save Hidden File",
   "fileSaved": "File saved: {name}",
   "@fileSaved": {

@@ -960,6 +960,12 @@ abstract class AppLocalizations {
   /// **'Signature copied to clipboard'**
   String get signatureCopied;
 
+  /// No description provided for @copySignature.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy signature'**
+  String get copySignature;
+
   /// No description provided for @saveHiddenFile.
   ///
   /// In en, this message translates to:

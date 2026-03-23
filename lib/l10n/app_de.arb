@@ -355,6 +355,7 @@
   },
   "unsupportedSharedFormat": "⚠️ Geteilte Dateien haben kein unterstütztes Format (JPG, PNG, WebP, PDF, HEIC/HEIF)",
   "signatureCopied": "Signatur in die Zwischenablage kopiert",
+  "copySignature": "Signatur kopieren",
   "saveHiddenFile": "Versteckte Datei speichern",
   "fileSaved": "Datei gespeichert: {name}",
   "@fileSaved": {

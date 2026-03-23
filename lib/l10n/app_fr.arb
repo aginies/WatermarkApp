@@ -355,6 +355,7 @@
   },
   "unsupportedSharedFormat": "⚠️ Les fichiers partagés ne sont pas dans un format supporté (JPG, PNG, WebP, PDF, HEIC/HEIF)",
   "signatureCopied": "Signature copiée dans le presse-papier",
+  "copySignature": "Copier la signature",
   "saveHiddenFile": "Enregistrer le fichier caché",
   "fileSaved": "Fichier enregistré : {name}",
   "@fileSaved": {

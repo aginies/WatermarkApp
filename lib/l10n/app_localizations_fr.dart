@@ -547,6 +547,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get signatureCopied => 'Signature copiée dans le presse-papier';
 
   @override
+  String get copySignature => 'Copier la signature';
+
+  @override
   String get saveHiddenFile => 'Enregistrer le fichier caché';
 
   @override

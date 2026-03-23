@@ -545,6 +545,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get signatureCopied => 'Firma copiata negli appunti';
 
   @override
+  String get copySignature => 'Copia firma';
+
+  @override
   String get saveHiddenFile => 'Salva file nascosto';
 
   @override

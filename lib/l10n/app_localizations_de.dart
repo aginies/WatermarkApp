@@ -545,6 +545,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get signatureCopied => 'Signatur in die Zwischenablage kopiert';
 
   @override
+  String get copySignature => 'Signatur kopieren';
+
+  @override
   String get saveHiddenFile => 'Versteckte Datei speichern';
 
   @override
