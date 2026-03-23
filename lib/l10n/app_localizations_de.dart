@@ -258,6 +258,19 @@ class AppLocalizationsDe extends AppLocalizations {
   String get rasterizePdfEnabledHint => 'PDF wird gerastert (flattening)';
 
   @override
+  String get ghostPdfLayerTitle => 'Ghost PDF Layer (Kopierschutz)';
+
+  @override
+  String get ghostPdfLayerSubtitle =>
+      'Fügt eine verborgene Ebene hinzu, die nur beim Drucken sichtbar ist (z. B. „UNAUTORISIERTE KOPIE“).';
+
+  @override
+  String get ghostPdfLayerEnabledHint => 'Ghost PDF Layer ist aktiv';
+
+  @override
+  String get ghostPdfTextLabel => 'Ghost Text (z.B. VOID)';
+
+  @override
   String get steganographyTitle => 'Steganographie (Unsichtbare Signatur)';
 
   @override
@@ -571,6 +584,16 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get antiAiEnabledHint => 'Anti-IA-Schutz ist aktiviert';
+
+  @override
+  String get aiCloakingTitle => 'KI-Cloaking (Adversarial)';
+
+  @override
+  String get aiCloakingSubtitle =>
+      'Injiziert unsichtbares Rauschen, um KI-Training und Style-Diebstahl zu stören.';
+
+  @override
+  String get aiCloakingEnabledHint => 'KI-Cloaking ist aktiv';
 
   @override
   String get qrContentType => 'QR-Inhaltstyp';

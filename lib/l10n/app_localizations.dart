@@ -474,6 +474,30 @@ abstract class AppLocalizations {
   /// **'PDF will be rasterized (flattened)'**
   String get rasterizePdfEnabledHint;
 
+  /// No description provided for @ghostPdfLayerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ghost PDF Layer (Copy-Evident)'**
+  String get ghostPdfLayerTitle;
+
+  /// No description provided for @ghostPdfLayerSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Adds a hidden layer visible only when printed (e.g., \'UNAUTHORIZED COPY\').'**
+  String get ghostPdfLayerSubtitle;
+
+  /// No description provided for @ghostPdfLayerEnabledHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ghost PDF layer is active'**
+  String get ghostPdfLayerEnabledHint;
+
+  /// No description provided for @ghostPdfTextLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Ghost Text (e.g., VOID)'**
+  String get ghostPdfTextLabel;
+
   /// No description provided for @steganographyTitle.
   ///
   /// In en, this message translates to:
@@ -1001,6 +1025,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Anti-AI protection is enabled'**
   String get antiAiEnabledHint;
+
+  /// No description provided for @aiCloakingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Cloaking (Adversarial)'**
+  String get aiCloakingTitle;
+
+  /// No description provided for @aiCloakingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Injects invisible adversarial noise to disrupt AI training and style theft.'**
+  String get aiCloakingSubtitle;
+
+  /// No description provided for @aiCloakingEnabledHint.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Cloaking is active'**
+  String get aiCloakingEnabledHint;
 
   /// No description provided for @qrContentType.
   ///

@@ -105,6 +105,7 @@ class ProcessResult {
     required this.originalBytes,
     this.steganographyVerified = false,
     this.robustVerified = false,
+    this.isPdf = false,
   });
 
   final String outputPath;
@@ -113,6 +114,7 @@ class ProcessResult {
   final Uint8List? originalBytes;
   final bool steganographyVerified;
   final bool robustVerified;
+  final bool isPdf;
 }
 
 class ExtractedFileResult {
@@ -299,6 +301,9 @@ class WatermarkProcessor {
     double antiAiLevel = 0.0,
     bool useSteganography = false,
     bool useRobustSteganography = false,
+    bool useAiCloaking = false,
+    bool useGhostPdfLayer = false,
+    String ghostPdfText = 'UNAUTHORIZED COPY',
     WatermarkType watermarkType = WatermarkType.text,
     Uint8List? watermarkImageBytes,
     String? steganographyPassword,
@@ -343,6 +348,9 @@ class WatermarkProcessor {
       antiAiLevel,
       useSteganography,
       useRobustSteganography,
+      useAiCloaking,
+      useGhostPdfLayer,
+      ghostPdfText,
       watermarkType,
       watermarkImageBytes,
       steganographyPassword,
@@ -386,6 +394,9 @@ class WatermarkProcessor {
           antiAiLevel: antiAiLevel,
           useSteganography: useSteganography,
           useRobustSteganography: useRobustSteganography,
+          useAiCloaking: useAiCloaking,
+          useGhostPdfLayer: useGhostPdfLayer,
+          ghostPdfText: ghostPdfText,
           watermarkType: watermarkType,
           watermarkImageBytes: watermarkImageBytes,
           steganographyPassword: steganographyPassword,
@@ -419,6 +430,9 @@ class WatermarkProcessor {
           antiAiLevel: antiAiLevel,
           useSteganography: useSteganography,
           useRobustSteganography: useRobustSteganography,
+          useAiCloaking: useAiCloaking,
+          useGhostPdfLayer: useGhostPdfLayer,
+          ghostPdfText: ghostPdfText,
           watermarkType: watermarkType,
           watermarkImageBytes: watermarkImageBytes,
           steganographyPassword: steganographyPassword,
@@ -627,6 +641,9 @@ class WatermarkProcessor {
     double antiAiLevel,
     bool useSteganography,
     bool useRobustSteganography,
+    bool useAiCloaking,
+    bool useGhostPdfLayer,
+    String ghostPdfText,
     WatermarkType watermarkType,
     Uint8List? watermarkImageBytes,
     String? steganographyPassword,
@@ -642,7 +659,7 @@ class WatermarkProcessor {
     final qrHash = qrConfig != null
         ? '${qrConfig.visibleQr}-${qrConfig.author}-${qrConfig.url}-${qrConfig.position}-${qrConfig.size}'
         : 'none';
-    return '$filePath-$transparency-$density-$watermarkText-$useRandomColor-$selectedColorValue-$fontSize-${font.fontFamily}-$jpegQuality-$targetSize-$includeTimestamp-$preserveMetadata-$rasterizePdf-$filePrefix-$antiAiLevel-$useSteganography-$useRobustSteganography-$watermarkType-$watermarkImageHash-$steganographyPassword-$hiddenFileName-$hiddenFileHash-$qrHash';
+    return '$filePath-$transparency-$density-$watermarkText-$useRandomColor-$selectedColorValue-$fontSize-${font.fontFamily}-$jpegQuality-$targetSize-$includeTimestamp-$preserveMetadata-$rasterizePdf-$filePrefix-$antiAiLevel-$useSteganography-$useRobustSteganography-$useAiCloaking-$useGhostPdfLayer-$ghostPdfText-$watermarkType-$watermarkImageHash-$steganographyPassword-$hiddenFileName-$hiddenFileHash-$qrHash';
   }
 
   /// Add result to cache with size management
@@ -677,6 +694,9 @@ class WatermarkProcessor {
     double antiAiLevel = 0.0,
     bool useSteganography = false,
     bool useRobustSteganography = false,
+    bool useAiCloaking = false,
+    bool useGhostPdfLayer = false,
+    String ghostPdfText = 'UNAUTHORIZED COPY',
     WatermarkType watermarkType = WatermarkType.text,
     Uint8List? watermarkImageBytes,
     String? steganographyPassword,
@@ -722,6 +742,7 @@ class WatermarkProcessor {
       final operations = <String>[];
       if (transparency < 100) operations.add('watermarks');
       if (antiAiLevel > 0) operations.add('Anti-AI protection');
+      if (useAiCloaking) operations.add('AI cloaking');
       if (qrConfig?.visibleQr == true) operations.add('QR code');
       if (useSteganography) operations.add('invisible signatures');
       if (useRobustSteganography) operations.add('robust watermark');
@@ -750,6 +771,9 @@ class WatermarkProcessor {
           antiAiLevel: antiAiLevel,
           useSteganography: useSteganography,
           useRobustSteganography: useRobustSteganography,
+          useAiCloaking: useAiCloaking,
+          useGhostPdfLayer: useGhostPdfLayer,
+          ghostPdfText: ghostPdfText,
           watermarkType: watermarkType,
           watermarkImageBytes: watermarkImageBytes,
           steganographyPassword: steganographyPassword,
@@ -826,6 +850,7 @@ class WatermarkProcessor {
         originalBytes: inputBytes, // Store original bytes for A/B comparison
         steganographyVerified: verified,
         robustVerified: robustVerified,
+        isPdf: false,
       );
     } catch (e) {
       if (e is WatermarkError) {
@@ -857,6 +882,9 @@ class WatermarkProcessor {
     double antiAiLevel = 0.0,
     bool useSteganography = false,
     bool useRobustSteganography = false,
+    bool useAiCloaking = false,
+    bool useGhostPdfLayer = false,
+    String ghostPdfText = 'UNAUTHORIZED COPY',
     WatermarkType watermarkType = WatermarkType.text,
     Uint8List? watermarkImageBytes,
     String? steganographyPassword,
@@ -887,6 +915,9 @@ class WatermarkProcessor {
           antiAiLevel: antiAiLevel,
           useSteganography: useSteganography,
           useRobustSteganography: useRobustSteganography,
+          useAiCloaking: useAiCloaking,
+          useGhostPdfLayer: useGhostPdfLayer,
+          ghostPdfText: ghostPdfText,
           watermarkType: watermarkType,
           watermarkImageBytes: watermarkImageBytes,
           steganographyPassword: steganographyPassword,
@@ -928,6 +959,9 @@ class WatermarkProcessor {
             qrConfig: qrConfig,
             useSteganography: useSteganography,
             useRobustSteganography: useRobustSteganography,
+            useAiCloaking: useAiCloaking,
+            useGhostPdfLayer: useGhostPdfLayer,
+            ghostPdfText: ghostPdfText,
             steganographyPassword: steganographyPassword,
           ),
         );
@@ -987,6 +1021,7 @@ class WatermarkProcessor {
         previewBytes: previewBytes,
         originalBytes: inputBytes, // Store original bytes for A/B comparison
         steganographyVerified: false,
+        isPdf: true,
       );
     } catch (e) {
       if (e is WatermarkError) rethrow;
@@ -1014,6 +1049,9 @@ class WatermarkProcessor {
     QrWatermarkConfig? qrConfig,
     bool useSteganography = false,
     bool useRobustSteganography = false,
+    bool useAiCloaking = false,
+    bool useGhostPdfLayer = false,
+    String ghostPdfText = 'UNAUTHORIZED COPY',
     String? steganographyPassword,
   }) {
     sync.PdfDocument document;
@@ -1052,10 +1090,53 @@ class WatermarkProcessor {
       logoBitmap = sync.PdfBitmap(watermarkImageBytes);
     }
 
+    sync.PdfLayer? ghostLayer;
+    sync.PdfStandardFont? ghostFont;
+    if (useGhostPdfLayer) {
+      ghostLayer = document.layers.add(name: 'GhostLayer');
+      ghostLayer.visible = false;
+      ghostFont = sync.PdfStandardFont(sync.PdfFontFamily.helvetica, 60,
+          style: sync.PdfFontStyle.bold);
+    }
+
     for (var i = 0; i < pageCount; i++) {
       final page = document.pages[i];
       final pageSize = page.size;
       final graphics = page.graphics;
+
+      // Add Ghost PDF Layer if enabled
+      if (useGhostPdfLayer && ghostLayer != null && ghostFont != null) {
+        final ghostGraphics = ghostLayer.createGraphics(page);
+
+        // Draw heavy "VOID" or custom text diagonally across the layer
+        for (var gy = 0.0; gy < pageSize.height; gy += 200) {
+          for (var gx = 0.0; gx < pageSize.width; gx += 300) {
+            ghostGraphics.save();
+            ghostGraphics.setTransparency(0.5);
+            ghostGraphics.translateTransform(gx, gy);
+            ghostGraphics.rotateTransform(-45);
+            ghostGraphics.drawString(ghostPdfText, ghostFont,
+                brush: sync.PdfBrushes.lightGray);
+            ghostGraphics.restore();
+          }
+        }
+      }
+
+      // Apply AI Cloaking to the page if enabled using a vector-based adversarial pattern
+      if (useAiCloaking) {
+        graphics.save();
+        for (var j = 0; j < 100; j++) {
+          final x = _random.nextDouble() * pageSize.width;
+          final y = _random.nextDouble() * pageSize.height;
+          final size = 2.0 + _random.nextDouble() * 3.0;
+          graphics.setTransparency(0.02 + _random.nextDouble() * 0.03);
+          final color = _randomWatermarkColor(255);
+          graphics.drawEllipse(ui.Rect.fromLTWH(x, y, size, size),
+              brush: sync.PdfSolidBrush(sync.PdfColor(
+                  color.r.toInt(), color.g.toInt(), color.b.toInt())));
+        }
+        graphics.restore();
+      }
 
       final targetCount = _watermarkCount(
           pageSize.width.toInt(), pageSize.height.toInt(), density);
@@ -1214,6 +1295,9 @@ class WatermarkProcessor {
     double antiAiLevel = 0.0,
     bool useSteganography = false,
     bool useRobustSteganography = false,
+    bool useAiCloaking = false,
+    bool useGhostPdfLayer = false,
+    String ghostPdfText = 'UNAUTHORIZED COPY',
     WatermarkType watermarkType = WatermarkType.text,
     Uint8List? watermarkImageBytes,
     String? steganographyPassword,
@@ -1237,6 +1321,11 @@ class WatermarkProcessor {
       onProgress?.call(0.05, 'Resizing image...');
       final resized = _resizeToTarget(decoded, targetSize);
       var outputImage = img.Image.from(resized);
+
+      if (useAiCloaking) {
+        onProgress?.call(0.08, 'Applying adversarial AI cloaking...');
+        outputImage = _applyAiCloaking(outputImage);
+      }
 
       if (preserveMetadata && !decoded.exif.isEmpty) {
         outputImage.exif = decoded.exif.clone();
@@ -2342,6 +2431,9 @@ class WatermarkProcessor {
     double antiAiLevel = 0.0,
     bool useSteganography = false,
     bool useRobustSteganography = false,
+    bool useAiCloaking = false,
+    bool useGhostPdfLayer = false,
+    String ghostPdfText = 'UNAUTHORIZED COPY',
     WatermarkType watermarkType = WatermarkType.text,
     Uint8List? watermarkImageBytes,
     String? steganographyPassword,
@@ -2370,6 +2462,11 @@ class WatermarkProcessor {
         firstPageOriginal ??= png;
         final decoded = img.decodeImage(png);
         var watermarked = img.Image.from(decoded!);
+
+        if (useAiCloaking) {
+          watermarked = _applyAiCloaking(watermarked);
+        }
+
         Map<String, Uint8List>? stamps;
         if (watermarkType == WatermarkType.text && !font.isBitmap) {
           final bytes = await _renderTextWithFlutterCanvas(
@@ -2459,7 +2556,8 @@ class WatermarkProcessor {
           previewBytes: preview,
           originalBytes: firstPageOriginal,
           steganographyVerified: verified,
-          robustVerified: robustVerified);
+          robustVerified: robustVerified,
+          isPdf: true);
     } catch (e) {
       throw WatermarkError(
           type: WatermarkErrorType.invalidPdfData,
@@ -2487,6 +2585,72 @@ class WatermarkProcessor {
     final s =
         '${n.hour.toString().padLeft(2, '0')}:${n.minute.toString().padLeft(2, '0')}:${n.second.toString().padLeft(2, '0')}';
     return t.trim().isEmpty ? '$d $s' : '${t.trim()} $d $s';
+  }
+
+  /// Applies adversarial AI cloaking by injecting high-frequency noise in the DCT domain.
+  /// This disrupts style and content extraction by AI models while being mostly invisible.
+  static img.Image _applyAiCloaking(img.Image image) {
+    final width = image.width;
+    final height = image.height;
+    final numBlocksX = width ~/ 8;
+    final numBlocksY = height ~/ 8;
+
+    final output = img.Image.from(image);
+
+    for (var by = 0; by < numBlocksY; by++) {
+      for (var bx = 0; bx < numBlocksX; bx++) {
+        final blockY = List<double>.filled(64, 0.0);
+        final blockCb = List<double>.filled(64, 0.0);
+        final blockCr = List<double>.filled(64, 0.0);
+
+        // 1. Extract YCbCr
+        for (var y = 0; y < 8; y++) {
+          for (var x = 0; x < 8; x++) {
+            final p = image.getPixel(bx * 8 + x, by * 8 + y);
+            // standard YCbCr conversion
+            blockY[y * 8 + x] = 0.299 * p.r + 0.587 * p.g + 0.114 * p.b;
+            blockCb[y * 8 + x] = -0.1687 * p.r - 0.3313 * p.g + 0.5 * p.b + 128;
+            blockCr[y * 8 + x] = 0.5 * p.r - 0.4187 * p.g - 0.0813 * p.b + 128;
+          }
+        }
+
+        // 2. DCT
+        final dctY = _dct8x8(blockY);
+
+        // 3. Inject adversarial noise in high-frequency coefficients
+        // We avoid DC [0,0] and very low freq to stay invisible
+        // We target high freq to disrupt fine style/texture extraction
+        for (var i = 1; i < 64; i++) {
+          // Use a deterministic but "noisy" pattern based on block position
+          final noise =
+              (sin((bx + by + i) * 10.0) * 12.0) * (_random.nextDouble() + 0.5);
+          // Only modify high frequency coeffs (zigzag index > 20 approx)
+          if (i > 32) {
+            dctY[i] += noise;
+          }
+        }
+
+        // 4. IDCT
+        final newY = _idct8x8(dctY);
+
+        // 5. Reconstruct RGB
+        for (var y = 0; y < 8; y++) {
+          for (var x = 0; x < 8; x++) {
+            final yVal = newY[y * 8 + x];
+            final cb = blockCb[y * 8 + x] - 128;
+            final cr = blockCr[y * 8 + x] - 128;
+
+            final r = (yVal + 1.402 * cr).clamp(0, 255).toInt();
+            final g =
+                (yVal - 0.344136 * cb - 0.714136 * cr).clamp(0, 255).toInt();
+            final b = (yVal + 1.772 * cb).clamp(0, 255).toInt();
+
+            output.setPixel(bx * 8 + x, by * 8 + y, img.ColorRgb8(r, g, b));
+          }
+        }
+      }
+    }
+    return output;
   }
 
   // --- Robust DCT Watermarking (Frequency Domain) ---

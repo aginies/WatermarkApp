@@ -258,6 +258,19 @@ class AppLocalizationsIt extends AppLocalizations {
       'Il PDF verrà rasterizzato (appiattito)';
 
   @override
+  String get ghostPdfLayerTitle => 'Livello PDF Fantasma (Anti-Copia)';
+
+  @override
+  String get ghostPdfLayerSubtitle =>
+      'Aggiunge un livello nascosto visibile solo durante la stampa (es. \'COPIA NON AUTORIZZATA\').';
+
+  @override
+  String get ghostPdfLayerEnabledHint => 'Il livello PDF fantasma è attivo';
+
+  @override
+  String get ghostPdfTextLabel => 'Testo Fantasma (es. VOID)';
+
+  @override
   String get steganographyTitle => 'Steganografia (Firma invisibile)';
 
   @override
@@ -571,6 +584,16 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get antiAiEnabledHint => 'La protezione Anti-IA è abilitata';
+
+  @override
+  String get aiCloakingTitle => 'Cloaking IA (Adversarial)';
+
+  @override
+  String get aiCloakingSubtitle =>
+      'Inietta rumore invisibile per disturbare l\'addestramento dell\'IA e il furto di stile.';
+
+  @override
+  String get aiCloakingEnabledHint => 'Il Cloaking IA è attivo';
 
   @override
   String get qrContentType => 'Tipo di contenuto QR';

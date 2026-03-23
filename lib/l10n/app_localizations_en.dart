@@ -255,6 +255,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rasterizePdfEnabledHint => 'PDF will be rasterized (flattened)';
 
   @override
+  String get ghostPdfLayerTitle => 'Ghost PDF Layer (Copy-Evident)';
+
+  @override
+  String get ghostPdfLayerSubtitle =>
+      'Adds a hidden layer visible only when printed (e.g., \'UNAUTHORIZED COPY\').';
+
+  @override
+  String get ghostPdfLayerEnabledHint => 'Ghost PDF layer is active';
+
+  @override
+  String get ghostPdfTextLabel => 'Ghost Text (e.g., VOID)';
+
+  @override
   String get steganographyTitle => 'Steganography (Invisible Signature)';
 
   @override
@@ -566,6 +579,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get antiAiEnabledHint => 'Anti-AI protection is enabled';
+
+  @override
+  String get aiCloakingTitle => 'AI Cloaking (Adversarial)';
+
+  @override
+  String get aiCloakingSubtitle =>
+      'Injects invisible adversarial noise to disrupt AI training and style theft.';
+
+  @override
+  String get aiCloakingEnabledHint => 'AI Cloaking is active';
 
   @override
   String get qrContentType => 'QR Content Type';

@@ -259,6 +259,19 @@ class AppLocalizationsFr extends AppLocalizations {
   String get rasterizePdfEnabledHint => 'Le PDF sera rasterisé (aplatir)';
 
   @override
+  String get ghostPdfLayerTitle => 'Calque PDF Fantôme (Anti-Copie)';
+
+  @override
+  String get ghostPdfLayerSubtitle =>
+      'Ajoute un calque invisible à l\'écran mais visible à l\'impression (ex: \'COPIE NON AUTORISÉE\').';
+
+  @override
+  String get ghostPdfLayerEnabledHint => 'Le calque PDF fantôme est actif';
+
+  @override
+  String get ghostPdfTextLabel => 'Texte Fantôme (ex: VOID)';
+
+  @override
   String get steganographyTitle => 'Stéganographie (Signature Invisible)';
 
   @override
@@ -573,6 +586,16 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get antiAiEnabledHint => 'La protection Anti-IA est activée';
+
+  @override
+  String get aiCloakingTitle => 'Cloaking IA (Adversaire)';
+
+  @override
+  String get aiCloakingSubtitle =>
+      'Injecte un bruit invisible pour perturber l\'entraînement des IA et le vol de style.';
+
+  @override
+  String get aiCloakingEnabledHint => 'Le Cloaking IA est actif';
 
   @override
   String get qrContentType => 'Type de contenu QR';
