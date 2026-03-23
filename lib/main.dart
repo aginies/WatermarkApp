@@ -1278,8 +1278,8 @@ class _WatermarkPageState extends State<WatermarkPage>
           results.add(l10n.encryptedFileDetected(fileResult.fileName));
         } else {
           _extractedFile = fileResult;
-          results.add(l10n.hiddenFileDetected(
-              fileResult.fileName, _formatFileSize(fileResult.fileBytes.length)));
+          results.add(l10n.hiddenFileDetected(fileResult.fileName,
+              _formatFileSize(fileResult.fileBytes.length)));
         }
       }
 
@@ -2703,8 +2703,8 @@ class _WatermarkPageState extends State<WatermarkPage>
                     message: l10n.steganographyEnabledHint,
                     child: const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 8.0),
-                      child:
-                          Icon(Icons.verified_user_outlined, color: Colors.green),
+                      child: Icon(Icons.verified_user_outlined,
+                          color: Colors.green),
                     ),
                   ),
                 ),
@@ -2726,8 +2726,8 @@ class _WatermarkPageState extends State<WatermarkPage>
                     message: l10n.imageResizingEnabledHint,
                     child: const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 8.0),
-                      child:
-                          Icon(Icons.photo_size_select_large, color: Colors.orange),
+                      child: Icon(Icons.photo_size_select_large,
+                          color: Colors.orange),
                     ),
                   ),
                 ),
