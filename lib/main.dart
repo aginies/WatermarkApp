@@ -1120,107 +1120,108 @@ class _WatermarkPageState extends State<WatermarkPage>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: l10n.steganographyPasswordLabel,
-                    hintText: l10n.steganographyPasswordHint,
-                    border: const OutlineInputBorder(),
-                    prefixIcon: const Icon(Icons.lock_outline),
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      labelText: l10n.steganographyPasswordLabel,
+                      hintText: l10n.steganographyPasswordHint,
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.lock_outline),
+                    ),
+                    onChanged: (value) {
+                      setDialogState(() {
+                        _extractionPassword = value;
+                      });
+                      setState(() {
+                        _extractionPassword = value;
+                      });
+                    },
+                    controller: _extractionPasswordController,
                   ),
-                  onChanged: (value) {
-                    setDialogState(() {
-                      _extractionPassword = value;
-                    });
-                    setState(() {
-                      _extractionPassword = value;
-                    });
-                  },
-                  controller: _extractionPasswordController,
-                ),
-                const SizedBox(height: 16),
-                Text(l10n.fileAnalyzerDescription),
-                const SizedBox(height: 24),
-                if (_analyzingFile)
-                  const CircularProgressIndicator()
-                else if (_analysisResult != null)
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.secondaryContainer
-                          .withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: theme.colorScheme.secondary),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(l10n.analysisResult,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold)),
-                            if (_extractedFile == null &&
-                                _analysisResult != null &&
-                                !_analysisResult!
-                                    .contains(l10n.noSignatureFound))
-                              IconButton(
-                                icon: const Icon(Icons.copy_rounded, size: 18),
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                                tooltip: l10n.copySignature,
-                                onPressed: () {
-                                  // Extract the actual signature text from the result message
-                                  // The result message is usually l10n.signatureFound(result)
-                                  // For simplicity, let's just copy the whole thing or try to find the part after the colon
-                                  final textToCopy =
-                                      _analysisResult!.contains(': ')
-                                          ? _analysisResult!
-                                              .split(': ')
-                                              .sublist(1)
-                                              .join(': ')
-                                          : _analysisResult!;
-                                  Clipboard.setData(
-                                      ClipboardData(text: textToCopy));
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                        content: Text(l10n.signatureCopied),
-                                        duration: const Duration(seconds: 2)),
-                                  );
-                                },
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(_analysisResult!),
-                        if (_extractedFile != null &&
-                            (!_extractedFile!.isEncrypted ||
-                                _extractedFile!.fileBytes.isNotEmpty)) ...[
-                          const SizedBox(height: 16),
-                          FilledButton.icon(
-                            onPressed: () => _saveExtractedFile(),
-                            icon: const Icon(Icons.save_alt),
-                            label: Text(l10n.saveHiddenFile),
+                  const SizedBox(height: 16),
+                  Text(l10n.fileAnalyzerDescription),
+                  const SizedBox(height: 24),
+                  if (_analyzingFile)
+                    const CircularProgressIndicator()
+                  else if (_analysisResult != null)
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.secondaryContainer
+                            .withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: theme.colorScheme.secondary),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(l10n.analysisResult,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold)),
+                              if (_extractedFile == null &&
+                                  _analysisResult != null &&
+                                  !_analysisResult!
+                                      .contains(l10n.noSignatureFound))
+                                IconButton(
+                                  icon:
+                                      const Icon(Icons.copy_rounded, size: 18),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  tooltip: l10n.copySignature,
+                                  onPressed: () {
+                                    // Extract the actual signature text from the result message
+                                    // The result message is usually l10n.signatureFound(result)
+                                    // For simplicity, let's just copy the whole thing or try to find the part after the colon
+                                    final textToCopy =
+                                        _analysisResult!.contains(': ')
+                                            ? _analysisResult!
+                                                .split(': ')
+                                                .sublist(1)
+                                                .join(': ')
+                                            : _analysisResult!;
+                                    Clipboard.setData(
+                                        ClipboardData(text: textToCopy));
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                          content: Text(l10n.signatureCopied),
+                                          duration: const Duration(seconds: 2)),
+                                    );
+                                  },
+                                ),
+                            ],
                           ),
+                          const SizedBox(height: 8),
+                          Text(_analysisResult!),
+                          if (_extractedFile != null &&
+                              (!_extractedFile!.isEncrypted ||
+                                  _extractedFile!.fileBytes.isNotEmpty)) ...[
+                            const SizedBox(height: 16),
+                            FilledButton.icon(
+                              onPressed: () => _saveExtractedFile(),
+                              icon: const Icon(Icons.save_alt),
+                              label: Text(l10n.saveHiddenFile),
+                            ),
+                          ],
                         ],
-                      ],
-                    ),
-                  )
-                else
-                  const Icon(Icons.insert_drive_file_outlined,
-                      size: 48, color: Colors.grey),
-                const SizedBox(height: 24),
-                ElevatedButton.icon(
-                  onPressed: _analyzingFile
-                      ? null
-                      : () => _pickAndAnalyze(setDialogState),
-                  icon: const Icon(Icons.file_open),
-                  label: Text(l10n.pickAndAnalyze),
-                ),
-              ],
+                      ),
+                    )
+                  else
+                    const Icon(Icons.insert_drive_file_outlined,
+                        size: 48, color: Colors.grey),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: _analyzingFile
+                        ? null
+                        : () => _pickAndAnalyze(setDialogState),
+                    icon: const Icon(Icons.file_open),
+                    label: Text(l10n.pickAndAnalyze),
+                  ),
+                ],
+              ),
             ),
-          ),
-          actions: [
+            actions: [
               TextButton(
                 onPressed: () {
                   _analysisResult = null;
@@ -1389,176 +1390,180 @@ class _WatermarkPageState extends State<WatermarkPage>
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     CheckboxListTile(
-                    title: Text(l10n.steganographyTitle),
-                    subtitle: Text(l10n.steganographySubtitle),
-                    value: _useSteganography,
-                    contentPadding: EdgeInsets.zero,
-                    onChanged: (value) {
-                      final bool enabled = value ?? false;
-                      setDialogState(() {
-                        _useSteganography = enabled;
-                      });
-                      setState(() {
-                        _useSteganography = enabled;
-                      });
-                      _savePreference('useSteganography', enabled);
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  CheckboxListTile(
-                    title: Text(l10n.robustSteganographyTitle),
-                    subtitle: Text(l10n.robustSteganographySubtitle),
-                    value: _useRobustSteganography,
-                    contentPadding: EdgeInsets.zero,
-                    onChanged: (value) {
-                      final bool enabled = value ?? false;
-                      setDialogState(() {
-                        _useRobustSteganography = enabled;
-                      });
-                      setState(() {
-                        _useRobustSteganography = enabled;
-                      });
-                      _savePreference('useRobustSteganography', enabled);
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  CheckboxListTile(
-                    title: Text(l10n.hideFileWithSteganographyTitle),
-                    subtitle: Text(l10n.hideFileWithSteganographySubtitle),
-                    value: _hideFileWithSteganography,
-                    contentPadding: EdgeInsets.zero,
-                    onChanged: (value) {
-                      final enabled = value ?? false;
-                      setDialogState(() {
-                        _hideFileWithSteganography = enabled;
-                        if (!enabled) {
-                          // Clear hidden file if checkbox is unchecked
-                          _hiddenFileBytes = null;
-                          _hiddenFileName = null;
-                          _savePreference('hiddenFileBytes', null);
-                          _savePreference('hiddenFileName', null);
-                        }
-                      });
-                      setState(() {
-                        _hideFileWithSteganography = enabled;
-                        if (!enabled) {
-                          // Clear hidden file if checkbox is unchecked
-                          _hiddenFileBytes = null;
-                          _hiddenFileName = null;
-                        }
-                      });
-                      _savePreference('hideFileWithSteganography', enabled);
-                    },
-                  ),
-                  if (_hideFileWithSteganography) ...[
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.errorContainer
-                            .withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: theme.colorScheme.error.withValues(alpha: 0.5),
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(
-                            Icons.warning_amber_rounded,
-                            color: theme.colorScheme.error,
-                            size: 20,
+                      title: Text(l10n.steganographyTitle),
+                      subtitle: Text(l10n.steganographySubtitle),
+                      value: _useSteganography,
+                      contentPadding: EdgeInsets.zero,
+                      onChanged: (value) {
+                        final bool enabled = value ?? false;
+                        setDialogState(() {
+                          _useSteganography = enabled;
+                        });
+                        setState(() {
+                          _useSteganography = enabled;
+                        });
+                        _savePreference('useSteganography', enabled);
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    CheckboxListTile(
+                      title: Text(l10n.robustSteganographyTitle),
+                      subtitle: Text(l10n.robustSteganographySubtitle),
+                      value: _useRobustSteganography,
+                      contentPadding: EdgeInsets.zero,
+                      onChanged: (value) {
+                        final bool enabled = value ?? false;
+                        setDialogState(() {
+                          _useRobustSteganography = enabled;
+                        });
+                        setState(() {
+                          _useRobustSteganography = enabled;
+                        });
+                        _savePreference('useRobustSteganography', enabled);
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    CheckboxListTile(
+                      title: Text(l10n.hideFileWithSteganographyTitle),
+                      subtitle: Text(l10n.hideFileWithSteganographySubtitle),
+                      value: _hideFileWithSteganography,
+                      contentPadding: EdgeInsets.zero,
+                      onChanged: (value) {
+                        final enabled = value ?? false;
+                        setDialogState(() {
+                          _hideFileWithSteganography = enabled;
+                          if (!enabled) {
+                            // Clear hidden file if checkbox is unchecked
+                            _hiddenFileBytes = null;
+                            _hiddenFileName = null;
+                            _savePreference('hiddenFileBytes', null);
+                            _savePreference('hiddenFileName', null);
+                          }
+                        });
+                        setState(() {
+                          _hideFileWithSteganography = enabled;
+                          if (!enabled) {
+                            // Clear hidden file if checkbox is unchecked
+                            _hiddenFileBytes = null;
+                            _hiddenFileName = null;
+                          }
+                        });
+                        _savePreference('hideFileWithSteganography', enabled);
+                      },
+                    ),
+                    if (_hideFileWithSteganography) ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.errorContainer
+                              .withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color:
+                                theme.colorScheme.error.withValues(alpha: 0.5),
+                            width: 1,
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              l10n.hiddenFileSecurityWarning,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onErrorContainer,
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.warning_amber_rounded,
+                              color: theme.colorScheme.error,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                l10n.hiddenFileSecurityWarning,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onErrorContainer,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      onPressed: () async {
-                        final result = await FilePicker.platform.pickFiles(
-                          allowMultiple: false,
-                          type: FileType.any,
-                          withData: true, // Crucial for mobile cloud providers
-                        );
-
-                        if (result != null &&
-                            result.files.single.bytes != null) {
-                          final platformFile = result.files.single;
-                          final fileBytes = platformFile.bytes!;
-                          setDialogState(() {
-                            _hiddenFileBytes = fileBytes;
-                            _hiddenFileName = platformFile.name;
-                          });
-                          setState(() {
-                            _hiddenFileBytes = fileBytes;
-                            _hiddenFileName = platformFile.name;
-                          });
-                          _savePreference(
-                              'hiddenFileBytes', base64Encode(fileBytes));
-                          _savePreference('hiddenFileName', platformFile.name);
-                        } else if (result != null &&
-                            result.files.single.path != null) {
-                          final platformFile = result.files.single;
-                          final fileBytes =
-                              await File(platformFile.path!).readAsBytes();
-                          setDialogState(() {
-                            _hiddenFileBytes = fileBytes;
-                            _hiddenFileName = platformFile.name;
-                          });
-                          setState(() {
-                            _hiddenFileBytes = fileBytes;
-                            _hiddenFileName = platformFile.name;
-                          });
-                          _savePreference(
-                              'hiddenFileBytes', base64Encode(fileBytes));
-                          _savePreference('hiddenFileName', platformFile.name);
-                        }
-                      },
-                      icon: const Icon(Icons.attach_file),
-                      label: Text(
-                        _hiddenFileName != null && _hiddenFileName!.isNotEmpty
-                            ? l10n.selectedHiddenFile(_hiddenFileName!)
-                            : l10n.selectFileToHide,
-                      ),
-                    ),
-                    if (_hiddenFileBytes != null &&
-                        _hiddenFileBytes!.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: _hidingPasswordController,
-                        decoration: InputDecoration(
-                          labelText: l10n.steganographyPasswordLabel,
-                          hintText: l10n.steganographyPasswordHint,
-                          border: const OutlineInputBorder(),
-                          prefixIcon: const Icon(Icons.lock_outline),
+                          ],
                         ),
-                        obscureText: true,
-                        onChanged: (value) {
-                          setState(() => _hidingPassword = value);
-                          _savePreference('hidingPassword', value);
-                        },
                       ),
-                      const SizedBox(height: 8),
-                      Text(l10n.steganographyPasswordNote,
-                          style: theme.textTheme.bodySmall
-                              ?.copyWith(fontStyle: FontStyle.italic)),
+                      const SizedBox(height: 16),
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          final result = await FilePicker.platform.pickFiles(
+                            allowMultiple: false,
+                            type: FileType.any,
+                            withData:
+                                true, // Crucial for mobile cloud providers
+                          );
+
+                          if (result != null &&
+                              result.files.single.bytes != null) {
+                            final platformFile = result.files.single;
+                            final fileBytes = platformFile.bytes!;
+                            setDialogState(() {
+                              _hiddenFileBytes = fileBytes;
+                              _hiddenFileName = platformFile.name;
+                            });
+                            setState(() {
+                              _hiddenFileBytes = fileBytes;
+                              _hiddenFileName = platformFile.name;
+                            });
+                            _savePreference(
+                                'hiddenFileBytes', base64Encode(fileBytes));
+                            _savePreference(
+                                'hiddenFileName', platformFile.name);
+                          } else if (result != null &&
+                              result.files.single.path != null) {
+                            final platformFile = result.files.single;
+                            final fileBytes =
+                                await File(platformFile.path!).readAsBytes();
+                            setDialogState(() {
+                              _hiddenFileBytes = fileBytes;
+                              _hiddenFileName = platformFile.name;
+                            });
+                            setState(() {
+                              _hiddenFileBytes = fileBytes;
+                              _hiddenFileName = platformFile.name;
+                            });
+                            _savePreference(
+                                'hiddenFileBytes', base64Encode(fileBytes));
+                            _savePreference(
+                                'hiddenFileName', platformFile.name);
+                          }
+                        },
+                        icon: const Icon(Icons.attach_file),
+                        label: Text(
+                          _hiddenFileName != null && _hiddenFileName!.isNotEmpty
+                              ? l10n.selectedHiddenFile(_hiddenFileName!)
+                              : l10n.selectFileToHide,
+                        ),
+                      ),
+                      if (_hiddenFileBytes != null &&
+                          _hiddenFileBytes!.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _hidingPasswordController,
+                          decoration: InputDecoration(
+                            labelText: l10n.steganographyPasswordLabel,
+                            hintText: l10n.steganographyPasswordHint,
+                            border: const OutlineInputBorder(),
+                            prefixIcon: const Icon(Icons.lock_outline),
+                          ),
+                          obscureText: true,
+                          onChanged: (value) {
+                            setState(() => _hidingPassword = value);
+                            _savePreference('hidingPassword', value);
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                        Text(l10n.steganographyPasswordNote,
+                            style: theme.textTheme.bodySmall
+                                ?.copyWith(fontStyle: FontStyle.italic)),
+                      ],
                     ],
                   ],
-                ],
+                ),
               ),
-            ),
-            actions: [
+              actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
                   child: Text(l10n.close),
@@ -3342,7 +3347,8 @@ class _WatermarkPageState extends State<WatermarkPage>
                       ],
                     ),
                   const SizedBox(height: 24),
-                  Text(hasError ? l10n.processingFailed : l10n.applyingWatermark,
+                  Text(
+                      hasError ? l10n.processingFailed : l10n.applyingWatermark,
                       style: theme.textTheme.titleMedium),
                   const SizedBox(height: 8),
                   Text(
@@ -3485,7 +3491,8 @@ class _WatermarkPageState extends State<WatermarkPage>
           if (mounted) {
             // Format error message for steganography capacity errors
             String errorMessage;
-            if (e is WatermarkError && e.message.contains('too large to hide')) {
+            if (e is WatermarkError &&
+                e.message.contains('too large to hide')) {
               final match = RegExp(
                       r'File "([^"]+)" \(([0-9.]+) KB\) is too large to hide in this image \(([^)]+)\)\. Maximum capacity: ([0-9.]+) KB')
                   .firstMatch(e.message);
