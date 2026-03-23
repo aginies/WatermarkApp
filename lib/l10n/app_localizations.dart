@@ -450,6 +450,12 @@ abstract class AppLocalizations {
   /// **'Preserve File Metadata (EXIF/PDF Info)'**
   String get preserveExifData;
 
+  /// No description provided for @preserveMetadataEnabledHint.
+  ///
+  /// In en, this message translates to:
+  /// **'File metadata will be preserved'**
+  String get preserveMetadataEnabledHint;
+
   /// No description provided for @rasterizePdfTitle.
   ///
   /// In en, this message translates to:
@@ -461,6 +467,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Convert PDF pages to images for maximum security (bigger size and slower)'**
   String get rasterizePdfSubtitle;
+
+  /// No description provided for @rasterizePdfEnabledHint.
+  ///
+  /// In en, this message translates to:
+  /// **'PDF will be rasterized (flattened)'**
+  String get rasterizePdfEnabledHint;
 
   /// No description provided for @steganographyTitle.
   ///

@@ -13,30 +13,24 @@ void main() {
     late String testPassword;
     late File appJpgCopy;
 
-    setUpAll(() async {
-      // Copy app.jpg for testing
-      final File originalAppJpg = File('app.jpg');
+    setUp(() async {
+      final File originalAppJpg = File('images/app.jpg');
       if (!await originalAppJpg.exists()) {
         throw Exception(
-            'app.jpg not found! Please ensure it exists in the root directory.');
+            'images/app.jpg not found! Please ensure it exists in the images directory.');
       }
-
       appJpgCopy = File('app_test_copy.jpg');
       await originalAppJpg.copy(appJpgCopy.path);
-
-      // Prepare test data
       testText = 'SecureMark-Test';
       dummyFileContent = 'This is a test file for steganography.';
       dummyFileBytes = Uint8List.fromList(utf8.encode(dummyFileContent));
       testPassword = 'test-password-2026';
     });
 
-    tearDownAll(() async {
-      if (await appJpgCopy.exists()) {
+    tearDown(() async {
+      if (appJpgCopy.existsSync()) {
         await appJpgCopy.delete();
       }
-      // Clean up any generated output files if they exist in the current dir
-      // (processFile usually saves them near the source)
     });
 
     test(

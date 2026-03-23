@@ -353,7 +353,9 @@ class WatermarkProcessor {
       onProgress?.call(0.1, 'Processing file...');
 
       final detectedType = await detectFileType(file);
-      final extension = detectedType.isEmpty ? p.extension(file.path).toLowerCase() : detectedType;
+      final extension = detectedType.isEmpty
+          ? p.extension(file.path).toLowerCase()
+          : detectedType;
       final resolvedText = _resolvedWatermarkText(watermarkText);
 
       ProcessResult result;
@@ -525,7 +527,8 @@ class WatermarkProcessor {
   static Future<String> detectFileType(File file) async {
     final extension = p.extension(file.path).toLowerCase();
     if (['.pdf'].contains(extension)) return '.pdf';
-    if (['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif'].contains(extension)) {
+    if (['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif']
+        .contains(extension)) {
       return extension;
     }
 

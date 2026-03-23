@@ -242,11 +242,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get preserveExifData => 'Preserve File Metadata (EXIF/PDF Info)';
 
   @override
+  String get preserveMetadataEnabledHint => 'File metadata will be preserved';
+
+  @override
   String get rasterizePdfTitle => 'Rasterize PDF (Flatten)';
 
   @override
   String get rasterizePdfSubtitle =>
       'Convert PDF pages to images for maximum security (bigger size and slower)';
+
+  @override
+  String get rasterizePdfEnabledHint => 'PDF will be rasterized (flattened)';
 
   @override
   String get steganographyTitle => 'Steganography (Invisible Signature)';
