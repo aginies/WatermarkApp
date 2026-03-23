@@ -499,5 +499,23 @@
         "type": "String"
       }
     }
+  },
+  "fileTooLargeTitle": "File troppo grande",
+  "fileTooLargeMessage": "Il file \"{fileName}\" ({fileSize} KB) è troppo grande per essere nascosto in questa immagine ({imageDimensions}).\n\nCapacità massima: {maxCapacity} KB\n\nSi prega di utilizzare un'immagine più grande o comprimere/ridurre la dimensione del file.",
+  "@fileTooLargeMessage": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "fileSize": {
+        "type": "String"
+      },
+      "imageDimensions": {
+        "type": "String"
+      },
+      "maxCapacity": {
+        "type": "String"
+      }
+    }
   }
 }

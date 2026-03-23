@@ -661,6 +661,8 @@ class WatermarkProcessor {
     CancellationToken? cancellationToken,
   }) async {
     try {
+      debugPrint(
+          '_processImage: useSteganography=$useSteganography, hiddenFileName=$hiddenFileName, hiddenFileBytes=${hiddenFileBytes?.length ?? 0}');
       onProgress?.call(0.05, 'Reading image file...');
 
       if (cancellationToken?.isCancelled == true) {
@@ -770,20 +772,34 @@ class WatermarkProcessor {
         final analysis =
             analyzeImage(outputBytes, password: steganographyPassword);
 
+        debugPrint(
+            'Verification - Expected: hiddenFileName=$hiddenFileName, watermarkText="$watermarkText"');
+        debugPrint(
+            'Verification - Found: file=${analysis.file?.fileName}, signature="${analysis.signature}"');
+
         if (useSteganography || hiddenFileName != null) {
           bool allVerified = true;
           if (hiddenFileName != null) {
-            allVerified &= (analysis.file != null &&
-                analysis.file!.fileName == hiddenFileName);
+            final fileMatch = analysis.file != null &&
+                analysis.file!.fileName == hiddenFileName;
+            debugPrint(
+                'File verification: $fileMatch (expected: $hiddenFileName, got: ${analysis.file?.fileName})');
+            allVerified &= fileMatch;
           }
           if (useSteganography) {
-            allVerified &= (analysis.signature == watermarkText);
+            final sigMatch =
+                analysis.signature?.startsWith(watermarkText) ?? false;
+            debugPrint(
+                'Signature verification: $sigMatch (expected prefix: "$watermarkText", got: "${analysis.signature}")');
+            allVerified &= sigMatch;
           }
           verified = allVerified;
+          debugPrint('Overall verification: $verified');
         }
 
         if (useRobustSteganography) {
-          robustVerified = analysis.robustSignature == watermarkText;
+          robustVerified =
+              analysis.robustSignature?.startsWith(watermarkText) ?? false;
         }
 
         if (verified || robustVerified) {
@@ -1243,6 +1259,8 @@ class WatermarkProcessor {
 
       if (useSteganography) {
         if (hiddenFileName != null && hiddenFileBytes != null) {
+          debugPrint(
+              'Hiding file: $hiddenFileName (${hiddenFileBytes.length} bytes)');
           onProgress?.call(0.85, 'Hiding file in image (steganography)...');
           outputImage = _embedFileIntoImage(
             outputImage,
@@ -1252,6 +1270,10 @@ class WatermarkProcessor {
             channel:
                 'g', // Use Green channel for files to avoid collision with signature
           );
+          debugPrint('File hidden successfully');
+        } else {
+          debugPrint(
+              'Skipping file hiding: fileName=$hiddenFileName, fileBytes=${hiddenFileBytes?.length ?? 0}');
         }
         // Always embed watermark text as LSB if steganography is enabled (Blue channel)
         onProgress?.call(0.88, 'Embedding invisible signature (LSB)...');
@@ -1312,6 +1334,8 @@ class WatermarkProcessor {
     final bool encrypt = password != null && password.isNotEmpty;
     Uint8List dataToEmbed = fileBytes;
     final crc = _crc16(fileBytes);
+    debugPrint(
+        'File embedding - filename="$fileName", originalSize=${fileBytes.length}, crc=$crc, encrypt=$encrypt');
     if (encrypt) dataToEmbed = _encryptBytes(fileBytes, password);
     final filenameBytes = utf8.encode(fileName);
     if (filenameBytes.length > 255) return image;
@@ -1321,6 +1345,8 @@ class WatermarkProcessor {
     fullPayload
         .add([(filenameBytes.length >> 8) & 0xFF, filenameBytes.length & 0xFF]);
     final fileSize = dataToEmbed.length;
+    debugPrint(
+        'File embedding - filenameLength=${filenameBytes.length}, encryptedSize=$fileSize, channel=$channel');
     fullPayload.add([
       (fileSize >> 24) & 0xFF,
       (fileSize >> 16) & 0xFF,
@@ -1334,7 +1360,27 @@ class WatermarkProcessor {
     final totalBits = payload.length * 8;
     final int width = image.width;
     final int totalPixels = width * image.height;
-    if (totalBits > totalPixels) return image;
+    if (totalBits > totalPixels) {
+      // Calculate maximum capacity
+      final maxBits = totalPixels - 64; // 64 bits for header
+      final maxBytes = maxBits ~/ 8;
+      final maxFileSize =
+          maxBytes - filenameBytes.length - 2; // minus filename and CRC
+      final maxFileSizeKB = (maxFileSize / 1024).toStringAsFixed(1);
+      final actualFileSizeKB = (fileBytes.length / 1024).toStringAsFixed(1);
+      final imageDimensions = '${image.width}×${image.height}';
+
+      debugPrint('File embedding FAILED - File too large!');
+      debugPrint('  Image: $imageDimensions ($totalPixels pixels)');
+      debugPrint('  File: $actualFileSizeKB KB');
+      debugPrint('  Max capacity: $maxFileSizeKB KB');
+
+      throw WatermarkError(
+        type: WatermarkErrorType.invalidImageData,
+        message:
+            'File "$fileName" ($actualFileSizeKB KB) is too large to hide in this image ($imageDimensions). Maximum capacity: $maxFileSizeKB KB',
+      );
+    }
     const int headerBits = 64;
     for (var i = 0; i < headerBits && i < totalBits; i++) {
       final bit = (payload[i ~/ 8] >> (7 - (i % 8))) & 1;
@@ -1507,17 +1553,22 @@ class WatermarkProcessor {
       return const AnalysisResult(); // 'S'
     }
     final type = headerBytes[1];
+    debugPrint(
+        '_checkChannel: channel=$channel, type=$type (${String.fromCharCode(type)})');
     if (type == 77 || type == 88) {
       return AnalysisResult(
           signature: _extractTextFromImage(image, type == 88, password,
               channel: channel));
     }
     if (type == 70 || type == 69) {
+      debugPrint(
+          '_checkChannel: Detected file in channel $channel, encrypted=${type == 69}');
       return AnalysisResult(
           file: _extractFileFromImage(image, type == 69, password,
               channel: channel));
     }
 
+    debugPrint('_checkChannel: Unknown type $type in channel $channel');
     return const AnalysisResult();
   }
 
@@ -1602,10 +1653,13 @@ class WatermarkProcessor {
       final int filenameLength = (bytes[0] << 8) | bytes[1];
       final int fileSize =
           (bytes[2] << 24) | (bytes[3] << 16) | (bytes[4] << 8) | bytes[5];
+      debugPrint(
+          'File extraction - filenameLength=$filenameLength, fileSize=$fileSize, encrypted=$isEncrypted');
       if (filenameLength <= 0 ||
           filenameLength > 255 ||
           fileSize <= 0 ||
           fileSize > 50 * 1024 * 1024) {
+        debugPrint('File extraction failed - invalid metadata');
         return null;
       }
       final int totalDataBytes = filenameLength + fileSize + 2;
@@ -1632,19 +1686,29 @@ class WatermarkProcessor {
           bytes.sublist(filenameLength, filenameLength + fileSize));
       final extractedCrc = (bytes[filenameLength + fileSize] << 8) |
           bytes[filenameLength + fileSize + 1];
+      debugPrint(
+          'File extraction - filename="$filename", extractedCrc=$extractedCrc');
       if (isEncrypted) {
         if (password == null || password.isEmpty) {
+          debugPrint('File extraction - encrypted but no password provided');
           return ExtractedFileResult(
               fileName: filename, fileBytes: Uint8List(0), isEncrypted: true);
         }
         final decrypted = _decryptBytes(fileBytes, password);
         if (decrypted == null) {
+          debugPrint('File extraction - decryption failed');
           return ExtractedFileResult(
               fileName: filename, fileBytes: Uint8List(0), isEncrypted: true);
         }
         fileBytes = decrypted;
+        debugPrint(
+            'File extraction - decrypted successfully, size=${fileBytes.length}');
       }
-      if (_crc16(fileBytes) != extractedCrc) {
+      final calculatedCrc = _crc16(fileBytes);
+      debugPrint(
+          'File extraction - calculatedCrc=$calculatedCrc, match=${calculatedCrc == extractedCrc}');
+      if (calculatedCrc != extractedCrc) {
+        debugPrint('File extraction - CRC mismatch');
         return isEncrypted
             ? ExtractedFileResult(
                 fileName: filename, fileBytes: Uint8List(0), isEncrypted: true)

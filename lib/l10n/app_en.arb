@@ -499,5 +499,23 @@
         "type": "String"
       }
     }
+  },
+  "fileTooLargeTitle": "File Too Large",
+  "fileTooLargeMessage": "The file \"{fileName}\" ({fileSize} KB) is too large to hide in this image ({imageDimensions}).\n\nMaximum capacity: {maxCapacity} KB\n\nPlease use a larger image or compress/reduce the file size.",
+  "@fileTooLargeMessage": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "fileSize": {
+        "type": "String"
+      },
+      "imageDimensions": {
+        "type": "String"
+      },
+      "maxCapacity": {
+        "type": "String"
+      }
+    }
   }
 }

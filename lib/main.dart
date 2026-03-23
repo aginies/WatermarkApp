@@ -3410,6 +3410,9 @@ class _WatermarkPageState extends State<WatermarkPage>
         final bool shouldApplyStegano = _useSteganography ||
             (_hideFileWithSteganography && _hiddenFileBytes != null);
 
+        _addLog(
+            'Processing with: useSteganography=$shouldApplyStegano, hideFile=$_hideFileWithSteganography, hiddenFile=$_hiddenFileName (${_hiddenFileBytes?.length ?? 0} bytes)');
+
         try {
           final result = await WatermarkProcessor.processFile(
             file: File(path),
@@ -3466,6 +3469,40 @@ class _WatermarkPageState extends State<WatermarkPage>
                   : l10n.errorPrefix(e.toString());
             });
             _progressListener?.call();
+
+            // Show dialog for file too large error with detailed information
+            if (e is WatermarkError &&
+                e.message.contains('too large to hide')) {
+              // Parse error message: File "name" (size KB) is too large to hide in this image (dimensions). Maximum capacity: max KB
+              final match = RegExp(
+                      r'File "([^"]+)" \(([0-9.]+) KB\) is too large to hide in this image \(([^)]+)\)\. Maximum capacity: ([0-9.]+) KB')
+                  .firstMatch(e.message);
+              if (match != null) {
+                final extractedFileName = match.group(1) ?? '';
+                final fileSize = match.group(2) ?? '';
+                final imageDimensions = match.group(3) ?? '';
+                final maxCapacity = match.group(4) ?? '';
+
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text(l10n.fileTooLargeTitle),
+                    content: Text(l10n.fileTooLargeMessage(
+                      extractedFileName,
+                      fileSize,
+                      imageDimensions,
+                      maxCapacity,
+                    )),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text(l10n.close),
+                      ),
+                    ],
+                  ),
+                );
+              }
+            }
           }
         }
       }

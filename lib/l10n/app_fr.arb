@@ -499,5 +499,23 @@
         "type": "String"
       }
     }
+  },
+  "fileTooLargeTitle": "Fichier trop volumineux",
+  "fileTooLargeMessage": "Le fichier \"{fileName}\" ({fileSize} Ko) est trop volumineux pour être caché dans cette image ({imageDimensions}).\n\nCapacité maximale : {maxCapacity} Ko\n\nVeuillez utiliser une image plus grande ou compresser/réduire la taille du fichier.",
+  "@fileTooLargeMessage": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "fileSize": {
+        "type": "String"
+      },
+      "imageDimensions": {
+        "type": "String"
+      },
+      "maxCapacity": {
+        "type": "String"
+      }
+    }
   }
 }

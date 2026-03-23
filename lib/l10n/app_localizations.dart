@@ -1175,6 +1175,19 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Processing file {current} of {total}: {name}'**
   String foregroundTaskUpdate(int current, int total, String name);
+
+  /// No description provided for @fileTooLargeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'File Too Large'**
+  String get fileTooLargeTitle;
+
+  /// No description provided for @fileTooLargeMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The file \"{fileName}\" ({fileSize} KB) is too large to hide in this image ({imageDimensions}).\n\nMaximum capacity: {maxCapacity} KB\n\nPlease use a larger image or compress/reduce the file size.'**
+  String fileTooLargeMessage(String fileName, String fileSize,
+      String imageDimensions, String maxCapacity);
 }
 
 class _AppLocalizationsDelegate

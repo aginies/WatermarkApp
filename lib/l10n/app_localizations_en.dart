@@ -689,4 +689,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String foregroundTaskUpdate(int current, int total, String name) {
     return 'Processing file $current of $total: $name';
   }
+
+  @override
+  String get fileTooLargeTitle => 'File Too Large';
+
+  @override
+  String fileTooLargeMessage(String fileName, String fileSize,
+      String imageDimensions, String maxCapacity) {
+    return 'The file \"$fileName\" ($fileSize KB) is too large to hide in this image ($imageDimensions).\n\nMaximum capacity: $maxCapacity KB\n\nPlease use a larger image or compress/reduce the file size.';
+  }
 }
