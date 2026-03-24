@@ -595,6 +595,19 @@ class WatermarkPageState extends State<WatermarkPage>
             _filePrefixController.text = _filePrefix;
           }
           break;
+
+        case SettingsProfile.p1:
+          if (!prefs.containsKey('${pKey}targetSize')) _targetSize = 1280;
+          if (!prefs.containsKey('${pKey}transparency')) _transparency = 75;
+          if (!prefs.containsKey('${pKey}density')) _density = 35;
+          if (!prefs.containsKey('${pKey}jpegQuality')) _jpegQuality = 75;
+          if (!prefs.containsKey('${pKey}antiAiLevel')) _antiAiLevel = 50;
+          if (!prefs.containsKey('${pKey}useAiCloaking')) _useAiCloaking = false;
+          if (!prefs.containsKey('${pKey}filePrefix')) {
+            _filePrefix = 'p1-';
+            _filePrefixController.text = _filePrefix;
+          }
+          break;
       }
     });
   }
@@ -1098,6 +1111,9 @@ class WatermarkPageState extends State<WatermarkPage>
         case SettingsProfile.shareDocument:
           label = l10n.profileShareDocument;
           icon = Icons.description;
+        case SettingsProfile.p1:
+          label = "P1";
+          icon = Icons.person_outline;
       }
 
       return Padding(
@@ -5191,6 +5207,9 @@ class WatermarkPageState extends State<WatermarkPage>
                 case SettingsProfile.shareDocument:
                   label = l10n.profileShareDocument;
                   icon = Icons.description;
+                case SettingsProfile.p1:
+                  label = "P1";
+                  icon = Icons.person_outline;
               }
 
               return Padding(
