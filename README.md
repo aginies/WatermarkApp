@@ -8,36 +8,33 @@ The project is designed for high-security document distribution: choose files, a
 
 ## Core Features Overview
 
-- **Multi-layer Protection**: Visible watermarks + 3 independent invisible steganography methods (LSB text, hidden file, robust DCT)
-- **Professional UI**: 8 specialized dialogs for configuration, analysis, and workflow management
-- **Batch Processing**: Process multiple files with Isolate-based background threading and real-time progress tracking
-- **22+ Font Options**: System bitmap, 9 Google Fonts, and 6 custom TTF fonts with intelligent caching
-- **Built-in Analyzer**: Detect and extract all hidden signatures and embedded files with password decryption
-- **Cross-platform Sharing**: Android share intents, iOS export, and desktop drag-and-drop support
-- **Multilingual**: Full support for English and French
+- **Settings Profiles**: One-tap presets (**Custom, Identity, Image, Doc, QR Code**) for instant workflow configuration.
+- **AI Protection Suite**: 
+    - **Anti-AI Removal Protection**: Position and alpha jitter to prevent AI from learning and erasing watermarks.
+    - **AI Cloaking (Adversarial)**: Injects invisible noise to disrupt AI style extraction and block OCR scrapers.
+- **Multi-layer Steganography**: 3 independent invisible methods (LSB text, hidden file, and robust DCT).
+- **Advanced File Management**: Manage large batches with a dedicated selection modal featuring PDF first-page previews and easy removal.
+- **Batch Processing**: Background threading (Isolates) with linear, granular progress tracking.
+- **Built-in Analyzer**: Detect and extract hidden signatures or embedded files with AES-256 decryption.
+- **Cross-platform**: Android share intents, iOS export, and desktop drag-and-drop support.
 
 ## User Interface & Workflow
 
 ### Main Interface
 
-- **Top Toolbar (7 buttons)**: File Picker, Camera Capture, File Analyzer, Steganography Options, QR Watermark, Expert Settings, Logs Viewer
-- **Action Panel (4 buttons)**: Apply SecureMark, Reset View, Save Results, Share Results
-- **Preview System**:
-  - PageView carousel for multi-file navigation
-  - Zoom and pan controls for detailed inspection
-  - A/B comparison toggle (original vs. watermarked)
-  - Real-time preview updates
+- **Profile Selector**: High-visibility horizontal chips for rapid switching between security presets.
+- **Interactive Preview**: 
+  - **Smart Zoom**: Double-tap to zoom at specific coordinates for detailed inspection.
+  - **A/B Toggle**: Quickly compare the original vs. protected result (images only).
+  - **Live Shader**: Real-time preview of transparency and color effects.
+- **Merged Controls**: Status icons are now integrated directly into the styling cards to maximize vertical space.
 
-### File Input Methods
+### File Input & Management
 
-- **File Picker Dialog**: Multi-file selection with format filtering
-- **Camera Capture**: Direct photo capture on mobile devices
-- **Drag & Drop**: Desktop support for file dragging
-- **Share Intent (Android)**: Receive files from other applications
-  - Single file sharing (`ACTION_SEND`)
-  - Multiple file sharing (`ACTION_SEND_MULTIPLE`)
-  - Supports: `image/*` and `application/pdf` MIME types
-  - Automatic content URI to file path conversion with extension preservation
+- **Selected Files Modal**: Click the "Selected files" label to open a grid view of all pending files with thumbnails and individual "remove" buttons.
+- **Fast PDF Previews**: Thumbnails for PDF files are generated instantly using the first page.
+- **Loading Feedback**: Immediate visual feedback during file selection and preparation.
+- **Input Variety**: Support for File Picker, Camera Capture, Desktop Drag & Drop, and Android Share Intents.
 
 ### Specialized Dialogs
 
@@ -220,11 +217,11 @@ Pre-bundled in application assets:
 
 ![Processing Progress](images/progress.jpg)
 
-- **Background Isolation**: All heavy processing runs in Dart Isolates (separate threads)
-- **Multi-file Support**: Process multiple images/PDFs in a single operation
-- **Progress Tracking**: Real-time progress callbacks with percentage and status messages
-- **Cancellation Token**: Graceful cancellation support during processing
-- **Result Caching**: LRU cache (max 10 results) to avoid reprocessing identical requests
+- **Background Isolation**: All heavy processing runs in Dart Isolates (separate threads) using `SendPort` for safe communication.
+- **Linear Progress Tracking**: Completely redesigned progress bar showing granular steps (Loading, Anti-AI, Watermarking, etc.).
+- **Multilingual Support**: All progress status messages are fully localized (EN, FR, DE, IT).
+- **Cancellation Token**: Graceful cancellation support during processing.
+- **Result Caching**: LRU cache (max 10 results) to avoid reprocessing identical requests.
 
 ### Quality Control
 
@@ -257,16 +254,21 @@ Pre-bundled in application assets:
   - Preserve original EXIF/metadata (optional)
   - Inject SecureMark identification in metadata
 
-### Anti-AI Protection
+### Anti-AI Removal Protection
 
-- **Purpose**: Disrupt AI model training and unauthorized scraping
-- **Level**: 0-100% intensity slider
+- **Purpose**: Disrupt AI model training and prevent automated watermark erasure.
+- **Level**: 0-100% intensity slider.
 - **Implementation**:
-  - **Position Jitter**: Random ±10px offset per watermark (scaled by level)
-  - **Angle Jitter**: Random ±15° rotation variation (scaled by level)
-  - **Alpha Jitter**: Random ±40 alpha channel variation per pixel (scaled by level)
-  - **Non-deterministic**: Different output each time at same settings
-- **Trade-off**: Higher levels = more visual noise = harder to remove, but slightly reduced aesthetics
+  - **Position Jitter**: Random ±10px offset per watermark (scaled by level).
+  - **Angle Jitter**: Random ±15° rotation variation (scaled by level).
+  - **Alpha Jitter**: Random ±40 alpha channel variation per pixel (scaled by level).
+  - **Non-deterministic**: Different output each time at same settings.
+
+### AI Cloaking (Adversarial)
+
+- **Purpose**: Protect the artistic style of images and block OCR (text recognition) by scraping bots.
+- **Mechanism**: Injects high-frequency noise in the DCT domain.
+- **Effect**: Invisible to human eyes, but causes AI models to misidentify content or fail to extract text data.
 
 ### PDF Handling
 
