@@ -310,7 +310,7 @@
   "steganographyPasswordHint": "Enter password to protect hidden file",
   "steganographyPasswordNote": "Note: This password will be required to extract the hidden file using SecureMark. It uses AES-256 encryption.",
   "zipAllFiles": "ZIP All Files",
-  "zipEnabledHint": "ZIP compression enabled for sharing",
+  "zipEnabledHint": "ZIP compression enabled for sharing. NOTE: third‑party apps (WhatsApp, Signal, etc.) compress images, potentially destroying steganographic signatures. Enable ZIP to avoid loosing signatures.",
   "zipDisabledHint": "ZIP compression disabled",
   "qrWatermarkTitle": "QR Code Watermark",
   "enableQrWatermark": "Enable QR Code",

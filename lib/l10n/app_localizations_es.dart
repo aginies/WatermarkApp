@@ -467,7 +467,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get zipAllFiles => 'ZIP todos los archivos';
 
   @override
-  String get zipEnabledHint => 'Compresión ZIP habilitada para compartir';
+  String get zipEnabledHint =>
+      'Compresión ZIP habilitada para compartir. NOTA: las aplicaciones de terceros (WhatsApp, Signal, etc.) comprimen las imágenes, lo que puede destruir las firmas de esteganografía. Habilite ZIP para evitar la pérdida de firmas.';
 
   @override
   String get zipDisabledHint => 'Compresión ZIP deshabilitada';

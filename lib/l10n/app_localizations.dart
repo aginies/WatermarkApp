@@ -821,7 +821,7 @@ abstract class AppLocalizations {
   /// No description provided for @zipEnabledHint.
   ///
   /// In en, this message translates to:
-  /// **'ZIP compression enabled for sharing'**
+  /// **'ZIP compression enabled for sharing. NOTE: third‑party apps (WhatsApp, Signal, etc.) compress images, potentially destroying steganographic signatures. Enable ZIP to avoid loosing signatures.'**
   String get zipEnabledHint;
 
   /// No description provided for @zipDisabledHint.
