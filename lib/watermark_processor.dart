@@ -734,15 +734,23 @@ class WatermarkProcessor {
       if (qrConfig?.visibleQr == true) operations.add('QR code');
       if (useSteganography) operations.add('invisible signatures');
       if (useRobustSteganography) operations.add('robust watermark');
-      if (hiddenFileName != null) operations.add('hidden file');
-
       final operationText = operations.isEmpty
           ? 'Processing'
           : 'Applying ${operations.join(", ")}';
       onProgress?.call(0.1, '$operationText...');
 
-      final outputBytes = await Isolate.run(
-        () => _renderWatermarkedImageBytesWithValidation(
+      final receivePort = ReceivePort();
+      receivePort.listen((message) {
+        if (message is Map<String, dynamic>) {
+          onProgress?.call(message['progress'], message['message']);
+        }
+      });
+
+      final progressSendPort = receivePort.sendPort;
+
+      Uint8List outputBytes;
+      try {
+        outputBytes = await _runImageIsolate(
           inputBytes: inputBytes,
           transparency: transparency,
           density: density,
@@ -767,9 +775,11 @@ class WatermarkProcessor {
           hiddenFileBytes: hiddenFileBytes,
           qrConfig: qrConfig,
           preRenderedStamps: preRenderedStamps,
-          onProgress: onProgress,
-        ),
-      );
+          progressPort: progressSendPort,
+        );
+      } finally {
+        receivePort.close();
+      }
 
       if (cancellationToken?.isCancelled == true) {
         throw const WatermarkError(
@@ -922,28 +932,34 @@ class WatermarkProcessor {
 
       onProgress?.call(0.2, 'Adding watermark layer (background)...');
 
+      final receivePort = ReceivePort();
+      receivePort.listen((message) {
+        if (message is Map<String, dynamic>) {
+          onProgress?.call(message['progress'], message['message']);
+        }
+      });
+
+      final progressSendPort = receivePort.sendPort;
+
       // Move heavy PDF processing to Isolate
       Uint8List outputBytes;
       try {
-        outputBytes = await Isolate.run(
-          () => _renderWatermarkedPdfBytes(
-            inputBytes: inputBytes,
-            transparency: transparency,
-            density: density,
-            watermarkText: watermarkText,
-            useRandomColor: useRandomColor,
-            selectedColorValue: selectedColorValue,
-            fontSize: fontSize,
-            preserveMetadata: preserveMetadata,
-            antiAiLevel: antiAiLevel,
-            watermarkType: watermarkType,
-            watermarkImageBytes: watermarkImageBytes,
-            qrConfig: qrConfig,
-            useSteganography: useSteganography,
-            useRobustSteganography: useRobustSteganography,
-            useAiCloaking: useAiCloaking,
-            steganographyPassword: steganographyPassword,
-          ),
+        outputBytes = await _runPdfIsolate(
+          inputBytes: inputBytes,
+          transparency: transparency,
+          density: density,
+          watermarkText: watermarkText,
+          useRandomColor: useRandomColor,
+          selectedColorValue: selectedColorValue,
+          fontSize: fontSize,
+          preserveMetadata: preserveMetadata,
+          antiAiLevel: antiAiLevel,
+          watermarkType: watermarkType,
+          watermarkImageBytes: watermarkImageBytes,
+          qrConfig: qrConfig,
+          useAiCloaking: useAiCloaking,
+          steganographyPassword: steganographyPassword,
+          progressPort: progressSendPort,
         );
       } catch (e, stackTrace) {
         debugPrint('Vector engine error: $e');
@@ -976,6 +992,8 @@ class WatermarkProcessor {
           onProgress: onProgress,
           cancellationToken: cancellationToken,
         );
+      } finally {
+        receivePort.close();
       }
 
       if (cancellationToken?.isCancelled == true) {
@@ -1027,13 +1045,14 @@ class WatermarkProcessor {
     WatermarkType watermarkType = WatermarkType.text,
     Uint8List? watermarkImageBytes,
     QrWatermarkConfig? qrConfig,
-    bool useSteganography = false,
-    bool useRobustSteganography = false,
     bool useAiCloaking = false,
     String? steganographyPassword,
+    SendPort? progressPort,
   }) {
     sync.PdfDocument document;
     try {
+      progressPort
+          ?.send({'progress': 0.1, 'message': 'Parsing PDF document...'});
       document = sync.PdfDocument(inputBytes: inputBytes);
     } catch (e) {
       throw WatermarkError(
@@ -1182,6 +1201,102 @@ class WatermarkProcessor {
     return Uint8List.fromList(bytes);
   }
 
+  static Future<Uint8List> _runImageIsolate({
+    required Uint8List inputBytes,
+    required double transparency,
+    required double density,
+    required String watermarkText,
+    required bool useRandomColor,
+    required int selectedColorValue,
+    required double fontSize,
+    required WatermarkFont font,
+    required int jpegQuality,
+    int? targetSize,
+    required String filePath,
+    required String originalExtension,
+    bool preserveMetadata = false,
+    double antiAiLevel = 0.0,
+    bool useSteganography = false,
+    bool useRobustSteganography = false,
+    bool useAiCloaking = false,
+    WatermarkType watermarkType = WatermarkType.text,
+    Uint8List? watermarkImageBytes,
+    String? steganographyPassword,
+    String? hiddenFileName,
+    Uint8List? hiddenFileBytes,
+    QrWatermarkConfig? qrConfig,
+    Map<String, Uint8List>? preRenderedStamps,
+    SendPort? progressPort,
+  }) {
+    return Isolate.run(
+      () => _renderWatermarkedImageBytesWithValidation(
+        inputBytes: inputBytes,
+        transparency: transparency,
+        density: density,
+        watermarkText: watermarkText,
+        useRandomColor: useRandomColor,
+        selectedColorValue: selectedColorValue,
+        fontSize: fontSize,
+        font: font,
+        jpegQuality: jpegQuality,
+        targetSize: targetSize,
+        filePath: filePath,
+        originalExtension: originalExtension,
+        preserveMetadata: preserveMetadata,
+        antiAiLevel: antiAiLevel,
+        useSteganography: useSteganography,
+        useRobustSteganography: useRobustSteganography,
+        useAiCloaking: useAiCloaking,
+        watermarkType: watermarkType,
+        watermarkImageBytes: watermarkImageBytes,
+        steganographyPassword: steganographyPassword,
+        hiddenFileName: hiddenFileName,
+        hiddenFileBytes: hiddenFileBytes,
+        qrConfig: qrConfig,
+        preRenderedStamps: preRenderedStamps,
+        progressPort: progressPort,
+      ),
+    );
+  }
+
+  static Future<Uint8List> _runPdfIsolate({
+    required Uint8List inputBytes,
+    required double transparency,
+    required double density,
+    required String watermarkText,
+    required bool useRandomColor,
+    required int selectedColorValue,
+    required double fontSize,
+    bool preserveMetadata = false,
+    double antiAiLevel = 0.0,
+    WatermarkType watermarkType = WatermarkType.text,
+    Uint8List? watermarkImageBytes,
+    QrWatermarkConfig? qrConfig,
+    bool useAiCloaking = false,
+    String? steganographyPassword,
+    SendPort? progressPort,
+  }) {
+    return Isolate.run(
+      () => _renderWatermarkedPdfBytes(
+        inputBytes: inputBytes,
+        transparency: transparency,
+        density: density,
+        watermarkText: watermarkText,
+        useRandomColor: useRandomColor,
+        selectedColorValue: selectedColorValue,
+        fontSize: fontSize,
+        preserveMetadata: preserveMetadata,
+        antiAiLevel: antiAiLevel,
+        watermarkType: watermarkType,
+        watermarkImageBytes: watermarkImageBytes,
+        qrConfig: qrConfig,
+        useAiCloaking: useAiCloaking,
+        steganographyPassword: steganographyPassword,
+        progressPort: progressPort,
+      ),
+    );
+  }
+
   static sync.PdfColor _resolveSyncfusionColor(
       bool useRandomColor, int selectedColorValue) {
     int r, g, b;
@@ -1254,10 +1369,10 @@ class WatermarkProcessor {
     Uint8List? hiddenFileBytes,
     QrWatermarkConfig? qrConfig,
     Map<String, Uint8List>? preRenderedStamps,
-    ProgressCallback? onProgress,
+    SendPort? progressPort,
   }) {
     try {
-      onProgress?.call(0.05, 'Decoding image...');
+      progressPort?.send({'progress': 0.05, 'message': 'Decoding image...'});
       final decoded = img.decodeImage(inputBytes);
       if (decoded == null) {
         throw WatermarkError(
@@ -1267,12 +1382,15 @@ class WatermarkProcessor {
         );
       }
 
-      onProgress?.call(0.15, 'Resizing image...');
+      progressPort?.send({'progress': 0.15, 'message': 'Resizing image...'});
       final resized = _resizeToTarget(decoded, targetSize);
       var outputImage = img.Image.from(resized);
 
       if (useAiCloaking) {
-        onProgress?.call(0.25, 'Applying adversarial AI cloaking...');
+        progressPort?.send({
+          'progress': 0.25,
+          'message': 'Applying adversarial AI cloaking...'
+        });
         outputImage = _applyAiCloaking(outputImage);
       }
 
@@ -1285,7 +1403,8 @@ class WatermarkProcessor {
           'SecureMark (https://github.com/aginies/SecureMark)';
       outputImage.textData!['Software'] = 'SecureMark';
 
-      onProgress?.call(0.35, 'Applying watermark...');
+      progressPort
+          ?.send({'progress': 0.35, 'message': 'Applying watermark...'});
       _applyWatermarkField(
         outputImage,
         watermarkText,
@@ -1302,20 +1421,27 @@ class WatermarkProcessor {
         watermarkImageBytes: watermarkImageBytes,
         onProgress: (progress, message) {
           // Map internal progress (0.0-1.0) to watermark range (0.35-0.75)
-          onProgress?.call(0.35 + (progress * 0.40), message);
+          progressPort?.send({
+            'progress': 0.35 + (progress * 0.40),
+            'message': message,
+          });
         },
       );
 
       if (useRobustSteganography) {
-        onProgress?.call(0.80, 'Embedding robust watermark (DCT)...');
+        progressPort?.send({
+          'progress': 0.80,
+          'message': 'Embedding robust watermark (DCT)...'
+        });
         outputImage = _embedRobustSignature(outputImage, watermarkText);
       }
 
       if (useSteganography) {
         if (hiddenFileName != null && hiddenFileBytes != null) {
-          debugPrint(
-              'Hiding file: $hiddenFileName (${hiddenFileBytes.length} bytes)');
-          onProgress?.call(0.85, 'Hiding file in image (steganography)...');
+          progressPort?.send({
+            'progress': 0.85,
+            'message': 'Hiding file in image (steganography)...'
+          });
           outputImage = _embedFileIntoImage(
             outputImage,
             hiddenFileName,
@@ -1324,13 +1450,12 @@ class WatermarkProcessor {
             channel:
                 'g', // Use Green channel for files to avoid collision with signature
           );
-          debugPrint('File hidden successfully');
-        } else {
-          debugPrint(
-              'Skipping file hiding: fileName=$hiddenFileName, fileBytes=${hiddenFileBytes?.length ?? 0}');
         }
         // Always embed watermark text as LSB if steganography is enabled (Blue channel)
-        onProgress?.call(0.88, 'Embedding invisible signature (LSB)...');
+        progressPort?.send({
+          'progress': 0.88,
+          'message': 'Embedding invisible signature (LSB)...'
+        });
         outputImage = _embedLSB(
           outputImage,
           watermarkText,
@@ -1339,7 +1464,7 @@ class WatermarkProcessor {
         );
       }
 
-      onProgress?.call(0.90, 'Encoding image...');
+      progressPort?.send({'progress': 0.90, 'message': 'Encoding image...'});
       final forcePng = useSteganography || useRobustSteganography;
 
       return _encodeImageInOriginalFormat(
