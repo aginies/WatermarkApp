@@ -3144,7 +3144,10 @@ class _WatermarkPageState extends State<WatermarkPage>
                       .whereType<String>()
                       .toSet()
                       .toList();
-                  if (paths.isNotEmpty) await _selectPaths(paths);
+                  if (paths.isNotEmpty) {
+                    setState(() => _loadingFiles = true);
+                    await _selectPaths(paths);
+                  }
                 },
                 child: buildButton(_dragging),
               )
@@ -3721,6 +3724,7 @@ class _WatermarkPageState extends State<WatermarkPage>
       }
 
       _addLog('Captured photo from camera: ${photo.path}');
+      setState(() => _loadingFiles = true);
       await _selectPaths([photo.path]);
     } catch (e) {
       _addLog('Error capturing photo: $e');
@@ -3766,6 +3770,7 @@ class _WatermarkPageState extends State<WatermarkPage>
           .toList();
 
       if (validPaths.isNotEmpty) {
+        setState(() => _loadingFiles = true);
         await _selectPaths(validPaths);
       } else {
         _addLog('Error: Picked files have no valid local paths.');
@@ -3779,7 +3784,6 @@ class _WatermarkPageState extends State<WatermarkPage>
     final uniquePaths = paths.toSet().toList();
 
     setState(() {
-      _loadingFiles = true;
       _selectedPaths = uniquePaths;
       _processedFiles = <_ProcessedFile>[];
       _previewIndex = 0;
