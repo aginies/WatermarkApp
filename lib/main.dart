@@ -931,16 +931,24 @@ class _WatermarkPageState extends State<WatermarkPage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4.0, bottom: 8.0),
-          child: Text(
-            l10n.profileLabel,
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.bold,
+        Row(
+          children: [
+            Icon(
+              Icons.category,
+              size: 24,
               color: theme.colorScheme.primary,
             ),
-          ),
+            const SizedBox(width: 8.0),
+            Text(
+              l10n.profileLabel,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+          ],
         ),
+        const SizedBox(height: 4.0),
         if (isMobile)
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,

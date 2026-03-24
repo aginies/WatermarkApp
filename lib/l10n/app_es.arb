@@ -1,0 +1,571 @@
+{
+  "@@locale": "es",
+  "appTitle": "SecureMark",
+  "emptyPreviewHint": "Ingresa el texto de la marca de agua y elige una o más imágenes o archivos PDF",
+  "selectedPreviewHint": "Archivos seleccionados. Haz clic en Aplicar SecureMark para generar las vistas previas",
+  "selectedFilesLabel": "Archivos seleccionados ({count})",
+  "@selectedFilesLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "clickApplyToPreview": "Haz clic en \"Aplicar SecureMark\" para generar las vistas previas",
+  "previewUnavailable": "Vista previa no disponible",
+  "swipeHint": "Desliza a la izquierda para el siguiente, a la derecha para el anterior ({current}/{total})",
+  "@swipeHint": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "processingFile": "Procesando archivo...",
+  "applyingWatermark": "Aplicando marca de agua...",
+  "processingValidating": "Validando archivo...",
+  "processingProcessing": "Procesando archivo...",
+  "processingCached": "Obtenido de la caché",
+  "processingComplete": "Procesamiento completado",
+  "processingFlattening": "Rasterizando PDF (aplana)...",
+  "authorFooter": "Autor: Antoine Giniès",
+  "pickFiles": "Imágenes o PDF",
+  "takePhoto": "Tomar Foto",
+  "takePhotoSubtitle": "Uso directo de cámara",
+  "selectedFile": "Archivo seleccionado: {name}",
+  "@selectedFile": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "selectedFiles": "Archivos seleccionados: {count}",
+  "@selectedFiles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "applyWatermark": "Aplicar SecureMark",
+  "saveAll": "Guardar todo",
+  "shareAll": "Compartir todo",
+  "reset": "Reiniciar",
+  "watermarkTypeText": "Texto",
+  "watermarkTypeImage": "Imagen/Logo",
+  "selectWatermarkImage": "Seleccionar imagen de logo",
+  "selectedWatermarkImage": "{name}",
+  "@selectedWatermarkImage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "watermarkTextLabel": "Texto para estampar (+Fecha-hora)",
+  "watermarkTextHint": "Ingresa el texto para estampar",
+  "randomColor": "Color aleatorio",
+  "selectedColor": "Color seleccionado",
+  "transparencyValue": "Transparencia de marca de agua: {value}%",
+  "@transparencyValue": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "densityValue": "Densidad: {value}%",
+  "@densityValue": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "droppedPathUnavailable": "Las rutas de archivo soltados no están disponibles.",
+  "desktopDropArea": "Suelta los archivos aquí",
+  "pickerLabel": "Imágenes y PDFs",
+  "processingCount": "Procesando 1/{count} archivos...",
+  "@processingCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "processingNamedFile": "Procesando {current}/{total}: {name}",
+  "@processingNamedFile": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "processingFailed": "Archivo no compatible o fallo en el procesamiento.",
+  "errorPrefix": "Error: {error}",
+  "@errorPrefix": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "savedFiles": "{count, plural, one {1 archivo guardado} other {{count} archivos guardados}}.",
+  "@savedFiles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shareSubject": "Archivos con marca de agua",
+  "shareText": "Compartido desde SecureMark",
+  "sharedFiles": "{count, plural, one {1 archivo compartido} other {{count} archivos Compartidos}}.",
+  "@sharedFiles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shareOpenedFiles": "Hoja de compartir abierta para {count, plural, one {1 archivo} other {{count} archivos}}.",
+  "@shareOpenedFiles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cancel": "Cancelar",
+  "saveLocationInfo": "Los archivos se guardarán en la misma carpeta que los originales con prefijo 'securemark-'",
+  "expertOptions": "Opciones de experto",
+  "fontSizeValue": "Tamaño de fuente: {value}px",
+  "@fontSizeValue": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "logoSizeLabel": "Tamaño del Logo: {value}px",
+  "@logoSizeLabel": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "jpegQualityValue": "Calidad JPEG: {value}%",
+  "@jpegQualityValue": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "imageResizingLabel": "Redimensionar imagen: {size}",
+  "@imageResizingLabel": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "imageResizingEnabledHint": "El redimensionamiento de imagen está habilitado",
+  "resizeNone": "Ninguno (Original)",
+  "pixelUnit": "{value} px",
+  "@pixelUnit": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "includeTimestampFilename": "Incluir fecha y hora en el nombre del archivo",
+  "preserveExifData": "Preservar metadatos del archivo (EXIF/Info PDF)",
+  "preserveMetadataEnabledHint": "Los metadatos del archivo se preservarán",
+  "rasterizePdfTitle": "Rasterizar PDF (Aplanar)",
+  "rasterizePdfSubtitle": "Convertir páginas PDF en imágenes para máxima seguridad (más tamaño y más lento)",
+  "rasterizePdfEnabledHint": "El PDF será rasterizado (aplanado)",
+  "steganographyTitle": "Esteganografía (Firma invisible)",
+  "steganographySubtitle": "Incluye texto secretamente en píxeles.",
+  "robustSteganographyTitle": "Marca de agua robusta (Dominio DCT)",
+  "robustSteganographySubtitle": "Experimental: sobrevive mejor a la recompression y redimensionamiento que el LSB.",
+  "filePrefixLabel": "Prefijo de archivo",
+  "filePrefixHint": "ej. marca-de-agua-",
+  "resetExpertHint": "Esto reiniciará todas las opciones de experto y el prefijo de archivo a valores predeterminados.",
+  "fontStyleLabel": "Estilo de fuente",
+  "fontSelectionNote": "Nota: Uso de fuentes de mapa de bits optimizadas para renderizado rápido multiplataforma.",
+  "fontSelectionNoteGoogle": "Nota: Uso de Google Fonts para una tipografía mejorada. Requiere internet para el primer uso.",
+  "fontSelectionNoteAsset": "Nota: Uso de fuente TTF personalizado para una tipografía mejorada. Requiere archivos de fuente en assets/fonts/.",
+  "resetToDefaults": "Reiniciar a predeterminados",
+  "outputDirectoryLabel": "Directorio de salida: {path}",
+  "@outputDirectoryLabel": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "selectOutputDirectory": "Seleccionar directorio de salida",
+  "viewLogs": "Ver registros",
+  "saveLogs": "Guardar registros",
+  "logsSaved": "Registros guardados en: {path}",
+  "@logsSaved": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "appLogs": "Registro de aplicación",
+  "noLogsYet": "Aún ningún registro",
+  "openGitHub": "Ver repositorio de GitHub",
+  "close": "Cerrar",
+  "aboutApp": "Acerca de SecureMark",
+  "appDescription": "Una aplicación profesional para proteger documentos con marcas de agua para compartir de forma segura.",
+  "authorLabel": "Autor: {name}",
+  "@authorLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "checkForUpdates": "Buscar actualizaciones",
+  "checkingForUpdates": "Buscando actualizaciones...",
+  "upToDate": "Estás usando la última versión.",
+  "updateAvailable": "¡Una nueva versión ({version}) está disponible!",
+  "@updateAvailable": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateCheckError": "No se pudo verificar las actualizaciones.",
+  "githubRepository": "Repositorio de GitHub",
+  "privacyPolicy": "Política de privacidad",
+  "viewUpdate": "Ver",
+  "analyzeFile": "Analizar archivo (LSB)",
+  "fileAnalyzerTitle": "Analizador de archivos (LSB)",
+  "fileAnalyzerDescription": "Selecciona un archivo para buscar firmas de SecureMark ocultas.",
+  "pickAndAnalyze": "Elegir y analizar",
+  "encryptedFileDetected": "🔐 Archivo cifrado detectado: {name}. Por favor proporciona la contraseña correcta.",
+  "hiddenFileDetected": "📁 Archivo oculto detectado: {name} ({size})",
+  "encryptedSignatureDetected": "🔐 Firma cifrada detectada. Por favor proporciona la contraseña correcta.",
+  "signatureFound": "✅ Firma encontrada: \"{message}\"",
+  "@signatureFound": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "robustSignatureFound": "💪 Firma robusta encontrada: \"{message}\"",
+  "@robustSignatureFound": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "noSignatureFound": "❌ No se detectó ninguna firma de SecureMark en este archivo.",
+  "analysisError": "Error durante el análisis: {error}",
+  "@analysisError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "analysisResult": "Resultado:",
+  "steganographyVerified": "Esteganografía verificada",
+  "steganographyVerificationFailed": "Verificación de esteganografía fallida",
+  "steganographyEnabledHint": "La esteganografía está habilitada y será aplicada",
+  "hideFileWithSteganographyTitle": "Ocultar un archivo (experimental)",
+  "hideFileWithSteganographySubtitle": "Incluye un archivo entero dentro de la imagen (podría aumentar el tamaño de salida)",
+  "hideFileEnabledHint": "Se incluirá un archivo oculto",
+  "selectFileToHide": "Seleccionar archivo para ocultar",
+  "selectedHiddenFile": "Archivo oculto: {name}",
+  "@selectedHiddenFile": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "hiddenFileSecurityWarning": "Nota de seguridad: los archivos ocultos solo son seguros si se cifran antes de incluir. La esteganografía oscurece pero no cifra tus datos.",
+  "steganographyPasswordLabel": "Contraseña de cifrado",
+  "steganographyPasswordHint": "Ingresa la contraseña para proteger el archivo oculto",
+  "steganographyPasswordNote": "Nota: esta contraseña será necesaria para extraer el archivo oculto usando SecureMark. Usa cifrado AES-256.",
+  "zipAllFiles": "ZIP todos los archivos",
+  "zipEnabledHint": "Compresión ZIP habilitada para compartir",
+  "zipDisabledHint": "Compresión ZIP deshabilitada",
+  "qrWatermarkTitle": "Marca de agua de código QR",
+  "enableQrWatermark": "Habilitar código QR",
+  "enableQrWatermarkSubtitle": "Incluye metadatos en un código QR",
+  "qrMode": "Modo de código QR",
+  "qrVisibleMode": "Código QR visible",
+  "qrVisibleModeDesc": "Muestra código QR en la imagen",
+  "qrAuthorLabel": "Nombre del autor",
+  "qrAuthorHint": "ej. Juan Pérez",
+  "qrUrlLabel": "URL o sitio web",
+  "qrUrlHint": "ej. https://ejemplo.com",
+  "qrVisibleOptions": "Opciones de QR visible",
+  "qrPositionLabel": "Ubicación de código QR",
+  "qrPosTopLeft": "Arriba izquierda",
+  "qrPosTopRight": "Arriba derecha",
+  "qrPosBottomLeft": "Abajo izquierda",
+  "qrPosBottomRight": "Abajo derecha",
+  "qrPosCenter": "Centro",
+  "qrSizeValue": "Tamaño del código QR: {value}px",
+  "@qrSizeValue": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "qrOpacityValue": "Opacidad del código QR: {value}%",
+  "@qrOpacityValue": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "receivedFilesFromSharing": "📥 Recibido {count} archivo(s) del compartir",
+  "@receivedFilesFromSharing": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unsupportedSharedFormat": "⚠️ Archivos compartidos no están en un formato compatible (JPG, PNG, WebP, PDF, HEIC/HEIF)",
+  "signatureCopied": "Firma copiada al portapapeles",
+  "copySignature": "Copiar firma",
+  "saveHiddenFile": "Guardar archivo oculto",
+  "fileSaved": "Archivo guardado: {name}",
+  "@fileSaved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "errorSavingFile": "Error al guardar archivo: {error}",
+  "@errorSavingFile": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "antiAiProtectionValue": "Protección de eliminación anti-IA: {value}%",
+  "@antiAiProtectionValue": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "antiAiProtectionNote": "Nota: añade ruido y ruido para hacer la marca de agua mucho más difícil de eliminar con IA. Los niveles más altos tardan más.",
+  "antiAiEnabledHint": "La protección de eliminación anti-IA está habilitada",
+  "aiCloakingTitle": "Cloaking de IA (Adversarial)",
+  "aiCloakingSubtitle": "Inyecta ruido adversario invisible para interrumpir el entrenamiento de IA y robo de estilo.",
+  "aiCloakingEnabledHint": "El cloaking de IA está activo",
+  "qrContentType": "Tipo de contenido QR",
+  "qrTypeMetadata": "Metadatos (JSON)",
+  "qrTypeUrl": "Redirección de sitio web",
+  "qrTypeVCard": "Contacto (vCard)",
+  "vCardFirstName": "Nombre",
+  "vCardLastName": "Apellido",
+  "vCardPhone": "Número de teléfono",
+  "vCardEmail": "Dirección de correo electrónico",
+  "vCardOrg": "Organización",
+  "invalidUrlError": "Por favor, ingresa una URL válida (ej. https://ejemplo.com)",
+  "noQrFound": "❌ No se detectó ningún código QR",
+  "abToggleTooltipOriginal": "Mostrar original",
+  "abToggleTooltipProcessed": "Mostrar procesado",
+  "processingCancelled": "Procesamiento cancelado",
+  "processingStatusMultiple": "Procesado {successCount} archivos con éxito. {failedCount} archivos fallaron.",
+  "@processingStatusMultiple": {
+    "placeholders": {
+      "successCount": {
+        "type": "int"
+      },
+      "failedCount": {
+        "type": "int"
+      }
+    }
+  },
+  "processingFailedSingle": "No se pudo procesar el archivo. Por favor verifica el formato del archivo e inténtalo de nuevo.",
+  "processingFailedMultiple": "No se pudo procesar {count} archivos. Por favor verifica los formatos de archivos e inténtalo de nuevo.",
+  "@processingFailedMultiple": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "fileSavedTo": "Archivo guardado en: {path}",
+  "@fileSavedTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "saveFailedGeneral": "No se pudo guardar los archivos. Por favor verifica los permisos y el espacio de almacenamiento.",
+  "saveStatusMultiple": "Guardado {successCount} archivos. {failedCount} archivos fallaron.",
+  "@saveStatusMultiple": {
+    "placeholders": {
+      "successCount": {
+        "type": "int"
+      },
+      "failedCount": {
+        "type": "int"
+      }
+    }
+  },
+  "filesSavedTitle": "Archivos guardados",
+  "successfullySavedCount": "{count, plural, one {1 archivo guardado con éxito} other {{count} archivos guardados con éxito}}:",
+  "@successfullySavedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "failedSavedCount": "No se pudo guardar {count, plural, one {1 archivo} other {{count} archivos}}:",
+  "@failedSavedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "willSaveAsIn": "Se guardará como: {name} en {path}/",
+  "@willSaveAsIn": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "willSaveMultipleIn": "Se guardarán {count} archivos en: {path}/",
+  "@willSaveMultipleIn": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "savingFiles": "Guardando archivos...",
+  "errorSavingFiles": "Error al guardar archivos: {error}",
+  "@errorSavingFiles": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "foregroundTaskTitle": "Procesamiento de SecureMark",
+  "foregroundTaskDescription": "Mostrando progreso de marcado de documentos",
+  "foregroundTaskUpdate": "Procesando archivo {current} de {total}: {name}",
+  "@foregroundTaskUpdate": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "fileTooLargeTitle": "Archivo demasiado grande",
+  "fileTooLargeMessage": "El archivo \"{fileName}\" ({fileSize} KB) es demasiado grande para ocultar en esta imagen ({imageDimensions}).\n\nCapacidad máxima: {maxCapacity} KB\n\nPor favor usa una imagen más grande o comprime/reduce el tamaño del archivo.",
+  "@fileTooLargeMessage": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      },
+      "fileSize": {
+        "type": "String"
+      },
+      "imageDimensions": {
+        "type": "String"
+      },
+      "maxCapacity": {
+        "type": "String"
+      }
+    }
+  },
+  "loadingSelectedFiles": "Cargando archivos seleccionados...",
+  "profileLabel": "Perfil",
+  "profileDescription": "Ajustes rápidos para casos de uso comunes",
+  "profileNone": "Personalizado",
+  "profileSecureIdentity": "Identidad",
+  "profileOnlineImage": "Imagen",
+  "profileQrCode": "Código QR",
+  "profileShareDocument": "Doc",
+  "progressValidating": "Validando archivo...",
+  "progressFromCache": "Obtenido de la caché",
+  "progressDetectingType": "Detectando tipo de archivo...",
+  "progressStarting": "Iniciando procesamiento...",
+  "progressComplete": "Procesamiento completado",
+  "progressReadingImage": "Leyendo archivo de imagen...",
+  "progressRenderingFont": "Renderizando fuente...",
+  "progressFinalizingImage": "Finalizando imagen...",
+  "progressVerifyingStegano": "Verificando esteganografía...",
+  "progressSteganoVerified": "Esteganografía verificada",
+  "progressSteganoFailed": "Verificación de esteganografía fallida",
+  "progressRasterizing": "Rasterizando PDF (aplanando)...",
+  "progressReadingPdf": "Leyendo archivo PDF...",
+  "progressAddingLayer": "Añadiendo capa de marca de agua...",
+  "progressFinalizingPdf": "Finalizando PDF...",
+  "progressParsingPdf": "Analizando documento PDF...",
+  "progressDecodingImage": "Decodificando imagen...",
+  "progressResizingImage": "Redimensionando imagen...",
+  "progressApplyingCloaking": "Aplicando cloaking adversarial IA...",
+  "progressApplyingWatermark": "Aplicando marca de agua...",
+  "progressEmbeddingRobust": "Incluyendo marca de agua robusta (DCT)...",
+  "progressHidingFile": "Ocultando archivo en imagen (esteganografía)...",
+  "progressEmbeddingLsb": "Incluyendo firma invisible (LSB)...",
+  "progressEncodingImage": "Codificando imagen...",
+  "progressGeneratingQr": "Generando código QR...",
+  "progressEmbeddingQr": "Incluyendo código QR...",
+  "progressQrEmbedded": "Código QR incluido",
+  "progressWatermarkingPage": "Marcando página {current}/{total}...",
+  "@progressWatermarkingPage": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  }
+}
