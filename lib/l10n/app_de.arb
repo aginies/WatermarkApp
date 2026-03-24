@@ -218,6 +218,15 @@
     }
   },
   "selectOutputDirectory": "Ausgabeverzeichnis wählen",
+  "logoDirectoryLabel": "Logo-Verzeichnis: {path}",
+  "@logoDirectoryLabel": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "selectLogoDirectory": "Logo-Verzeichnis wählen",
   "viewLogs": "Protokolle anzeigen",
   "saveLogs": "Protokolle speichern",
   "logsSaved": "Protokolle gespeichert unter: {path}",
@@ -567,5 +576,9 @@
         "type": "int"
       }
     }
-  }
+  },
+  "themeLabel": "Design",
+  "themeSystem": "Systemstandard",
+  "themeLight": "Hell",
+  "themeDark": "Dunkel"
 }

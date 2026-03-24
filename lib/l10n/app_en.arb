@@ -218,6 +218,15 @@
     }
   },
   "selectOutputDirectory": "Select Output Directory",
+  "logoDirectoryLabel": "Logo Directory: {path}",
+  "@logoDirectoryLabel": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "selectLogoDirectory": "Select Logo Directory",
   "viewLogs": "View Logs",
   "saveLogs": "Save Logs",
   "logsSaved": "Logs saved to: {path}",
@@ -567,5 +576,9 @@
         "type": "int"
       }
     }
-  }
+  },
+  "themeLabel": "Theme",
+  "themeSystem": "System Default",
+  "themeLight": "Light",
+  "themeDark": "Dark"
 }

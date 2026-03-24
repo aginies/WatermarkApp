@@ -77,8 +77,42 @@ void main() {
   runApp(const SecureMarkApp());
 }
 
-class SecureMarkApp extends StatelessWidget {
+class SecureMarkApp extends StatefulWidget {
   const SecureMarkApp({super.key});
+
+  static _SecureMarkAppState of(BuildContext context) =>
+      context.findAncestorStateOfType<_SecureMarkAppState>()!;
+
+  @override
+  State<SecureMarkApp> createState() => _SecureMarkAppState();
+}
+
+class _SecureMarkAppState extends State<SecureMarkApp> {
+  ThemeMode _themeMode = ThemeMode.system;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadThemeMode();
+  }
+
+  Future<void> _loadThemeMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    final themeIndex = prefs.getInt('themeMode');
+    if (themeIndex != null) {
+      setState(() {
+        _themeMode = ThemeMode.values[themeIndex];
+      });
+    }
+  }
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('themeMode', mode.index);
+    setState(() {
+      _themeMode = mode;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,7 +139,7 @@ class SecureMarkApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      themeMode: ThemeMode.system,
+      themeMode: _themeMode,
       home: const WatermarkPage(),
     );
   }
@@ -175,6 +209,7 @@ class _WatermarkPageState extends State<WatermarkPage>
   String _elapsedTime = '00:00';
   String _appVersion = '';
   String? _outputDirectory;
+  String? _logoDirectory;
   ui.Image? _rawImage;
   final List<String> _logs = <String>[];
   final List<String> _tempFiles = <String>[];
@@ -262,9 +297,26 @@ class _WatermarkPageState extends State<WatermarkPage>
         setState(() {
           _outputDirectory = directoryPath;
         });
+        _savePreference('outputDirectory', directoryPath);
       }
     } catch (e) {
       _addLog('Error picking directory: $e');
+    }
+  }
+
+  Future<void> _pickLogoDirectory() async {
+    try {
+      final String? directoryPath =
+          await getDirectoryPath(initialDirectory: _logoDirectory);
+      if (directoryPath != null) {
+        _addLog('Selected logo directory: $directoryPath');
+        setState(() {
+          _logoDirectory = directoryPath;
+        });
+        _savePreference('logoDirectory', directoryPath);
+      }
+    } catch (e) {
+      _addLog('Error picking logo directory: $e');
     }
   }
 
@@ -373,6 +425,8 @@ class _WatermarkPageState extends State<WatermarkPage>
               _hiddenFileBytes = null;
             }
           }
+          _logoDirectory = prefs.getString('logoDirectory');
+          _outputDirectory = prefs.getString('outputDirectory');
         });
       }
     } catch (e) {
@@ -478,6 +532,7 @@ class _WatermarkPageState extends State<WatermarkPage>
           _jpegQuality = 75;
           _antiAiLevel = 100;
           _useAiCloaking = true;
+          _watermarkType = WatermarkType.text;
           break;
 
         case SettingsProfile.onlineImage:
@@ -1341,18 +1396,13 @@ class _WatermarkPageState extends State<WatermarkPage>
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          final theme = Theme.of(context);
-          return AlertDialog(
-            title: Row(
-              children: [
-                const Icon(Icons.search_rounded),
-                const SizedBox(width: 12),
-                Text(l10n.fileAnalyzerTitle),
-              ],
-            ),
-            content: SingleChildScrollView(
+      builder: (context) {
+        bool isDragging = false;
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final theme = Theme.of(context);
+
+            Widget dialogContent = SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -1408,9 +1458,6 @@ class _WatermarkPageState extends State<WatermarkPage>
                                   constraints: const BoxConstraints(),
                                   tooltip: l10n.copySignature,
                                   onPressed: () {
-                                    // Extract the actual signature text from the result message
-                                    // The result message is usually l10n.signatureFound(result)
-                                    // For simplicity, let's just copy the whole thing or try to find the part after the colon
                                     final textToCopy =
                                         _analysisResult!.contains(': ')
                                             ? _analysisResult!
@@ -1445,32 +1492,102 @@ class _WatermarkPageState extends State<WatermarkPage>
                       ),
                     )
                   else
-                    const Icon(Icons.insert_drive_file_outlined,
-                        size: 48, color: Colors.grey),
+                    Icon(
+                        isDragging
+                            ? Icons.file_download
+                            : Icons.insert_drive_file_outlined,
+                        size: 48,
+                        color: isDragging
+                            ? theme.colorScheme.primary
+                            : Colors.grey),
                   const SizedBox(height: 24),
-                  ElevatedButton.icon(
+                  FilledButton(
                     onPressed: _analyzingFile
                         ? null
                         : () => _pickAndAnalyze(setDialogState),
-                    icon: const Icon(Icons.file_open),
-                    label: Text(l10n.pickAndAnalyze),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      backgroundColor: isDragging
+                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
+                          : null,
+                      minimumSize: const Size(double.infinity, 0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: isDragging
+                            ? BorderSide(
+                                color: theme.colorScheme.onPrimary, width: 2)
+                            : BorderSide.none,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          isDragging ? Icons.file_upload : Icons.file_open,
+                          size: 32,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          isDragging
+                              ? l10n.desktopDropArea
+                              : l10n.pickAndAnalyze,
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: theme.colorScheme.onPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  _analysisResult = null;
-                  _extractedFile = null;
-                  Navigator.of(context).pop();
+            );
+
+            if (_supportsDesktopDrop) {
+              dialogContent = DropTarget(
+                onDragEntered: (_) => setDialogState(() => isDragging = true),
+                onDragExited: (_) => setDialogState(() => isDragging = false),
+                onDragDone: (detail) async {
+                  setDialogState(() => isDragging = false);
+                  if (detail.files.isEmpty) return;
+                  final file = detail.files.first;
+                  try {
+                    final bytes = await file.readAsBytes();
+                    await _performFileAnalysis(
+                        bytes, file.name, setDialogState);
+                  } catch (e) {
+                    setDialogState(() {
+                      _analysisResult = l10n.analysisError(e.toString());
+                    });
+                  }
                 },
-                child: Text(l10n.close),
+                child: dialogContent,
+              );
+            }
+
+            return AlertDialog(
+              title: Row(
+                children: [
+                  const Icon(Icons.search_rounded),
+                  const SizedBox(width: 12),
+                  Text(l10n.fileAnalyzerTitle),
+                ],
               ),
-            ],
-          );
-        },
-      ),
+              content: dialogContent,
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    _analysisResult = null;
+                    _extractedFile = null;
+                    Navigator.of(context).pop();
+                  },
+                  child: Text(l10n.close),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -1479,8 +1596,6 @@ class _WatermarkPageState extends State<WatermarkPage>
   ExtractedFileResult? _extractedFile;
 
   Future<void> _pickAndAnalyze(StateSetter setDialogState) async {
-    final l10n = AppLocalizations.of(context)!;
-
     final result = await FilePicker.platform.pickFiles(
       allowMultiple: false,
       type: FileType.custom,
@@ -1491,6 +1606,22 @@ class _WatermarkPageState extends State<WatermarkPage>
     if (result == null || result.files.isEmpty) return;
     final pickedFile = result.files.single;
 
+    try {
+      final bytes =
+          pickedFile.bytes ?? await File(pickedFile.path!).readAsBytes();
+      await _performFileAnalysis(bytes, pickedFile.name, setDialogState);
+    } catch (e) {
+      final l10n = AppLocalizations.of(context)!;
+      setDialogState(() {
+        _analysisResult = l10n.analysisError(e.toString());
+      });
+    }
+  }
+
+  Future<void> _performFileAnalysis(
+      Uint8List bytes, String fileName, StateSetter setDialogState) async {
+    final l10n = AppLocalizations.of(context)!;
+
     setDialogState(() {
       _analyzingFile = true;
       _analysisResult = null;
@@ -1498,14 +1629,12 @@ class _WatermarkPageState extends State<WatermarkPage>
     });
 
     try {
-      final bytes =
-          pickedFile.bytes ?? await File(pickedFile.path!).readAsBytes();
       final password =
           _extractionPassword.isNotEmpty ? _extractionPassword : null;
 
       // Check for all types of hidden data in a single pass
       final analysis = await WatermarkProcessor.analyzeFileAsync(
-          bytes, pickedFile.name,
+          bytes, fileName,
           password: password);
 
       // Build combined result
@@ -2244,8 +2373,8 @@ class _WatermarkPageState extends State<WatermarkPage>
                                     ],
                                   ),
                                   Positioned(
-                                    top: -8,
-                                    right: -8,
+                                    top: -10,
+                                    right: -10,
                                     child: GestureDetector(
                                       onTap: () async {
                                         setState(() {
@@ -2267,7 +2396,7 @@ class _WatermarkPageState extends State<WatermarkPage>
                                         setModalState(() {});
                                       },
                                       child: Container(
-                                        padding: const EdgeInsets.all(4),
+                                        padding: const EdgeInsets.all(6),
                                         decoration: BoxDecoration(
                                           color: theme.colorScheme.error,
                                           shape: BoxShape.circle,
@@ -2282,7 +2411,7 @@ class _WatermarkPageState extends State<WatermarkPage>
                                         ),
                                         child: const Icon(
                                           Icons.remove,
-                                          size: 16,
+                                          size: 20,
                                           color: Colors.white,
                                         ),
                                       ),
@@ -2543,6 +2672,46 @@ class _WatermarkPageState extends State<WatermarkPage>
                         ),
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    Text(
+                      l10n.themeLabel,
+                      style: theme.textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: theme.dividerColor),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<ThemeMode>(
+                          value: SecureMarkApp.of(context)._themeMode,
+                          isExpanded: true,
+                          items: [
+                            DropdownMenuItem(
+                              value: ThemeMode.system,
+                              child: Text(l10n.themeSystem),
+                            ),
+                            DropdownMenuItem(
+                              value: ThemeMode.light,
+                              child: Text(l10n.themeLight),
+                            ),
+                            DropdownMenuItem(
+                              value: ThemeMode.dark,
+                              child: Text(l10n.themeDark),
+                            ),
+                          ],
+                          onChanged: (mode) {
+                            if (mode != null) {
+                              SecureMarkApp.of(context).setThemeMode(mode);
+                              setDialogState(() {});
+                            }
+                          },
+                        ),
+                      ),
+                    ),
                     if (!kIsWeb &&
                         (Platform.isLinux ||
                             Platform.isMacOS ||
@@ -2567,6 +2736,24 @@ class _WatermarkPageState extends State<WatermarkPage>
                           minimumSize: const Size(double.infinity, 44),
                         ),
                       ),
+                      const SizedBox(height: 16),
+                      Text(
+                        l10n.logoDirectoryLabel(
+                            _logoDirectory ?? l10n.resizeNone),
+                        style: theme.textTheme.titleSmall,
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: () async {
+                          await _pickLogoDirectory();
+                          setDialogState(() {}); // Update dialog state
+                        },
+                        icon: const Icon(Icons.folder_shared_outlined),
+                        label: Text(l10n.selectLogoDirectory),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(double.infinity, 44),
+                        ),
+                      ),
                     ],
                     const SizedBox(height: 24),
                     OutlinedButton.icon(
@@ -2586,6 +2773,8 @@ class _WatermarkPageState extends State<WatermarkPage>
                           _useRandomColor = true;
                           _selectedColor = Colors.deepPurple;
                           _selectedFont = WatermarkFont.arial;
+                          _outputDirectory = null;
+                          _logoDirectory = null;
                         });
 
                         setState(() {
@@ -2600,6 +2789,8 @@ class _WatermarkPageState extends State<WatermarkPage>
                           _useRandomColor = true;
                           _selectedColor = Colors.deepPurple;
                           _selectedFont = WatermarkFont.arial;
+                          _outputDirectory = null;
+                          _logoDirectory = null;
                         });
                       },
                       icon: const Icon(Icons.refresh),
@@ -4351,15 +4542,48 @@ class _WatermarkPageState extends State<WatermarkPage>
       _watermarkType = WatermarkType.text;
       _watermarkImageBytes = null;
       _watermarkImageName = null;
+      _outputDirectory = null;
+      _logoDirectory = null;
     });
   }
 
   Future<void> _selectWatermarkImage() async {
+    _addLog(
+        'Picking watermark image. Initial directory: ${_logoDirectory ?? "not set"}');
     try {
+      if (!kIsWeb &&
+          (Platform.isLinux || Platform.isMacOS || Platform.isWindows)) {
+        // Use file_selector for desktop platforms (better initialDirectory support)
+        final XTypeGroup typeGroup = XTypeGroup(
+          label: 'images',
+          extensions: <String>['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif'],
+        );
+        final XFile? file = await openFile(
+          acceptedTypeGroups: <XTypeGroup>[typeGroup],
+          initialDirectory: _logoDirectory,
+        );
+
+        if (file != null) {
+          final Uint8List bytes = await file.readAsBytes();
+          setState(() {
+            _watermarkImageBytes = bytes;
+            _watermarkImageName = file.name;
+            // Remember the directory of the selected logo
+            _logoDirectory = p.dirname(file.path);
+          });
+          _savePreference('logoDirectory', _logoDirectory!);
+          _addLog('Watermark image selected: ${file.name}');
+          _addLog('Logo directory updated to: $_logoDirectory');
+        }
+        return;
+      }
+
+      // Fallback for mobile/web
       final result = await FilePicker.platform.pickFiles(
         type: FileType.image,
         allowMultiple: false,
         withData: true,
+        initialDirectory: _logoDirectory,
       );
 
       if (result != null && result.files.isNotEmpty) {
@@ -4367,7 +4591,13 @@ class _WatermarkPageState extends State<WatermarkPage>
         setState(() {
           _watermarkImageBytes = file.bytes;
           _watermarkImageName = file.name;
+          if (file.path != null) {
+            _logoDirectory = p.dirname(file.path!);
+          }
         });
+        if (_logoDirectory != null) {
+          _savePreference('logoDirectory', _logoDirectory!);
+        }
         _addLog('Watermark image selected: ${file.name}');
       }
     } catch (e) {

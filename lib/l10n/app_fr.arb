@@ -218,6 +218,15 @@
     }
   },
   "selectOutputDirectory": "Choisir le dossier de sortie",
+  "logoDirectoryLabel": "Dossier des logos : {path}",
+  "@logoDirectoryLabel": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "selectLogoDirectory": "Choisir le dossier des logos",
   "viewLogs": "Voir les logs",
   "saveLogs": "Enregistrer les logs",
   "logsSaved": "Logs enregistrés dans : {path}",
@@ -567,5 +576,9 @@
         "type": "int"
       }
     }
-  }
+  },
+  "themeLabel": "Thème",
+  "themeSystem": "Système",
+  "themeLight": "Clair",
+  "themeDark": "Sombre"
 }

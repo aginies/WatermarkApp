@@ -308,6 +308,14 @@ class AppLocalizationsIt extends AppLocalizations {
   String get selectOutputDirectory => 'Seleziona cartella di output';
 
   @override
+  String logoDirectoryLabel(String path) {
+    return 'Cartella logo: $path';
+  }
+
+  @override
+  String get selectLogoDirectory => 'Seleziona cartella logo';
+
+  @override
   String get viewLogs => 'Visualizza log';
 
   @override
@@ -829,4 +837,16 @@ class AppLocalizationsIt extends AppLocalizations {
   String progressWatermarkingPage(int current, int total) {
     return 'Filigrana pagina $current/$total...';
   }
+
+  @override
+  String get themeLabel => 'Tema';
+
+  @override
+  String get themeSystem => 'Predefinito di sistema';
+
+  @override
+  String get themeLight => 'Chiaro';
+
+  @override
+  String get themeDark => 'Scuro';
 }
