@@ -887,7 +887,7 @@ class _WatermarkPageState extends State<WatermarkPage>
         const SizedBox(height: 16),
         _buildColorCard(),
         const SizedBox(height: 16),
-        _buildStatusIconsBox(),
+        _buildStatusIconsBox(context),
         _buildActionButtons(),
         const SizedBox(height: 16),
         Row(
@@ -2917,7 +2917,7 @@ class _WatermarkPageState extends State<WatermarkPage>
     );
   }
 
-  Widget _buildStatusIconsBox() {
+  Widget _buildStatusIconsBox(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
     if (!((_useSteganography && !_steganographyVerificationFailed) ||
@@ -2934,6 +2934,23 @@ class _WatermarkPageState extends State<WatermarkPage>
       return const SizedBox.shrink();
     }
 
+    // Helper to show tooltip on tap
+    void showTooltip(GlobalKey<TooltipState> key) {
+      key.currentState?.ensureTooltipVisible();
+    }
+
+    final steganoKey = GlobalKey<TooltipState>();
+    final robustKey = GlobalKey<TooltipState>();
+    final resizeKey = GlobalKey<TooltipState>();
+    final warningKey = GlobalKey<TooltipState>();
+    final qrKey = GlobalKey<TooltipState>();
+    final hideKey = GlobalKey<TooltipState>();
+    final zipKey = GlobalKey<TooltipState>();
+    final antiAiKey = GlobalKey<TooltipState>();
+    final cloakingKey = GlobalKey<TooltipState>();
+    final rasterKey = GlobalKey<TooltipState>();
+    final preserveKey = GlobalKey<TooltipState>();
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Card(
@@ -2947,8 +2964,10 @@ class _WatermarkPageState extends State<WatermarkPage>
             children: [
               if (_useSteganography && !_steganographyVerificationFailed)
                 GestureDetector(
+                  onTap: () => showTooltip(steganoKey),
                   onDoubleTap: _showSteganographyOptions,
                   child: Tooltip(
+                    key: steganoKey,
                     message: l10n.steganographyEnabledHint,
                     child: const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 8.0),
@@ -2959,8 +2978,10 @@ class _WatermarkPageState extends State<WatermarkPage>
                 ),
               if (_useRobustSteganography)
                 GestureDetector(
+                  onTap: () => showTooltip(robustKey),
                   onDoubleTap: _showSteganographyOptions,
                   child: Tooltip(
+                    key: robustKey,
                     message: l10n.robustSteganographyTitle,
                     child: const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 8.0),
@@ -2970,8 +2991,10 @@ class _WatermarkPageState extends State<WatermarkPage>
                 ),
               if (_targetSize != null)
                 GestureDetector(
+                  onTap: () => showTooltip(resizeKey),
                   onDoubleTap: _showExpertOptions,
                   child: Tooltip(
+                    key: resizeKey,
                     message:
                         l10n.imageResizingLabel(l10n.pixelUnit(_targetSize!)),
                     child: const Padding(
@@ -2983,8 +3006,10 @@ class _WatermarkPageState extends State<WatermarkPage>
                 ),
               if (_steganographyVerificationFailed)
                 GestureDetector(
+                  onTap: () => showTooltip(warningKey),
                   onDoubleTap: _showSteganographyOptions,
                   child: Tooltip(
+                    key: warningKey,
                     message: l10n.steganographyVerificationFailed,
                     child: const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 8.0),
@@ -2994,8 +3019,10 @@ class _WatermarkPageState extends State<WatermarkPage>
                 ),
               if (_qrVisible)
                 GestureDetector(
+                  onTap: () => showTooltip(qrKey),
                   onDoubleTap: _showQrWatermarkOptions,
                   child: Tooltip(
+                    key: qrKey,
                     message: l10n.qrWatermarkTitle +
                         (_qrType != QrType.metadata
                             ? ' (${_qrType.name.toUpperCase()})'
@@ -3008,8 +3035,10 @@ class _WatermarkPageState extends State<WatermarkPage>
                 ),
               if (_hideFileWithSteganography && _hiddenFileBytes != null)
                 GestureDetector(
+                  onTap: () => showTooltip(hideKey),
                   onDoubleTap: _showSteganographyOptions,
                   child: Tooltip(
+                    key: hideKey,
                     message: l10n.hideFileEnabledHint,
                     child: const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 8.0),
@@ -3018,17 +3047,23 @@ class _WatermarkPageState extends State<WatermarkPage>
                   ),
                 ),
               if (_zipOutputs)
-                Tooltip(
-                  message: l10n.zipEnabledHint,
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Icon(Icons.folder_zip, color: Colors.amber),
+                GestureDetector(
+                  onTap: () => showTooltip(zipKey),
+                  child: Tooltip(
+                    key: zipKey,
+                    message: l10n.zipEnabledHint,
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Icon(Icons.folder_zip, color: Colors.amber),
+                    ),
                   ),
                 ),
               if (_antiAiLevel > 0)
                 GestureDetector(
+                  onTap: () => showTooltip(antiAiKey),
                   onDoubleTap: _showExpertOptions,
                   child: Tooltip(
+                    key: antiAiKey,
                     message: l10n.antiAiProtectionValue(_antiAiLevel.round()),
                     child: const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 8.0),
@@ -3038,8 +3073,10 @@ class _WatermarkPageState extends State<WatermarkPage>
                 ),
               if (_useAiCloaking)
                 GestureDetector(
+                  onTap: () => showTooltip(cloakingKey),
                   onDoubleTap: _showExpertOptions,
                   child: Tooltip(
+                    key: cloakingKey,
                     message: l10n.aiCloakingEnabledHint,
                     child: const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 8.0),
@@ -3050,8 +3087,10 @@ class _WatermarkPageState extends State<WatermarkPage>
                 ),
               if (_rasterizePdf)
                 GestureDetector(
+                  onTap: () => showTooltip(rasterKey),
                   onDoubleTap: _showExpertOptions,
                   child: Tooltip(
+                    key: rasterKey,
                     message: l10n.rasterizePdfEnabledHint,
                     child: const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 8.0),
@@ -3062,8 +3101,10 @@ class _WatermarkPageState extends State<WatermarkPage>
                 ),
               if (_preserveMetadata)
                 GestureDetector(
+                  onTap: () => showTooltip(preserveKey),
                   onDoubleTap: _showExpertOptions,
                   child: Tooltip(
+                    key: preserveKey,
                     message: l10n.preserveMetadataEnabledHint,
                     child: const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 8.0),
