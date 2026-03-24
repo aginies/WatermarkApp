@@ -318,7 +318,7 @@
   "steganographyPasswordLabel": "Verschlüsselungspasswort",
   "steganographyPasswordHint": "Passwort zum Schutz der versteckten Datei eingeben",
   "steganographyPasswordNote": "Hinweis: Dieses Passwort wird benötigt, um die versteckte Datei mit SecureMark zu extrahieren. Es verwendet AES-256-Verschlüsselung.",
-  "steganographyZipNote": "Wichtig: Wenn Sie Steganographie verwenden und diese Dateien über WhatsApp, Signal oder andere Apps, die Bilder komprimieren, teilen, müssen Sie die ZIP-Komprimierung aktivieren (in den Expertenoptionen) oder sie manuell zippen. Direktes Teilen zerstört normalerweise die unsichtbare Steganographie.",
+  "steganographyZipNote": "Wichtig: Wenn Sie Steganographie verwenden und diese Dateien über WhatsApp, Signal oder andere Apps, die Bilder komprimieren, teilen, müssen Sie die ZIP-Komprimierung aktivieren oder sie manuell zippen. Direktes Teilen zerstört normalerweise die unsichtbare Steganographie.",
   "zipAllFiles": "Alle Dateien zippen",
   "zipEnabledHint": "ZIP-Komprimierung für den Austausch aktiviert",
   "zipDisabledHint": "ZIP-Komprimierung deaktiviert",
