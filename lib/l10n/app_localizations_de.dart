@@ -718,6 +718,9 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get loadingSelectedFiles => 'Ausgewählte Dateien werden geladen...';
+
+  @override
   String get profileLabel => 'Profil';
 
   @override
@@ -738,4 +741,95 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get profileShareDocument => 'Dokument';
+
+  @override
+  String get progressValidating => 'Datei wird validiert...';
+
+  @override
+  String get progressFromCache => 'Aus dem Cache abgerufen';
+
+  @override
+  String get progressDetectingType => 'Dateityp wird erkannt...';
+
+  @override
+  String get progressStarting => 'Verarbeitung wird gestartet...';
+
+  @override
+  String get progressComplete => 'Verarbeitung abgeschlossen';
+
+  @override
+  String get progressReadingImage => 'Bilddatei wird gelesen...';
+
+  @override
+  String get progressRenderingFont => 'Schriftart wird gerendert...';
+
+  @override
+  String get progressFinalizingImage => 'Bild wird finalisiert...';
+
+  @override
+  String get progressVerifyingStegano => 'Steganographie wird überprüft...';
+
+  @override
+  String get progressSteganoVerified => 'Steganographie verifiziert';
+
+  @override
+  String get progressSteganoFailed =>
+      'Steganographie-Überprüfung fehlgeschlagen';
+
+  @override
+  String get progressRasterizing => 'PDF wird gerastert (flattening)...';
+
+  @override
+  String get progressReadingPdf => 'PDF-Datei wird gelesen...';
+
+  @override
+  String get progressAddingLayer => 'Wasserzeichen-Ebene wird hinzugefügt...';
+
+  @override
+  String get progressFinalizingPdf => 'PDF wird finalisiert...';
+
+  @override
+  String get progressParsingPdf => 'PDF-Dokument wird analysiert...';
+
+  @override
+  String get progressDecodingImage => 'Bild wird dekodiert...';
+
+  @override
+  String get progressResizingImage => 'Bildgröße wird angepasst...';
+
+  @override
+  String get progressApplyingCloaking =>
+      'Adversarielles KI-Cloaking wird angewendet...';
+
+  @override
+  String get progressApplyingWatermark => 'Wasserzeichen wird angewendet...';
+
+  @override
+  String get progressEmbeddingRobust =>
+      'Robustes Wasserzeichen wird eingebettet (DCT)...';
+
+  @override
+  String get progressHidingFile =>
+      'Datei wird im Bild versteckt (Steganographie)...';
+
+  @override
+  String get progressEmbeddingLsb =>
+      'Unsichtbare Signatur wird eingebettet (LSB)...';
+
+  @override
+  String get progressEncodingImage => 'Bild wird kodiert...';
+
+  @override
+  String get progressGeneratingQr => 'QR-Code wird generiert...';
+
+  @override
+  String get progressEmbeddingQr => 'QR-Code wird eingebettet...';
+
+  @override
+  String get progressQrEmbedded => 'QR-Code eingebettet';
+
+  @override
+  String progressWatermarkingPage(int current, int total) {
+    return 'Seite $current/$total wird markiert...';
+  }
 }

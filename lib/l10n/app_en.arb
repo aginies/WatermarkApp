@@ -522,11 +522,50 @@
       }
     }
   },
+  "loadingSelectedFiles": "Loading Selected Files...",
   "profileLabel": "Profile",
   "profileDescription": "Quick presets for common use cases",
   "profileNone": "Custom",
   "profileSecureIdentity": "Identity",
   "profileOnlineImage": "Image",
   "profileQrCode": "QR Code",
-  "profileShareDocument": "Doc"
+  "profileShareDocument": "Doc",
+  "progressValidating": "Validating file...",
+  "progressFromCache": "Retrieved from cache",
+  "progressDetectingType": "Detecting file type...",
+  "progressStarting": "Starting processing...",
+  "progressComplete": "Processing complete",
+  "progressReadingImage": "Reading image file...",
+  "progressRenderingFont": "Rendering font...",
+  "progressFinalizingImage": "Finalizing image...",
+  "progressVerifyingStegano": "Verifying steganography...",
+  "progressSteganoVerified": "Steganography verified",
+  "progressSteganoFailed": "Steganography verification failed",
+  "progressRasterizing": "Rasterizing PDF (flattening)...",
+  "progressReadingPdf": "Reading PDF file...",
+  "progressAddingLayer": "Adding watermark layer...",
+  "progressFinalizingPdf": "Finalizing PDF...",
+  "progressParsingPdf": "Parsing PDF document...",
+  "progressDecodingImage": "Decoding image...",
+  "progressResizingImage": "Resizing image...",
+  "progressApplyingCloaking": "Applying adversarial AI cloaking...",
+  "progressApplyingWatermark": "Applying watermark...",
+  "progressEmbeddingRobust": "Embedding robust watermark (DCT)...",
+  "progressHidingFile": "Hiding file in image (steganography)...",
+  "progressEmbeddingLsb": "Embedding invisible signature (LSB)...",
+  "progressEncodingImage": "Encoding image...",
+  "progressGeneratingQr": "Generating QR code...",
+  "progressEmbeddingQr": "Embedding QR code...",
+  "progressQrEmbedded": "QR code embedded",
+  "progressWatermarkingPage": "Watermarking page {current}/{total}...",
+  "@progressWatermarkingPage": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  }
 }

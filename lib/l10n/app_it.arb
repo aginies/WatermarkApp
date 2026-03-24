@@ -522,11 +522,50 @@
       }
     }
   },
+  "loadingSelectedFiles": "Caricamento dei file selezionati...",
   "profileLabel": "Profilo",
   "profileDescription": "Preselezioni rapide per casi d'uso comuni",
   "profileNone": "Custom",
   "profileSecureIdentity": "Identità",
   "profileOnlineImage": "Immagine",
   "profileQrCode": "QR Code",
-  "profileShareDocument": "Doc"
+  "profileShareDocument": "Doc",
+  "progressValidating": "Validazione file...",
+  "progressFromCache": "Recuperato dalla cache",
+  "progressDetectingType": "Rilevamento tipo di file...",
+  "progressStarting": "Avvio elaborazione...",
+  "progressComplete": "Elaborazione completata",
+  "progressReadingImage": "Lettura file immagine...",
+  "progressRenderingFont": "Rendering del carattere...",
+  "progressFinalizingImage": "Finalizzazione immagine...",
+  "progressVerifyingStegano": "Verifica steganografia...",
+  "progressSteganoVerified": "Steganografia verificata",
+  "progressSteganoFailed": "Verifica steganografica fallita",
+  "progressRasterizing": "Rasterizzazione PDF (appiattimento)...",
+  "progressReadingPdf": "Lettura file PDF...",
+  "progressAddingLayer": "Aggiunta livello filigrana...",
+  "progressFinalizingPdf": "Finalizzazione PDF...",
+  "progressParsingPdf": "Analisi documento PDF...",
+  "progressDecodingImage": "Decodifica immagine...",
+  "progressResizingImage": "Ridimensionamento immagine...",
+  "progressApplyingCloaking": "Applicazione cloaking IA...",
+  "progressApplyingWatermark": "Applicazione filigrana...",
+  "progressEmbeddingRobust": "Incorporamento filigrana robusta (DCT)...",
+  "progressHidingFile": "Nascondiglio file nell'immagine (steganografia)...",
+  "progressEmbeddingLsb": "Incorporamento firma invisibile (LSB)...",
+  "progressEncodingImage": "Codifica immagine...",
+  "progressGeneratingQr": "Generazione codice QR...",
+  "progressEmbeddingQr": "Incorporamento codice QR...",
+  "progressQrEmbedded": "Codice QR incorporato",
+  "progressWatermarkingPage": "Filigrana pagina {current}/{total}...",
+  "@progressWatermarkingPage": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  }
 }

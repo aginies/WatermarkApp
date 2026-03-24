@@ -167,6 +167,7 @@ class _WatermarkPageState extends State<WatermarkPage>
   SettingsProfile _selectedProfile = SettingsProfile.none;
   bool _dragging = false;
   bool _logoDragging = false;
+  bool _loadingFiles = false;
   bool _processing = false;
   double _progress = 0.0;
   String _statusMessage = '';
@@ -2635,8 +2636,19 @@ class _WatermarkPageState extends State<WatermarkPage>
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
-      child: _processedFiles.isEmpty
+      child: _loadingFiles
           ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  Text(l10n.loadingSelectedFiles),
+                ],
+              ),
+            )
+          : _processedFiles.isEmpty
+              ? Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -3737,7 +3749,7 @@ class _WatermarkPageState extends State<WatermarkPage>
           .toList();
 
       if (validPaths.isNotEmpty) {
-        _selectPaths(validPaths);
+        await _selectPaths(validPaths);
       } else {
         _addLog('Error: Picked files have no valid local paths.');
       }
@@ -3746,10 +3758,11 @@ class _WatermarkPageState extends State<WatermarkPage>
     }
   }
 
-  void _selectPaths(List<String> paths) {
+  Future<void> _selectPaths(List<String> paths) async {
     final uniquePaths = paths.toSet().toList();
 
     setState(() {
+      _loadingFiles = true;
       _selectedPaths = uniquePaths;
       _processedFiles = <_ProcessedFile>[];
       _previewIndex = 0;
@@ -3757,22 +3770,32 @@ class _WatermarkPageState extends State<WatermarkPage>
       _statusMessage = ''; // Removed "Selected X files..." message
     });
 
-    // Load the first image for live shader preview
-    if (uniquePaths.isNotEmpty) {
-      final firstPath = uniquePaths.first;
-      final extension = p.extension(firstPath).toLowerCase();
-      if (['.jpg', '.jpeg', '.png', '.webp'].contains(extension)) {
-        File(firstPath).readAsBytes().then((bytes) {
+    try {
+      // Load the first image for live shader preview
+      if (uniquePaths.isNotEmpty) {
+        final firstPath = uniquePaths.first;
+        final extension = p.extension(firstPath).toLowerCase();
+        if (['.jpg', '.jpeg', '.png', '.webp'].contains(extension)) {
+          final bytes = await File(firstPath).readAsBytes();
+          final completer = Completer<ui.Image>();
           ui.decodeImageFromList(bytes, (image) {
-            if (mounted) {
-              setState(() {
-                _rawImage = image;
-              });
-            }
+            completer.complete(image);
           });
-        }).catchError((e) {
-          _addLog('Error reading first image for preview: $e');
-          debugPrint('Preview error: $e');
+          final image = await completer.future;
+          if (mounted) {
+            setState(() {
+              _rawImage = image;
+            });
+          }
+        }
+      }
+    } catch (e) {
+      _addLog('Error reading first image for preview: $e');
+      debugPrint('Preview error: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loadingFiles = false;
         });
       }
     }
@@ -3809,6 +3832,81 @@ class _WatermarkPageState extends State<WatermarkPage>
     final failedFiles = <String>[];
     bool dialogOpened = false;
 
+    // Helper to translate progress messages from processor keys
+    String translateProgress(String msg) {
+      if (msg.startsWith('progress')) {
+        // Handle parameterized messages
+        if (msg.contains(':')) {
+          final parts = msg.split(':');
+          final key = parts[0];
+          final params = parts[1].split('/');
+          if (key == 'progressWatermarkingPage' && params.length == 2) {
+            return l10n.progressWatermarkingPage(
+                int.parse(params[0]), int.parse(params[1]));
+          }
+        }
+
+        // Direct key mapping
+        switch (msg) {
+          case 'progressValidating':
+            return l10n.progressValidating;
+          case 'progressFromCache':
+            return l10n.progressFromCache;
+          case 'progressDetectingType':
+            return l10n.progressDetectingType;
+          case 'progressStarting':
+            return l10n.progressStarting;
+          case 'progressComplete':
+            return l10n.progressComplete;
+          case 'progressReadingImage':
+            return l10n.progressReadingImage;
+          case 'progressRenderingFont':
+            return l10n.progressRenderingFont;
+          case 'progressFinalizingImage':
+            return l10n.progressFinalizingImage;
+          case 'progressVerifyingStegano':
+            return l10n.progressVerifyingStegano;
+          case 'progressSteganoVerified':
+            return l10n.progressSteganoVerified;
+          case 'progressSteganoFailed':
+            return l10n.progressSteganoFailed;
+          case 'progressRasterizing':
+            return l10n.progressRasterizing;
+          case 'progressReadingPdf':
+            return l10n.progressReadingPdf;
+          case 'progressAddingLayer':
+            return l10n.progressAddingLayer;
+          case 'progressFinalizingPdf':
+            return l10n.progressFinalizingPdf;
+          case 'progressParsingPdf':
+            return l10n.progressParsingPdf;
+          case 'progressDecodingImage':
+            return l10n.progressDecodingImage;
+          case 'progressResizingImage':
+            return l10n.progressResizingImage;
+          case 'progressApplyingCloaking':
+            return l10n.progressApplyingCloaking;
+          case 'progressApplyingWatermark':
+            return l10n.progressApplyingWatermark;
+          case 'progressEmbeddingRobust':
+            return l10n.progressEmbeddingRobust;
+          case 'progressHidingFile':
+            return l10n.progressHidingFile;
+          case 'progressEmbeddingLsb':
+            return l10n.progressEmbeddingLsb;
+          case 'progressEncodingImage':
+            return l10n.progressEncodingImage;
+          case 'progressGeneratingQr':
+            return l10n.progressGeneratingQr;
+          case 'progressEmbeddingQr':
+            return l10n.progressEmbeddingQr;
+          case 'progressQrEmbedded':
+            return l10n.progressQrEmbedded;
+        }
+      }
+      return msg;
+    }
+
     // Show progress dialog
     showDialog(
       context: context,
@@ -3826,7 +3924,7 @@ class _WatermarkPageState extends State<WatermarkPage>
                 ? (_statusMessage.isEmpty
                     ? l10n.processingFile
                     : _statusMessage)
-                : _progressMessage;
+                : translateProgress(_progressMessage);
 
             // Show error state when processing is complete and there were failures
             final hasError = !_processing && failedFiles.isNotEmpty;
@@ -3867,7 +3965,9 @@ class _WatermarkPageState extends State<WatermarkPage>
                     ),
                   const SizedBox(height: 24),
                   Text(
-                      hasError ? l10n.processingFailed : l10n.applyingWatermark,
+                      !_processing && failedFiles.isEmpty
+                          ? l10n.processingComplete
+                          : l10n.applyingWatermark,
                       style: theme.textTheme.titleMedium),
                   const SizedBox(height: 8),
                   Text(
@@ -3885,23 +3985,20 @@ class _WatermarkPageState extends State<WatermarkPage>
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '${(_progress * 100).round()}${[
-                        'fr',
-                        'de'
-                      ].contains(Localizations.localeOf(context).languageCode) ? ' %' : '%'}',
+                      '${(_progress * 100).round()}${['fr', 'de'].contains(Localizations.localeOf(context).languageCode) ? ' %' : '%'}',
                       style: theme.textTheme.bodySmall
                           ?.copyWith(fontWeight: FontWeight.bold),
                     ),
                   ],
                   const SizedBox(height: 24),
                   TextButton(
-                    onPressed: hasError
+                    onPressed: (!_processing)
                         ? () {
                             _progressListener = null;
                             Navigator.of(context, rootNavigator: true).pop();
                           }
                         : _cancelProcessing,
-                    child: Text(hasError ? l10n.close : l10n.cancel),
+                    child: Text((!_processing) ? l10n.close : l10n.cancel),
                   ),
                 ],
               ),

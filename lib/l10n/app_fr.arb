@@ -522,11 +522,50 @@
       }
     }
   },
+  "loadingSelectedFiles": "Chargement des fichiers sélectionnés...",
   "profileLabel": "Profil",
   "profileDescription": "Préréglages rapides pour les cas d'usage courants",
   "profileNone": "Custom",
   "profileSecureIdentity": "Identité",
   "profileOnlineImage": "Image",
   "profileQrCode": "QR Code",
-  "profileShareDocument": "Doc"
+  "profileShareDocument": "Doc",
+  "progressValidating": "Validation du fichier...",
+  "progressFromCache": "Récupéré du cache",
+  "progressDetectingType": "Détection du type de fichier...",
+  "progressStarting": "Démarrage du traitement...",
+  "progressComplete": "Traitement terminé",
+  "progressReadingImage": "Lecture du fichier image...",
+  "progressRenderingFont": "Rendu de la police...",
+  "progressFinalizingImage": "Finalisation de l'image...",
+  "progressVerifyingStegano": "Vérification de la stéganographie...",
+  "progressSteganoVerified": "Stéganographie vérifiée",
+  "progressSteganoFailed": "Échec de la vérification stéganographique",
+  "progressRasterizing": "Rasterisation du PDF (aplatissement)...",
+  "progressReadingPdf": "Lecture du fichier PDF...",
+  "progressAddingLayer": "Ajout du calque de filigrane...",
+  "progressFinalizingPdf": "Finalisation du PDF...",
+  "progressParsingPdf": "Analyse du document PDF...",
+  "progressDecodingImage": "Décodage de l'image...",
+  "progressResizingImage": "Redimensionnement de l'image...",
+  "progressApplyingCloaking": "Application du cloaking IA...",
+  "progressApplyingWatermark": "Application du filigrane...",
+  "progressEmbeddingRobust": "Incorporation du filigrane robuste (DCT)...",
+  "progressHidingFile": "Masquage du fichier dans l'image (stéganographie)...",
+  "progressEmbeddingLsb": "Incorporation de la signature invisible (LSB)...",
+  "progressEncodingImage": "Encodage de l'image...",
+  "progressGeneratingQr": "Génération du code QR...",
+  "progressEmbeddingQr": "Incorporation du code QR...",
+  "progressQrEmbedded": "Code QR incorporé",
+  "progressWatermarkingPage": "Marquage de la page {current}/{total}...",
+  "@progressWatermarkingPage": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  }
 }

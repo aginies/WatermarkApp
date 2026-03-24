@@ -721,6 +721,9 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get loadingSelectedFiles => 'Chargement des fichiers sélectionnés...';
+
+  @override
   String get profileLabel => 'Profil';
 
   @override
@@ -741,4 +744,94 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get profileShareDocument => 'Doc';
+
+  @override
+  String get progressValidating => 'Validation du fichier...';
+
+  @override
+  String get progressFromCache => 'Récupéré du cache';
+
+  @override
+  String get progressDetectingType => 'Détection du type de fichier...';
+
+  @override
+  String get progressStarting => 'Démarrage du traitement...';
+
+  @override
+  String get progressComplete => 'Traitement terminé';
+
+  @override
+  String get progressReadingImage => 'Lecture du fichier image...';
+
+  @override
+  String get progressRenderingFont => 'Rendu de la police...';
+
+  @override
+  String get progressFinalizingImage => 'Finalisation de l\'image...';
+
+  @override
+  String get progressVerifyingStegano => 'Vérification de la stéganographie...';
+
+  @override
+  String get progressSteganoVerified => 'Stéganographie vérifiée';
+
+  @override
+  String get progressSteganoFailed =>
+      'Échec de la vérification stéganographique';
+
+  @override
+  String get progressRasterizing => 'Rasterisation du PDF (aplatissement)...';
+
+  @override
+  String get progressReadingPdf => 'Lecture du fichier PDF...';
+
+  @override
+  String get progressAddingLayer => 'Ajout du calque de filigrane...';
+
+  @override
+  String get progressFinalizingPdf => 'Finalisation du PDF...';
+
+  @override
+  String get progressParsingPdf => 'Analyse du document PDF...';
+
+  @override
+  String get progressDecodingImage => 'Décodage de l\'image...';
+
+  @override
+  String get progressResizingImage => 'Redimensionnement de l\'image...';
+
+  @override
+  String get progressApplyingCloaking => 'Application du cloaking IA...';
+
+  @override
+  String get progressApplyingWatermark => 'Application du filigrane...';
+
+  @override
+  String get progressEmbeddingRobust =>
+      'Incorporation du filigrane robuste (DCT)...';
+
+  @override
+  String get progressHidingFile =>
+      'Masquage du fichier dans l\'image (stéganographie)...';
+
+  @override
+  String get progressEmbeddingLsb =>
+      'Incorporation de la signature invisible (LSB)...';
+
+  @override
+  String get progressEncodingImage => 'Encodage de l\'image...';
+
+  @override
+  String get progressGeneratingQr => 'Génération du code QR...';
+
+  @override
+  String get progressEmbeddingQr => 'Incorporation du code QR...';
+
+  @override
+  String get progressQrEmbedded => 'Code QR incorporé';
+
+  @override
+  String progressWatermarkingPage(int current, int total) {
+    return 'Marquage de la page $current/$total...';
+  }
 }

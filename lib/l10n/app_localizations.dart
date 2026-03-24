@@ -1213,6 +1213,12 @@ abstract class AppLocalizations {
   String fileTooLargeMessage(String fileName, String fileSize,
       String imageDimensions, String maxCapacity);
 
+  /// No description provided for @loadingSelectedFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading Selected Files...'**
+  String get loadingSelectedFiles;
+
   /// No description provided for @profileLabel.
   ///
   /// In en, this message translates to:
@@ -1254,6 +1260,174 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Doc'**
   String get profileShareDocument;
+
+  /// No description provided for @progressValidating.
+  ///
+  /// In en, this message translates to:
+  /// **'Validating file...'**
+  String get progressValidating;
+
+  /// No description provided for @progressFromCache.
+  ///
+  /// In en, this message translates to:
+  /// **'Retrieved from cache'**
+  String get progressFromCache;
+
+  /// No description provided for @progressDetectingType.
+  ///
+  /// In en, this message translates to:
+  /// **'Detecting file type...'**
+  String get progressDetectingType;
+
+  /// No description provided for @progressStarting.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting processing...'**
+  String get progressStarting;
+
+  /// No description provided for @progressComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing complete'**
+  String get progressComplete;
+
+  /// No description provided for @progressReadingImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading image file...'**
+  String get progressReadingImage;
+
+  /// No description provided for @progressRenderingFont.
+  ///
+  /// In en, this message translates to:
+  /// **'Rendering font...'**
+  String get progressRenderingFont;
+
+  /// No description provided for @progressFinalizingImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Finalizing image...'**
+  String get progressFinalizingImage;
+
+  /// No description provided for @progressVerifyingStegano.
+  ///
+  /// In en, this message translates to:
+  /// **'Verifying steganography...'**
+  String get progressVerifyingStegano;
+
+  /// No description provided for @progressSteganoVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Steganography verified'**
+  String get progressSteganoVerified;
+
+  /// No description provided for @progressSteganoFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Steganography verification failed'**
+  String get progressSteganoFailed;
+
+  /// No description provided for @progressRasterizing.
+  ///
+  /// In en, this message translates to:
+  /// **'Rasterizing PDF (flattening)...'**
+  String get progressRasterizing;
+
+  /// No description provided for @progressReadingPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading PDF file...'**
+  String get progressReadingPdf;
+
+  /// No description provided for @progressAddingLayer.
+  ///
+  /// In en, this message translates to:
+  /// **'Adding watermark layer...'**
+  String get progressAddingLayer;
+
+  /// No description provided for @progressFinalizingPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Finalizing PDF...'**
+  String get progressFinalizingPdf;
+
+  /// No description provided for @progressParsingPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Parsing PDF document...'**
+  String get progressParsingPdf;
+
+  /// No description provided for @progressDecodingImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Decoding image...'**
+  String get progressDecodingImage;
+
+  /// No description provided for @progressResizingImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Resizing image...'**
+  String get progressResizingImage;
+
+  /// No description provided for @progressApplyingCloaking.
+  ///
+  /// In en, this message translates to:
+  /// **'Applying adversarial AI cloaking...'**
+  String get progressApplyingCloaking;
+
+  /// No description provided for @progressApplyingWatermark.
+  ///
+  /// In en, this message translates to:
+  /// **'Applying watermark...'**
+  String get progressApplyingWatermark;
+
+  /// No description provided for @progressEmbeddingRobust.
+  ///
+  /// In en, this message translates to:
+  /// **'Embedding robust watermark (DCT)...'**
+  String get progressEmbeddingRobust;
+
+  /// No description provided for @progressHidingFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Hiding file in image (steganography)...'**
+  String get progressHidingFile;
+
+  /// No description provided for @progressEmbeddingLsb.
+  ///
+  /// In en, this message translates to:
+  /// **'Embedding invisible signature (LSB)...'**
+  String get progressEmbeddingLsb;
+
+  /// No description provided for @progressEncodingImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Encoding image...'**
+  String get progressEncodingImage;
+
+  /// No description provided for @progressGeneratingQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Generating QR code...'**
+  String get progressGeneratingQr;
+
+  /// No description provided for @progressEmbeddingQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Embedding QR code...'**
+  String get progressEmbeddingQr;
+
+  /// No description provided for @progressQrEmbedded.
+  ///
+  /// In en, this message translates to:
+  /// **'QR code embedded'**
+  String get progressQrEmbedded;
+
+  /// No description provided for @progressWatermarkingPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Watermarking page {current}/{total}...'**
+  String progressWatermarkingPage(int current, int total);
 }
 
 class _AppLocalizationsDelegate

@@ -522,11 +522,50 @@
       }
     }
   },
+  "loadingSelectedFiles": "Ausgewählte Dateien werden geladen...",
   "profileLabel": "Profil",
   "profileDescription": "Schnelle Voreinstellungen für häufige Anwendungsfälle",
   "profileNone": "Custom",
   "profileSecureIdentity": "Identität",
   "profileOnlineImage": "Bild",
   "profileQrCode": "QR-Code",
-  "profileShareDocument": "Dokument"
+  "profileShareDocument": "Dokument",
+  "progressValidating": "Datei wird validiert...",
+  "progressFromCache": "Aus dem Cache abgerufen",
+  "progressDetectingType": "Dateityp wird erkannt...",
+  "progressStarting": "Verarbeitung wird gestartet...",
+  "progressComplete": "Verarbeitung abgeschlossen",
+  "progressReadingImage": "Bilddatei wird gelesen...",
+  "progressRenderingFont": "Schriftart wird gerendert...",
+  "progressFinalizingImage": "Bild wird finalisiert...",
+  "progressVerifyingStegano": "Steganographie wird überprüft...",
+  "progressSteganoVerified": "Steganographie verifiziert",
+  "progressSteganoFailed": "Steganographie-Überprüfung fehlgeschlagen",
+  "progressRasterizing": "PDF wird gerastert (flattening)...",
+  "progressReadingPdf": "PDF-Datei wird gelesen...",
+  "progressAddingLayer": "Wasserzeichen-Ebene wird hinzugefügt...",
+  "progressFinalizingPdf": "PDF wird finalisiert...",
+  "progressParsingPdf": "PDF-Dokument wird analysiert...",
+  "progressDecodingImage": "Bild wird dekodiert...",
+  "progressResizingImage": "Bildgröße wird angepasst...",
+  "progressApplyingCloaking": "Adversarielles KI-Cloaking wird angewendet...",
+  "progressApplyingWatermark": "Wasserzeichen wird angewendet...",
+  "progressEmbeddingRobust": "Robustes Wasserzeichen wird eingebettet (DCT)...",
+  "progressHidingFile": "Datei wird im Bild versteckt (Steganographie)...",
+  "progressEmbeddingLsb": "Unsichtbare Signatur wird eingebettet (LSB)...",
+  "progressEncodingImage": "Bild wird kodiert...",
+  "progressGeneratingQr": "QR-Code wird generiert...",
+  "progressEmbeddingQr": "QR-Code wird eingebettet...",
+  "progressQrEmbedded": "QR-Code eingebettet",
+  "progressWatermarkingPage": "Seite {current}/{total} wird markiert...",
+  "@progressWatermarkingPage": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  }
 }

@@ -319,7 +319,7 @@ class WatermarkProcessor {
       );
     }
 
-    onProgress?.call(0.0, 'Validating file...');
+    onProgress?.call(0.0, 'progressValidating');
 
     // Validate the file
     final validation = await _validateFile(file);
@@ -356,19 +356,19 @@ class WatermarkProcessor {
     );
 
     if (_resultCache.containsKey(cacheKey)) {
-      onProgress?.call(1.0, 'Retrieved from cache');
+      onProgress?.call(1.0, 'progressFromCache');
       return _resultCache[cacheKey]!;
     }
 
     try {
-      onProgress?.call(0.05, 'Detecting file type...');
+      onProgress?.call(0.05, 'progressDetectingType');
 
       final detectedType = await detectFileType(file);
       final extension = detectedType.isEmpty
           ? p.extension(file.path).toLowerCase()
           : detectedType;
 
-      onProgress?.call(0.1, 'Starting processing...');
+      onProgress?.call(0.1, 'progressStarting');
       final resolvedText = _resolvedWatermarkText(watermarkText);
 
       ProcessResult result;
@@ -448,7 +448,7 @@ class WatermarkProcessor {
       // Cache the result (with size limit)
       _addToCache(cacheKey, result);
 
-      onProgress?.call(1.0, 'Processing complete');
+      onProgress?.call(1.0, 'progressComplete');
       return result;
     } catch (e) {
       if (e is WatermarkError) {
@@ -695,7 +695,7 @@ class WatermarkProcessor {
     CancellationToken? cancellationToken,
   }) async {
     try {
-      onProgress?.call(0.0, 'Reading image file...');
+      onProgress?.call(0.0, 'progressReadingImage');
 
       if (cancellationToken?.isCancelled == true) {
         throw const WatermarkError(
@@ -710,7 +710,7 @@ class WatermarkProcessor {
       // Pre-render TTF stamps if using non-bitmap fonts
       Map<String, Uint8List>? preRenderedStamps;
       if (watermarkType == WatermarkType.text && !font.isBitmap) {
-        onProgress?.call(0.1, 'Rendering font...');
+        onProgress?.call(0.1, 'progressRenderingFont');
         final stampKey = '${font.fontFamily}-${fontSize.round()}';
         try {
           final stampBytes = await _renderTextWithFlutterCanvas(
@@ -737,6 +737,7 @@ class WatermarkProcessor {
       final operationText = operations.isEmpty
           ? 'Processing'
           : 'Applying ${operations.join(", ")}';
+      // We don't localize this composite operation text easily, so we keep it as a base
       onProgress?.call(0.1, '$operationText...');
 
       final receivePort = ReceivePort();
@@ -788,7 +789,7 @@ class WatermarkProcessor {
         );
       }
 
-      onProgress?.call(0.85, 'Finalizing image...');
+      onProgress?.call(0.85, 'progressFinalizingImage');
 
       // For HEIC/HEIF or other formats, we might want to default to .jpg for the output
       // since our encoder handles them as such or as PNG.
@@ -806,7 +807,7 @@ class WatermarkProcessor {
       if (useSteganography ||
           useRobustSteganography ||
           hiddenFileName != null) {
-        onProgress?.call(0.9, 'Verifying steganography...');
+        onProgress?.call(0.9, 'progressVerifyingStegano');
 
         // Use the new combined analyzer for verification
         final analysis =
@@ -831,13 +832,13 @@ class WatermarkProcessor {
         }
 
         if (verified || robustVerified) {
-          onProgress?.call(0.95, 'Steganography verified');
+          onProgress?.call(0.95, 'progressSteganoVerified');
         } else {
-          onProgress?.call(0.95, 'Steganography verification failed');
+          onProgress?.call(0.95, 'progressSteganoFailed');
         }
       }
 
-      onProgress?.call(1.0, 'Processing complete');
+      onProgress?.call(1.0, 'progressComplete');
 
       return ProcessResult(
         outputPath: outputPath,
@@ -1372,7 +1373,7 @@ class WatermarkProcessor {
     SendPort? progressPort,
   }) {
     try {
-      progressPort?.send({'progress': 0.05, 'message': 'Decoding image...'});
+      progressPort?.send({'progress': 0.05, 'message': 'progressDecodingImage'});
       final decoded = img.decodeImage(inputBytes);
       if (decoded == null) {
         throw WatermarkError(
@@ -1382,14 +1383,14 @@ class WatermarkProcessor {
         );
       }
 
-      progressPort?.send({'progress': 0.15, 'message': 'Resizing image...'});
+      progressPort?.send({'progress': 0.15, 'message': 'progressResizingImage'});
       final resized = _resizeToTarget(decoded, targetSize);
       var outputImage = img.Image.from(resized);
 
       if (useAiCloaking) {
         progressPort?.send({
           'progress': 0.25,
-          'message': 'Applying adversarial AI cloaking...'
+          'message': 'progressApplyingCloaking'
         });
         outputImage = _applyAiCloaking(outputImage);
       }
@@ -1404,7 +1405,7 @@ class WatermarkProcessor {
       outputImage.textData!['Software'] = 'SecureMark';
 
       progressPort
-          ?.send({'progress': 0.35, 'message': 'Applying watermark...'});
+          ?.send({'progress': 0.35, 'message': 'progressApplyingWatermark'});
       _applyWatermarkField(
         outputImage,
         watermarkText,
@@ -1431,7 +1432,7 @@ class WatermarkProcessor {
       if (useRobustSteganography) {
         progressPort?.send({
           'progress': 0.80,
-          'message': 'Embedding robust watermark (DCT)...'
+          'message': 'progressEmbeddingRobust'
         });
         outputImage = _embedRobustSignature(outputImage, watermarkText);
       }
@@ -1440,7 +1441,7 @@ class WatermarkProcessor {
         if (hiddenFileName != null && hiddenFileBytes != null) {
           progressPort?.send({
             'progress': 0.85,
-            'message': 'Hiding file in image (steganography)...'
+            'message': 'progressHidingFile'
           });
           outputImage = _embedFileIntoImage(
             outputImage,
@@ -1454,7 +1455,7 @@ class WatermarkProcessor {
         // Always embed watermark text as LSB if steganography is enabled (Blue channel)
         progressPort?.send({
           'progress': 0.88,
-          'message': 'Embedding invisible signature (LSB)...'
+          'message': 'progressEmbeddingLsb'
         });
         outputImage = _embedLSB(
           outputImage,
@@ -1464,7 +1465,7 @@ class WatermarkProcessor {
         );
       }
 
-      progressPort?.send({'progress': 0.90, 'message': 'Encoding image...'});
+      progressPort?.send({'progress': 0.90, 'message': 'progressEncodingImage'});
       final forcePng = useSteganography || useRobustSteganography;
 
       return _encodeImageInOriginalFormat(

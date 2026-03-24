@@ -713,6 +713,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get loadingSelectedFiles => 'Loading Selected Files...';
+
+  @override
   String get profileLabel => 'Profile';
 
   @override
@@ -732,4 +735,90 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileShareDocument => 'Doc';
+
+  @override
+  String get progressValidating => 'Validating file...';
+
+  @override
+  String get progressFromCache => 'Retrieved from cache';
+
+  @override
+  String get progressDetectingType => 'Detecting file type...';
+
+  @override
+  String get progressStarting => 'Starting processing...';
+
+  @override
+  String get progressComplete => 'Processing complete';
+
+  @override
+  String get progressReadingImage => 'Reading image file...';
+
+  @override
+  String get progressRenderingFont => 'Rendering font...';
+
+  @override
+  String get progressFinalizingImage => 'Finalizing image...';
+
+  @override
+  String get progressVerifyingStegano => 'Verifying steganography...';
+
+  @override
+  String get progressSteganoVerified => 'Steganography verified';
+
+  @override
+  String get progressSteganoFailed => 'Steganography verification failed';
+
+  @override
+  String get progressRasterizing => 'Rasterizing PDF (flattening)...';
+
+  @override
+  String get progressReadingPdf => 'Reading PDF file...';
+
+  @override
+  String get progressAddingLayer => 'Adding watermark layer...';
+
+  @override
+  String get progressFinalizingPdf => 'Finalizing PDF...';
+
+  @override
+  String get progressParsingPdf => 'Parsing PDF document...';
+
+  @override
+  String get progressDecodingImage => 'Decoding image...';
+
+  @override
+  String get progressResizingImage => 'Resizing image...';
+
+  @override
+  String get progressApplyingCloaking => 'Applying adversarial AI cloaking...';
+
+  @override
+  String get progressApplyingWatermark => 'Applying watermark...';
+
+  @override
+  String get progressEmbeddingRobust => 'Embedding robust watermark (DCT)...';
+
+  @override
+  String get progressHidingFile => 'Hiding file in image (steganography)...';
+
+  @override
+  String get progressEmbeddingLsb => 'Embedding invisible signature (LSB)...';
+
+  @override
+  String get progressEncodingImage => 'Encoding image...';
+
+  @override
+  String get progressGeneratingQr => 'Generating QR code...';
+
+  @override
+  String get progressEmbeddingQr => 'Embedding QR code...';
+
+  @override
+  String get progressQrEmbedded => 'QR code embedded';
+
+  @override
+  String progressWatermarkingPage(int current, int total) {
+    return 'Watermarking page $current/$total...';
+  }
 }
