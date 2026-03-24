@@ -318,6 +318,7 @@
   "steganographyPasswordLabel": "Mot de passe de chiffrage",
   "steganographyPasswordHint": "Entrez le mot de passe pour protéger le fichier caché",
   "steganographyPasswordNote": "Remarque : Ce mot de passe sera requis pour extraire le fichier caché à l'aide de SecureMark. Il utilise le chiffrage AES-256.",
+  "steganographyZipNote": "Important : Si vous utilisez la stéganographie et partagez ces fichiers via WhatsApp, Signal ou d'autres applications qui compressent les images, vous devez activer la compression ZIP (dans les Options Expert) ou les zipper manuellement. Le partage direct détruit généralement la stéganographie invisible.",
   "zipAllFiles": "Zipper tous les fichiers",
   "zipEnabledHint": "Compression ZIP activée pour le partage",
   "zipDisabledHint": "Compression ZIP désactivée",

@@ -471,6 +471,10 @@ class AppLocalizationsIt extends AppLocalizations {
       'Nota: questa password sarà richiesta per estrarre il file nascosto utilizzando SecureMark. Utilizza la crittografia AES-256.';
 
   @override
+  String get steganographyZipNote =>
+      'Importante: se utilizzi la steganografia e condividi questi file tramite WhatsApp, Signal o altre app che comprimono le immagini, è necessario abilitare la compressione ZIP (nelle Opzioni esperto) o comprimerli manualmente. La condivisione diretta di solito distrugge la steganografia invisibile.';
+
+  @override
   String get zipAllFiles => 'Zippa tutti i file';
 
   @override

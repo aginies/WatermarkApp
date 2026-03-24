@@ -472,6 +472,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'Nota: esta contraseña será necesaria para extraer el archivo oculto usando SecureMark. Usa cifrado AES-256.';
 
   @override
+  String get steganographyZipNote =>
+      'Importante: si usa esteganografía y comparte estos archivos a través de WhatsApp, Signal u otras aplicaciones que comprimen imágenes, debe habilitar la compresión ZIP (en las Opciones de Experto) o comprimirlos manualmente. El intercambio directo suele destruir la esteganografía invisible.';
+
+  @override
   String get zipAllFiles => 'ZIP todos los archivos';
 
   @override

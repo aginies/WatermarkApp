@@ -824,6 +824,12 @@ abstract class AppLocalizations {
   /// **'Note: This password will be required to extract the hidden file using SecureMark. It uses AES-256 encryption.'**
   String get steganographyPasswordNote;
 
+  /// No description provided for @steganographyZipNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Important: If you use steganography and share these files via WhatsApp, Signal, or other apps that compress images, you must enable ZIP compression (in Expert Options) or ZIP them manually. Direct sharing usually destroys the invisible steganography.'**
+  String get steganographyZipNote;
+
   /// No description provided for @zipAllFiles.
   ///
   /// In en, this message translates to:

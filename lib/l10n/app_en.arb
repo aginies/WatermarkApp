@@ -318,6 +318,7 @@
   "steganographyPasswordLabel": "Encryption Password",
   "steganographyPasswordHint": "Enter password to protect hidden file",
   "steganographyPasswordNote": "Note: This password will be required to extract the hidden file using SecureMark. It uses AES-256 encryption.",
+  "steganographyZipNote": "Important: If you use steganography and share these files via WhatsApp, Signal, or other apps that compress images, you must enable ZIP compression (in Expert Options) or ZIP them manually. Direct sharing usually destroys the invisible steganography.",
   "zipAllFiles": "ZIP All Files",
   "zipEnabledHint": "ZIP compression enabled for sharing. NOTE: third‑party apps (WhatsApp, Signal, etc.) compress images, potentially destroying steganographic signatures. Enable ZIP to avoid loosing signatures.",
   "zipDisabledHint": "ZIP compression disabled",
