@@ -218,7 +218,7 @@ class WatermarkProcessor {
       final height = originalImg.height;
       final heatmap = img.Image(width: width, height: height);
 
-      // We want to highlight differences. 
+      // We want to highlight differences.
       // Background will be a dimmed version of the original image
       // Differences will be bright red
       for (int y = 0; y < height; y++) {
@@ -235,7 +235,9 @@ class WatermarkProcessor {
           final b2 = processedPixel.b;
 
           // Simple difference threshold
-          if ((r1 - r2).abs() > 0 || (g1 - g2).abs() > 0 || (b1 - b2).abs() > 0) {
+          if ((r1 - r2).abs() > 0 ||
+              (g1 - g2).abs() > 0 ||
+              (b1 - b2).abs() > 0) {
             // Highlight difference in bright red
             heatmap.setPixel(x, y, img.ColorRgb8(255, 0, 0));
           } else {
@@ -1560,8 +1562,10 @@ class WatermarkProcessor {
     }
   }
 
-  static img.Image? _generateHeatmapImage(img.Image original, img.Image processed) {
-    if (original.width != processed.width || original.height != processed.height) {
+  static img.Image? _generateHeatmapImage(
+      img.Image original, img.Image processed) {
+    if (original.width != processed.width ||
+        original.height != processed.height) {
       return null;
     }
 

@@ -3267,15 +3267,24 @@ class WatermarkPageState extends State<WatermarkPage>
                                             ? _processedFiles[index]
                                                 .result
                                                 .originalBytes!
-                                            : (_previewMode == PreviewMode.heatmap && _processedFiles[index].result.heatmapBytes != null)
-                                                ? _processedFiles[index].result.heatmapBytes!
+                                            : (_previewMode ==
+                                                        PreviewMode.heatmap &&
+                                                    _processedFiles[index]
+                                                            .result
+                                                            .heatmapBytes !=
+                                                        null)
+                                                ? _processedFiles[index]
+                                                    .result
+                                                    .heatmapBytes!
                                                 : previewBytes,
                                         fit: BoxFit.contain,
                                       ),
                                     ),
                                   ),
                                 ),
-                                if (_processedFiles[index].result.originalBytes !=
+                                if (_processedFiles[index]
+                                            .result
+                                            .originalBytes !=
                                         null &&
                                     !_processedFiles[index].result.isPdf)
                                   Positioned(
@@ -3488,9 +3497,7 @@ class WatermarkPageState extends State<WatermarkPage>
           height: 32,
           margin: const EdgeInsets.symmetric(horizontal: 2),
           decoration: BoxDecoration(
-            color: isSelected
-                ? theme.colorScheme.primary
-                : Colors.transparent,
+            color: isSelected ? theme.colorScheme.primary : Colors.transparent,
             shape: BoxShape.circle,
           ),
           child: Center(
