@@ -5172,12 +5172,13 @@ class WatermarkPageState extends State<WatermarkPage>
           title: Text(l10n.resetProfiles),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            children: SettingsProfile.values
-                .where((p) => p != SettingsProfile.none)
-                .map((profile) {
+            children: SettingsProfile.values.map((profile) {
               String label = '';
               IconData icon;
               switch (profile) {
+                case SettingsProfile.none:
+                  label = l10n.profileNone;
+                  icon = Icons.not_interested;
                 case SettingsProfile.secureIdentity:
                   label = l10n.profileSecureIdentity;
                   icon = Icons.fingerprint;
@@ -5190,9 +5191,6 @@ class WatermarkPageState extends State<WatermarkPage>
                 case SettingsProfile.shareDocument:
                   label = l10n.profileShareDocument;
                   icon = Icons.description;
-                default:
-                  label = profile.name;
-                  icon = Icons.settings;
               }
 
               return Padding(
