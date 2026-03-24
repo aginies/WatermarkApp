@@ -987,19 +987,19 @@ abstract class AppLocalizations {
   /// No description provided for @antiAiProtectionValue.
   ///
   /// In en, this message translates to:
-  /// **'Anti-AI Protection: {value}%'**
+  /// **'Anti-AI Removal Protection: {value}%'**
   String antiAiProtectionValue(int value);
 
   /// No description provided for @antiAiProtectionNote.
   ///
   /// In en, this message translates to:
-  /// **'Note: higher protection significantly increases the time to generate the securemarked image.'**
+  /// **'Note: adds jitter and noise to make the watermark much harder to remove by AI. Higher levels take more time.'**
   String get antiAiProtectionNote;
 
   /// No description provided for @antiAiEnabledHint.
   ///
   /// In en, this message translates to:
-  /// **'Anti-AI protection is enabled'**
+  /// **'Anti-AI removal protection is enabled'**
   String get antiAiEnabledHint;
 
   /// No description provided for @aiCloakingTitle.

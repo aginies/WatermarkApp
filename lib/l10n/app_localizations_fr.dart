@@ -564,15 +564,16 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String antiAiProtectionValue(int value) {
-    return 'Protection Anti-IA : $value%';
+    return 'Protection Anti-Suppression IA : $value%';
   }
 
   @override
   String get antiAiProtectionNote =>
-      'Note : une protection élevée augmente significativement le temps de génération de l\'image.';
+      'Note : ajoute des micro-variations et du bruit pour rendre le filigrane beaucoup plus difficile à supprimer par une IA. Les niveaux élevés prennent plus de temps.';
 
   @override
-  String get antiAiEnabledHint => 'La protection Anti-IA est activée';
+  String get antiAiEnabledHint =>
+      'La protection contre la suppression par IA est activée';
 
   @override
   String get aiCloakingTitle => 'Cloaking IA (Adversaire)';

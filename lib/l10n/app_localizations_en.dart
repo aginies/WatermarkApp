@@ -557,15 +557,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String antiAiProtectionValue(int value) {
-    return 'Anti-AI Protection: $value%';
+    return 'Anti-AI Removal Protection: $value%';
   }
 
   @override
   String get antiAiProtectionNote =>
-      'Note: higher protection significantly increases the time to generate the securemarked image.';
+      'Note: adds jitter and noise to make the watermark much harder to remove by AI. Higher levels take more time.';
 
   @override
-  String get antiAiEnabledHint => 'Anti-AI protection is enabled';
+  String get antiAiEnabledHint => 'Anti-AI removal protection is enabled';
 
   @override
   String get aiCloakingTitle => 'AI Cloaking (Adversarial)';

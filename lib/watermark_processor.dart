@@ -2577,7 +2577,8 @@ class WatermarkProcessor {
 
         // Base strength multipliers
         final baseStrength = isTextured ? 1.5 : 1.0;
-        final edgeMultiplier = isEdge ? 0.7 : 1.0; // Reduce on edges for invisibility
+        final edgeMultiplier =
+            isEdge ? 0.7 : 1.0; // Reduce on edges for invisibility
         final textMultiplier = isText ? 1.3 : 1.0; // Boost in text regions
 
         // 4. Multi-band adversarial attacks
@@ -2645,7 +2646,9 @@ class WatermarkProcessor {
             final crVal = newCr[y * 8 + x] - 128;
 
             final r = (yVal + 1.402 * crVal).clamp(0, 255).toInt();
-            final g = (yVal - 0.344136 * cbVal - 0.714136 * crVal).clamp(0, 255).toInt();
+            final g = (yVal - 0.344136 * cbVal - 0.714136 * crVal)
+                .clamp(0, 255)
+                .toInt();
             final b = (yVal + 1.772 * cbVal).clamp(0, 255).toInt();
 
             output.setPixel(bx * 8 + x, by * 8 + y, img.ColorRgb8(r, g, b));
@@ -2657,7 +2660,8 @@ class WatermarkProcessor {
   }
 
   /// Computes edge strength map for adaptive processing
-  static List<double> _computeEdgeMap(img.Image image, int numBlocksX, int numBlocksY) {
+  static List<double> _computeEdgeMap(
+      img.Image image, int numBlocksX, int numBlocksY) {
     final edgeMap = List<double>.filled(numBlocksX * numBlocksY, 0.0);
 
     for (var by = 0; by < numBlocksY; by++) {
@@ -2680,8 +2684,10 @@ class WatermarkProcessor {
             final pRight = image.getPixel(px + 1, py);
             final pDown = image.getPixel(px, py + 1);
 
-            final grayRight = 0.299 * pRight.r + 0.587 * pRight.g + 0.114 * pRight.b;
-            final grayDown = 0.299 * pDown.r + 0.587 * pDown.g + 0.114 * pDown.b;
+            final grayRight =
+                0.299 * pRight.r + 0.587 * pRight.g + 0.114 * pRight.b;
+            final grayDown =
+                0.299 * pDown.r + 0.587 * pDown.g + 0.114 * pDown.b;
 
             final gx = (gray - grayRight).abs();
             final gy = (gray - grayDown).abs();
@@ -2691,7 +2697,8 @@ class WatermarkProcessor {
           }
         }
 
-        edgeMap[by * numBlocksX + bx] = count > 0 ? (edgeStrength / count) / 255.0 : 0.0;
+        edgeMap[by * numBlocksX + bx] =
+            count > 0 ? (edgeStrength / count) / 255.0 : 0.0;
       }
     }
 
@@ -2711,7 +2718,8 @@ class WatermarkProcessor {
   }
 
   /// Detects text regions using edge patterns and variance
-  static List<double> _detectTextRegions(img.Image image, int numBlocksX, int numBlocksY) {
+  static List<double> _detectTextRegions(
+      img.Image image, int numBlocksX, int numBlocksY) {
     final textMap = List<double>.filled(numBlocksX * numBlocksY, 0.0);
 
     for (var by = 0; by < numBlocksY; by++) {
@@ -2735,13 +2743,15 @@ class WatermarkProcessor {
             // Edge detection
             if (px < image.width - 1) {
               final pRight = image.getPixel(px + 1, py);
-              final grayRight = 0.299 * pRight.r + 0.587 * pRight.g + 0.114 * pRight.b;
+              final grayRight =
+                  0.299 * pRight.r + 0.587 * pRight.g + 0.114 * pRight.b;
               verticalEdges += (gray - grayRight).abs();
             }
 
             if (py < image.height - 1) {
               final pDown = image.getPixel(px, py + 1);
-              final grayDown = 0.299 * pDown.r + 0.587 * pDown.g + 0.114 * pDown.b;
+              final grayDown =
+                  0.299 * pDown.r + 0.587 * pDown.g + 0.114 * pDown.b;
               horizontalEdges += (gray - grayDown).abs();
             }
           }
@@ -2763,13 +2773,16 @@ class WatermarkProcessor {
         // 3. Strong vertical edges (character strokes)
         // 4. Vertical edges stronger than horizontal
 
-        final normalizedVariance = (variance > 200 && variance < 800) ? 1.0 : 0.0;
-        final normalizedHorizontal = (horizontalEdges / (8 * 8 * 255.0)).clamp(0.0, 1.0);
-        final normalizedVertical = (verticalEdges / (8 * 8 * 255.0)).clamp(0.0, 1.0);
+        final normalizedVariance =
+            (variance > 200 && variance < 800) ? 1.0 : 0.0;
+        final normalizedHorizontal =
+            (horizontalEdges / (8 * 8 * 255.0)).clamp(0.0, 1.0);
+        final normalizedVertical =
+            (verticalEdges / (8 * 8 * 255.0)).clamp(0.0, 1.0);
 
         final textScore = normalizedVariance * 0.3 +
-                          normalizedHorizontal * 0.3 +
-                          normalizedVertical * 0.4;
+            normalizedHorizontal * 0.3 +
+            normalizedVertical * 0.4;
 
         textMap[by * numBlocksX + bx] = textScore.clamp(0.0, 1.0);
       }
