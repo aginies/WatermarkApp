@@ -855,20 +855,20 @@ class AppLocalizationsIt extends AppLocalizations {
   String get themeDark => 'Scuro';
 
   @override
-  String get resetProfiles => 'Reset Profiles';
+  String get resetProfiles => 'Ripristina profili';
 
   @override
   String resetProfileConfirm(String profile) {
-    return 'Reset $profile to factory defaults?';
+    return 'Ripristinare $profile ai valori di fabbrica?';
   }
 
   @override
   String profileSaved(String profile) {
-    return 'Current configuration saved as default for $profile';
+    return 'Configurazione attuale salvata come predefinita per $profile';
   }
 
   @override
   String profileReset(String profile) {
-    return 'Profile $profile reset to factory defaults';
+    return 'Profilo $profile ripristinato ai valori di fabbrica';
   }
 }

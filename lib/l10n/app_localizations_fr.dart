@@ -860,20 +860,20 @@ class AppLocalizationsFr extends AppLocalizations {
   String get themeDark => 'Sombre';
 
   @override
-  String get resetProfiles => 'Reset Profiles';
+  String get resetProfiles => 'Réinitialiser les profils';
 
   @override
   String resetProfileConfirm(String profile) {
-    return 'Reset $profile to factory defaults?';
+    return 'Réinitialiser $profile aux valeurs d\'usine ?';
   }
 
   @override
   String profileSaved(String profile) {
-    return 'Current configuration saved as default for $profile';
+    return 'Configuration actuelle enregistrée par défaut pour $profile';
   }
 
   @override
   String profileReset(String profile) {
-    return 'Profile $profile reset to factory defaults';
+    return 'Profil $profile réinitialisé aux valeurs d\'usine';
   }
 }
