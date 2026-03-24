@@ -49,15 +49,6 @@ flutter:
   
   # Custom fonts
   fonts:
-    - family: CustomRoboto
-      fonts:
-        - asset: assets/fonts/Roboto-Regular.ttf
-    - family: CustomOpenSans
-      fonts:
-        - asset: assets/fonts/OpenSans-Regular.ttf
-    - family: Charis
-      fonts:
-        - asset: assets/fonts/Charis-Regular.ttf
     - family: LiberationMono
       fonts:
         - asset: assets/fonts/LiberationMono-Regular.ttf

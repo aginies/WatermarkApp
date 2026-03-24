@@ -22,10 +22,6 @@ enum WatermarkFont {
       FontSource.google),
   oswald('Oswald', 'Oswald (Strong)', false, FontSource.google),
   // Custom asset fonts (your actual font files)
-  customRoboto('CustomRoboto', 'Roboto (Custom TTF)', false, FontSource.asset),
-  customOpenSans(
-      'CustomOpenSans', 'Open Sans (Custom TTF)', false, FontSource.asset),
-  charis('Charis', 'Charis SIL (Serif)', false, FontSource.asset),
   liberationMono(
       'LiberationMono', 'Liberation Mono (Monospace)', false, FontSource.asset),
   liberationSerif('LiberationSerif', 'Liberation Serif (Traditional)', false,
@@ -129,12 +125,6 @@ enum WatermarkFont {
       case WatermarkFont.oswald:
         return 'Oswald';
       // Custom asset fonts
-      case WatermarkFont.customRoboto:
-        return 'CustomRoboto';
-      case WatermarkFont.customOpenSans:
-        return 'CustomOpenSans';
-      case WatermarkFont.charis:
-        return 'Charis';
       case WatermarkFont.liberationMono:
         return 'LiberationMono';
       case WatermarkFont.liberationSerif:
@@ -150,12 +140,6 @@ enum WatermarkFont {
     if (source != FontSource.asset) return null;
 
     switch (this) {
-      case WatermarkFont.customRoboto:
-        return 'assets/fonts/Roboto-Regular.ttf';
-      case WatermarkFont.customOpenSans:
-        return 'assets/fonts/OpenSans-Regular.ttf';
-      case WatermarkFont.charis:
-        return 'assets/fonts/Charis-Regular.ttf';
       case WatermarkFont.liberationMono:
         return 'assets/fonts/LiberationMono-Regular.ttf';
       case WatermarkFont.liberationSerif:
@@ -247,9 +231,7 @@ class FontManager {
   static List<WatermarkFont> get professionalFonts => [
         WatermarkFont.arial,
         WatermarkFont.roboto,
-        WatermarkFont.customRoboto,
         WatermarkFont.openSans,
-        WatermarkFont.customOpenSans,
         WatermarkFont.lato,
         WatermarkFont.notoSans,
         WatermarkFont.vera,
@@ -259,7 +241,6 @@ class FontManager {
         WatermarkFont.montserrat,
         WatermarkFont.poppins,
         WatermarkFont.roboto,
-        WatermarkFont.customRoboto,
         WatermarkFont.oswald,
         WatermarkFont.vera,
       ];
@@ -268,7 +249,6 @@ class FontManager {
         WatermarkFont.playfairDisplay,
         WatermarkFont.oswald,
         WatermarkFont.montserrat,
-        WatermarkFont.charis,
       ];
 
   static List<WatermarkFont> get monospaceFonts => [
@@ -277,7 +257,6 @@ class FontManager {
       ];
 
   static List<WatermarkFont> get serifFonts => [
-        WatermarkFont.charis,
         WatermarkFont.liberationSerif,
         WatermarkFont.playfairDisplay,
       ];

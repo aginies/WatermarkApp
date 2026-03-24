@@ -57,6 +57,7 @@ class WatermarkPageState extends State<WatermarkPage>
   final TransformationController _transformationController =
       TransformationController();
   final PageController _previewController = PageController();
+  final ScrollController _profileScrollController = ScrollController();
   double _transparency = 75;
   double _density = 35;
   double _fontSize = 24;
@@ -728,6 +729,9 @@ class WatermarkPageState extends State<WatermarkPage>
   @override
   void initState() {
     super.initState();
+    _profileScrollController.addListener(() {
+      if (mounted) setState(() {});
+    });
     WidgetsBinding.instance.addObserver(this);
     _setupPlatformCallHandler();
     _loadPreferences();
@@ -810,6 +814,7 @@ class WatermarkPageState extends State<WatermarkPage>
     _filePrefixController.dispose();
     _transformationController.dispose();
     _previewController.dispose();
+    _profileScrollController.dispose();
     super.dispose();
   }
 
@@ -1128,9 +1133,97 @@ class WatermarkPageState extends State<WatermarkPage>
       children: [
         const SizedBox(height: 4.0),
         if (isMobile)
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(children: chips),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              ShaderMask(
+                shaderCallback: (Rect rect) {
+                  return const LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      Colors.purple,
+                      Colors.transparent,
+                      Colors.transparent,
+                      Colors.purple
+                    ],
+                    stops: [
+                      0.0,
+                      0.05,
+                      0.95,
+                      1.0
+                    ], // 5% fade on both sides
+                  ).createShader(rect);
+                },
+                blendMode: BlendMode.dstOut,
+                child: SingleChildScrollView(
+                  controller: _profileScrollController,
+                  scrollDirection: Axis.horizontal,
+                  clipBehavior: Clip.none,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(children: chips),
+                  ),
+                ),
+              ),
+              // Left Indicator Arrow
+              Positioned(
+                left: 0,
+                child: IgnorePointer(
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 200),
+                    opacity: _profileScrollController.hasClients &&
+                            _profileScrollController.offset > 5
+                        ? 1.0
+                        : 0.0,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: [
+                            theme.colorScheme.surface,
+                            theme.colorScheme.surface.withValues(alpha: 0.0),
+                          ],
+                        ),
+                      ),
+                      child: Icon(Icons.chevron_left,
+                          size: 20, color: theme.colorScheme.primary),
+                    ),
+                  ),
+                ),
+              ),
+              // Right Indicator Arrow
+              Positioned(
+                right: 0,
+                child: IgnorePointer(
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 200),
+                    opacity: _profileScrollController.hasClients &&
+                            _profileScrollController.offset <
+                                _profileScrollController
+                                        .position.maxScrollExtent -
+                                    5
+                        ? 1.0
+                        : 0.0,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.centerRight,
+                          end: Alignment.centerLeft,
+                          colors: [
+                            theme.colorScheme.surface,
+                            theme.colorScheme.surface.withValues(alpha: 0.0),
+                          ],
+                        ),
+                      ),
+                      child: Icon(Icons.chevron_right,
+                          size: 20, color: theme.colorScheme.primary),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           )
         else
           Wrap(
