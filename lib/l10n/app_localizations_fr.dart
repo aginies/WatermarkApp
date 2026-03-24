@@ -731,14 +731,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String get profileNone => 'Aucun';
 
   @override
-  String get profileSecureIdentity => 'Identité Sécurisée';
+  String get profileSecureIdentity => 'Identité';
 
   @override
-  String get profileOnlineImage => 'Image En Ligne';
+  String get profileOnlineImage => 'Image';
 
   @override
   String get profileQrCode => 'QR Code';
 
   @override
-  String get profileShareDocument => 'Partager Document';
+  String get profileShareDocument => 'Doc';
 }

@@ -1234,13 +1234,13 @@ abstract class AppLocalizations {
   /// No description provided for @profileSecureIdentity.
   ///
   /// In en, this message translates to:
-  /// **'Secure Identity'**
+  /// **'Identity'**
   String get profileSecureIdentity;
 
   /// No description provided for @profileOnlineImage.
   ///
   /// In en, this message translates to:
-  /// **'Online Image'**
+  /// **'Image'**
   String get profileOnlineImage;
 
   /// No description provided for @profileQrCode.
@@ -1252,7 +1252,7 @@ abstract class AppLocalizations {
   /// No description provided for @profileShareDocument.
   ///
   /// In en, this message translates to:
-  /// **'Share Document'**
+  /// **'Doc'**
   String get profileShareDocument;
 }
 

@@ -525,8 +525,8 @@
   "profileLabel": "Profil",
   "profileDescription": "Préréglages rapides pour les cas d'usage courants",
   "profileNone": "Aucun",
-  "profileSecureIdentity": "Identité Sécurisée",
-  "profileOnlineImage": "Image En Ligne",
+  "profileSecureIdentity": "Identité",
+  "profileOnlineImage": "Image",
   "profileQrCode": "QR Code",
-  "profileShareDocument": "Partager Document"
+  "profileShareDocument": "Doc"
 }

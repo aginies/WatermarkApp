@@ -877,10 +877,89 @@ class _WatermarkPageState extends State<WatermarkPage>
     );
   }
 
+  Widget _buildProfileSelector(ThemeData theme, AppLocalizations l10n) {
+    final isMobile = !kIsWeb && (Platform.isIOS || Platform.isAndroid);
+
+    final chips = SettingsProfile.values.map((profile) {
+      final isSelected = _selectedProfile == profile;
+      String label;
+      IconData icon;
+
+      switch (profile) {
+        case SettingsProfile.none:
+          label = l10n.profileNone;
+          icon = Icons.not_interested;
+        case SettingsProfile.secureIdentity:
+          label = l10n.profileSecureIdentity;
+          icon = Icons.fingerprint;
+        case SettingsProfile.onlineImage:
+          label = l10n.profileOnlineImage;
+          icon = Icons.public;
+        case SettingsProfile.qrCode:
+          label = l10n.profileQrCode;
+          icon = Icons.qr_code;
+        case SettingsProfile.shareDocument:
+          label = l10n.profileShareDocument;
+          icon = Icons.description;
+      }
+
+      return Padding(
+        padding: const EdgeInsets.only(right: 8.0, bottom: 4.0),
+        child: ChoiceChip(
+          label: Text(label),
+          avatar: Icon(
+            icon,
+            size: 16,
+            color: isSelected
+                ? theme.colorScheme.onPrimaryContainer
+                : theme.colorScheme.onSurfaceVariant,
+          ),
+          selected: isSelected,
+          onSelected: _processing
+              ? null
+              : (selected) {
+                  if (selected) {
+                    _applyProfile(profile);
+                  }
+                },
+        ),
+      );
+    }).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4.0, bottom: 8.0),
+          child: Text(
+            l10n.profileLabel,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+        ),
+        if (isMobile)
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(children: chips),
+          )
+        else
+          Wrap(
+            children: chips,
+          ),
+      ],
+    );
+  }
+
   Widget _buildControlsPanel(ThemeData theme) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        _buildProfileSelector(theme, l10n),
+        const SizedBox(height: 16),
         _buildTextCard(),
         const SizedBox(height: 16),
         _buildPrimaryActionCard(),
@@ -2033,63 +2112,6 @@ class _WatermarkPageState extends State<WatermarkPage>
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 8),
-                    // Profile Selection
-                    Row(
-                      children: [
-                        const Icon(Icons.bookmark_outline, size: 20),
-                        const SizedBox(width: 8),
-                        Text(
-                          l10n.profileLabel,
-                          style: theme.textTheme.titleMedium,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: theme.colorScheme.outline),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 4),
-                      child: DropdownButton<SettingsProfile>(
-                        value: _selectedProfile,
-                        isExpanded: true,
-                        underline: const SizedBox(),
-                        hint: Text(l10n.profileDescription),
-                        items: [
-                          DropdownMenuItem(
-                            value: SettingsProfile.none,
-                            child: Text(l10n.profileNone),
-                          ),
-                          DropdownMenuItem(
-                            value: SettingsProfile.secureIdentity,
-                            child: Text(l10n.profileSecureIdentity),
-                          ),
-                          DropdownMenuItem(
-                            value: SettingsProfile.onlineImage,
-                            child: Text(l10n.profileOnlineImage),
-                          ),
-                          DropdownMenuItem(
-                            value: SettingsProfile.qrCode,
-                            child: Text(l10n.profileQrCode),
-                          ),
-                          DropdownMenuItem(
-                            value: SettingsProfile.shareDocument,
-                            child: Text(l10n.profileShareDocument),
-                          ),
-                        ],
-                        onChanged: (profile) {
-                          if (profile != null) {
-                            _applyProfile(profile);
-                            setDialogState(() {});
-                          }
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Divider(color: theme.colorScheme.outlineVariant),
                     const SizedBox(height: 16),
                     TextField(
                       decoration: InputDecoration(
@@ -2775,7 +2797,7 @@ class _WatermarkPageState extends State<WatermarkPage>
               child: FilledButton(
                 onPressed: _processing ? null : _pickFile,
                 style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   backgroundColor: isDragging
                       ? theme.colorScheme.primary.withValues(alpha: 0.8)
                       : null,
@@ -2813,7 +2835,7 @@ class _WatermarkPageState extends State<WatermarkPage>
               child: FilledButton(
                 onPressed: _processing ? null : _takePhoto,
                 style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   backgroundColor: theme.colorScheme.secondary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -2845,7 +2867,7 @@ class _WatermarkPageState extends State<WatermarkPage>
       return FilledButton(
         onPressed: _processing ? null : _pickFile,
         style: FilledButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 24),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           backgroundColor: isDragging
               ? theme.colorScheme.primary.withValues(alpha: 0.8)
               : null,

@@ -722,14 +722,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileNone => 'None';
 
   @override
-  String get profileSecureIdentity => 'Secure Identity';
+  String get profileSecureIdentity => 'Identity';
 
   @override
-  String get profileOnlineImage => 'Online Image';
+  String get profileOnlineImage => 'Image';
 
   @override
   String get profileQrCode => 'QR Code';
 
   @override
-  String get profileShareDocument => 'Share Document';
+  String get profileShareDocument => 'Doc';
 }
