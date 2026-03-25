@@ -932,85 +932,87 @@ class AppLocalizationsIt extends AppLocalizations {
       'Controllo forense fallito. Sia i pixel visivi che i dati nascosti sembrano modificati.';
 
   @override
-  String get onboardingPage1Title => 'Protect your documents';
+  String get onboardingPage1Title => 'Proteggi i tuoi documenti';
 
   @override
   String get onboardingPage1Body =>
-      'Visible and invisible watermarks for safe sharing.';
+      'Filigrane visibili e invisibili per una condivisione sicura.';
 
   @override
-  String get onboardingPage2Title => 'Steganography';
+  String get onboardingPage2Title => 'Steganografia';
 
   @override
   String get onboardingPage2Body =>
-      'Embed hidden signatures or entire files inside images.';
+      'Incorpora firme nascoste o interi file nelle immagini.';
 
   @override
-  String get onboardingPage3Title => 'AI Protection';
+  String get onboardingPage3Title => 'Protezione IA';
 
   @override
   String get onboardingPage3Body =>
-      'Anti-AI protection and Cloaking to disrupt AI models.';
+      'Protezione Anti-IA e Cloaking per contrastare i modelli IA.';
 
   @override
-  String get onboardingStepTitle => 'How it works';
+  String get onboardingStepTitle => 'Come funziona';
 
   @override
-  String get onboardingStep1 => '1. Choose a Profile preset for your use case.';
+  String get onboardingStep1 =>
+      '1. Scegli un profilo predefinito per il tuo caso d\'uso.';
 
   @override
-  String get onboardingStep2 => '2. Import your Images or PDF files.';
+  String get onboardingStep2 => '2. Importa le tue immagini o i tuoi file PDF.';
 
   @override
-  String get onboardingStep3 => '3. Click Apply to generate the watermarks.';
+  String get onboardingStep3 =>
+      '3. Clicca su Applica per generare le filigrane.';
 
   @override
-  String get onboardingStep4 => '4. Share or Save the results.';
+  String get onboardingStep4 => '4. Condividi o salva i risultati.';
 
   @override
-  String get onboardingExpertTitle => 'Profiles & Options';
+  String get onboardingExpertTitle => 'Profili e Opzioni';
 
   @override
-  String get onboardingExpertModeTitle => 'Expert Mode';
+  String get onboardingExpertModeTitle => 'Modalità Esperto';
 
   @override
-  String get onboardingSaveProfileTitle => 'Save Presets';
+  String get onboardingSaveProfileTitle => 'Salva Preset';
 
   @override
-  String get onboardingLiveStatusTitle => 'Security Status';
+  String get onboardingLiveStatusTitle => 'Stato Sicurezza';
 
   @override
-  String get onboardingFileAnalyzerTitle => 'Verification';
+  String get onboardingFileAnalyzerTitle => 'Verifica';
 
   @override
   String get onboardingProfileSave =>
-      'Long-press any profile to save your current configuration as the default for that preset.';
+      'Premi a lungo su un profilo per salvare la configurazione corrente come predefinita.';
 
   @override
   String get onboardingExpertNote =>
-      'Expert mode (top right) unlocks advanced settings';
+      'La modalità esperto (in alto a destra) sblocca impostazioni avanzate';
 
   @override
   String get onboardingOptionsNote =>
-      'See which options are active (double-tap to open the configuration)';
+      'Guarda quali opzioni sono attive (doppio tocco per configurare)';
 
   @override
   String get onboardingFileAnalyzerNote =>
-      'File Analyzer to check for hidden SecureMark signature or files';
+      'Analizzatore di file per cercare firme o file nascosti';
 
   @override
   String get onboardingQrCodeNote =>
-      'Embed contact info, links, or metadata via QR code.';
+      'Incorpora contatti, link o metadati tramite codice QR.';
 
   @override
-  String get onboardingNext => 'Next';
+  String get onboardingNext => 'Avanti';
 
   @override
-  String get onboardingDone => 'Got it';
+  String get onboardingDone => 'Ho capito';
 
   @override
-  String get onboardingSkip => 'Skip';
+  String get onboardingSkip => 'Salta';
 
   @override
-  String get showGuide => 'Show Guide';
+  String get showGuide => 'Mostra guida';
 }

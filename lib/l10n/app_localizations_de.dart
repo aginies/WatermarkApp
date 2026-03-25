@@ -936,85 +936,87 @@ class AppLocalizationsDe extends AppLocalizations {
       'Forensische Prüfung fehlgeschlagen. Sowohl visuelle Pixel als auch versteckte Daten scheinen geändert worden zu sein.';
 
   @override
-  String get onboardingPage1Title => 'Protect your documents';
+  String get onboardingPage1Title => 'Dokumente schützen';
 
   @override
   String get onboardingPage1Body =>
-      'Visible and invisible watermarks for safe sharing.';
+      'Sichtbare und unsichtbare Wasserzeichen für sicheres Teilen.';
 
   @override
-  String get onboardingPage2Title => 'Steganography';
+  String get onboardingPage2Title => 'Steganographie';
 
   @override
   String get onboardingPage2Body =>
-      'Embed hidden signatures or entire files inside images.';
+      'Versteckte Signaturen oder ganze Dateien in Bildern einbetten.';
 
   @override
-  String get onboardingPage3Title => 'AI Protection';
+  String get onboardingPage3Title => 'KI-Schutz';
 
   @override
   String get onboardingPage3Body =>
-      'Anti-AI protection and Cloaking to disrupt AI models.';
+      'Anti-KI-Schutz und Cloaking gegen KI-Manipulation.';
 
   @override
-  String get onboardingStepTitle => 'How it works';
+  String get onboardingStepTitle => 'So funktioniert es';
 
   @override
-  String get onboardingStep1 => '1. Choose a Profile preset for your use case.';
+  String get onboardingStep1 =>
+      '1. Wählen Sie ein Profil für Ihren Anwendungsfall.';
 
   @override
-  String get onboardingStep2 => '2. Import your Images or PDF files.';
+  String get onboardingStep2 => '2. Importieren Sie Bilder oder PDF-Dateien.';
 
   @override
-  String get onboardingStep3 => '3. Click Apply to generate the watermarks.';
+  String get onboardingStep3 =>
+      '3. Klicken Sie auf Anwenden, um Wasserzeichen zu generieren.';
 
   @override
-  String get onboardingStep4 => '4. Share or Save the results.';
+  String get onboardingStep4 => '4. Teilen oder Speichern Sie die Ergebnisse.';
 
   @override
-  String get onboardingExpertTitle => 'Profiles & Options';
+  String get onboardingExpertTitle => 'Profile & Optionen';
 
   @override
-  String get onboardingExpertModeTitle => 'Expert Mode';
+  String get onboardingExpertModeTitle => 'Expertenmodus';
 
   @override
-  String get onboardingSaveProfileTitle => 'Save Presets';
+  String get onboardingSaveProfileTitle => 'Presets speichern';
 
   @override
-  String get onboardingLiveStatusTitle => 'Security Status';
+  String get onboardingLiveStatusTitle => 'Sicherheitsstatus';
 
   @override
-  String get onboardingFileAnalyzerTitle => 'Verification';
+  String get onboardingFileAnalyzerTitle => 'Verifizierung';
 
   @override
   String get onboardingProfileSave =>
-      'Long-press any profile to save your current configuration as the default for that preset.';
+      'Langes Drücken auf ein Profil speichert die aktuelle Konfiguration als Standard.';
 
   @override
   String get onboardingExpertNote =>
-      'Expert mode (top right) unlocks advanced settings';
+      'Expertenmodus (oben rechts) schaltet erweiterte Einstellungen frei';
 
   @override
   String get onboardingOptionsNote =>
-      'See which options are active (double-tap to open the configuration)';
+      'Aktive Optionen sehen (Doppeltippen zum Konfigurieren)';
 
   @override
   String get onboardingFileAnalyzerNote =>
-      'File Analyzer to check for hidden SecureMark signature or files';
+      'Datei-Analysator zur Prüfung auf versteckte Signaturen oder Dateien';
 
   @override
   String get onboardingQrCodeNote =>
-      'Embed contact info, links, or metadata via QR code.';
+      'Kontaktdaten, Links oder Metadaten per QR-Code einbetten.';
 
   @override
-  String get onboardingNext => 'Next';
+  String get onboardingNext => 'Weiter';
 
   @override
-  String get onboardingDone => 'Got it';
+  String get onboardingDone => 'Verstanden';
 
   @override
-  String get onboardingSkip => 'Skip';
+  String get onboardingSkip => 'Überspringen';
 
   @override
-  String get showGuide => 'Show Guide';
+  String get showGuide => 'Anleitung anzeigen';
 }
