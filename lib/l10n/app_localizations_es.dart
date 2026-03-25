@@ -269,6 +269,43 @@ class AppLocalizationsEs extends AppLocalizations {
   String get rasterizePdfEnabledHint => 'El PDF será rasterizado (aplanado)';
 
   @override
+  String get pdfSecurityTitle => 'Seguridad PDF Avanzada';
+
+  @override
+  String get enablePdfSecurity => 'Habilitar seguridad PDF';
+
+  @override
+  String get pdfSecuritySubtitle =>
+      'Proteger PDF con contraseñas y restringir permisos';
+
+  @override
+  String get pdfUserPasswordLabel => 'Contraseña de usuario (para abrir)';
+
+  @override
+  String get pdfUserPasswordHint => 'Contraseña requerida para ver el PDF';
+
+  @override
+  String get pdfOwnerPasswordLabel =>
+      'Contraseña de propietario (para restringir)';
+
+  @override
+  String get pdfOwnerPasswordHint =>
+      'Contraseña requerida para cambiar permisos';
+
+  @override
+  String get pdfAllowPrinting => 'Permitir impresión';
+
+  @override
+  String get pdfAllowCopying => 'Permitir copia de texto/contenido';
+
+  @override
+  String get pdfAllowEditing => 'Permitir anotaciones/edición';
+
+  @override
+  String get pdfSecurityNote =>
+      'Nota: Los ajustes de seguridad solo se aplican a archivos PDF y dependen del soporte del visor.';
+
+  @override
   String get steganographyTitle => 'Esteganografía (Firma invisible)';
 
   @override

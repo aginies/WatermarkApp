@@ -494,6 +494,72 @@ abstract class AppLocalizations {
   /// **'PDF will be rasterized (flattened)'**
   String get rasterizePdfEnabledHint;
 
+  /// No description provided for @pdfSecurityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'PDF Advanced Security'**
+  String get pdfSecurityTitle;
+
+  /// No description provided for @enablePdfSecurity.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable PDF Security'**
+  String get enablePdfSecurity;
+
+  /// No description provided for @pdfSecuritySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Protect PDF with passwords and restrict permissions'**
+  String get pdfSecuritySubtitle;
+
+  /// No description provided for @pdfUserPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'User Password (to open)'**
+  String get pdfUserPasswordLabel;
+
+  /// No description provided for @pdfUserPasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Password required to view the PDF'**
+  String get pdfUserPasswordHint;
+
+  /// No description provided for @pdfOwnerPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner Password (to restrict)'**
+  String get pdfOwnerPasswordLabel;
+
+  /// No description provided for @pdfOwnerPasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Password required to change permissions'**
+  String get pdfOwnerPasswordHint;
+
+  /// No description provided for @pdfAllowPrinting.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow Printing'**
+  String get pdfAllowPrinting;
+
+  /// No description provided for @pdfAllowCopying.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow Text/Content Copying'**
+  String get pdfAllowCopying;
+
+  /// No description provided for @pdfAllowEditing.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow Annotations/Editing'**
+  String get pdfAllowEditing;
+
+  /// No description provided for @pdfSecurityNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note: Security settings only apply to PDF files and depend on viewer support.'**
+  String get pdfSecurityNote;
+
   /// No description provided for @steganographyTitle.
   ///
   /// In en, this message translates to:

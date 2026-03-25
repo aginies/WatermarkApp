@@ -68,6 +68,12 @@ class WatermarkProcessor {
     String? hiddenFileName,
     int? hiddenFileLength,
     bool? visibleQr,
+    bool? enablePdfSecurity,
+    String? pdfUserPassword,
+    String? pdfOwnerPassword,
+    bool? pdfAllowPrinting,
+    bool? pdfAllowCopying,
+    bool? pdfAllowEditing,
   }) {
     // Compute hash of all parameters for efficient cache key
     final hash = Object.hashAll([
@@ -96,6 +102,12 @@ class WatermarkProcessor {
       hiddenFileName,
       hiddenFileLength,
       visibleQr,
+      enablePdfSecurity,
+      pdfUserPassword,
+      pdfOwnerPassword,
+      pdfAllowPrinting,
+      pdfAllowCopying,
+      pdfAllowEditing,
     ]);
     return hash.toRadixString(36); // Base-36 for compact representation
   }
@@ -129,6 +141,12 @@ class WatermarkProcessor {
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
     QrWatermarkConfig? qrConfig,
+    bool enablePdfSecurity = false,
+    String? pdfUserPassword,
+    String? pdfOwnerPassword,
+    bool pdfAllowPrinting = false,
+    bool pdfAllowCopying = false,
+    bool pdfAllowEditing = false,
     ProgressCallback? onProgress,
     CancellationToken? cancellationToken,
   }) async {
@@ -197,6 +215,12 @@ class WatermarkProcessor {
       hiddenFileName: hiddenFileName,
       hiddenFileLength: hiddenFileBytes?.length,
       visibleQr: qrConfig?.visibleQr,
+      enablePdfSecurity: enablePdfSecurity,
+      pdfUserPassword: pdfUserPassword,
+      pdfOwnerPassword: pdfOwnerPassword,
+      pdfAllowPrinting: pdfAllowPrinting,
+      pdfAllowCopying: pdfAllowCopying,
+      pdfAllowEditing: pdfAllowEditing,
     );
     if (_resultCache.containsKey(cacheKey)) {
       onProgress?.call(1.0, 'progressFromCache');
@@ -298,6 +322,12 @@ class WatermarkProcessor {
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
     QrWatermarkConfig? qrConfig,
+    bool enablePdfSecurity = false,
+    String? pdfUserPassword,
+    String? pdfOwnerPassword,
+    bool pdfAllowPrinting = false,
+    bool pdfAllowCopying = false,
+    bool pdfAllowEditing = false,
     ProgressCallback? onProgress,
     CancellationToken? cancellationToken,
   }) async {
@@ -388,6 +418,12 @@ class WatermarkProcessor {
           'qrConfig': qrConfig,
           'preRenderedStamps': preRenderedStamps?.map((key, value) =>
               MapEntry(key, TransferableTypedData.fromList([value]))),
+          'enablePdfSecurity': enablePdfSecurity,
+          'pdfUserPassword': pdfUserPassword,
+          'pdfOwnerPassword': pdfOwnerPassword,
+          'pdfAllowPrinting': pdfAllowPrinting,
+          'pdfAllowCopying': pdfAllowCopying,
+          'pdfAllowEditing': pdfAllowEditing,
         },
       );
 
@@ -800,6 +836,12 @@ class WatermarkProcessor {
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
     QrWatermarkConfig? qrConfig,
+    bool enablePdfSecurity = false,
+    String? pdfUserPassword,
+    String? pdfOwnerPassword,
+    bool pdfAllowPrinting = false,
+    bool pdfAllowCopying = false,
+    bool pdfAllowEditing = false,
     ProgressCallback? onProgress,
     CancellationToken? cancellationToken,
   }) async {
@@ -832,9 +874,14 @@ class WatermarkProcessor {
         hiddenFileName: hiddenFileName,
         hiddenFileBytes: hiddenFileBytes,
         qrConfig: qrConfig,
+        enablePdfSecurity: enablePdfSecurity,
+        pdfUserPassword: pdfUserPassword,
+        pdfOwnerPassword: pdfOwnerPassword,
+        pdfAllowPrinting: pdfAllowPrinting,
+        pdfAllowCopying: pdfAllowCopying,
+        pdfAllowEditing: pdfAllowEditing,
         onProgress: onProgress,
-        cancellationToken: cancellationToken,
-      );
+        cancellationToken: cancellationToken);
     }
 
     // Create ReceivePort to get progress updates from isolate
@@ -887,6 +934,12 @@ class WatermarkProcessor {
           'steganographyText': steganographyText,
           'hiddenFileName': hiddenFileName,
           'hiddenFileBytes': hiddenFileBytes,
+          'enablePdfSecurity': enablePdfSecurity,
+          'pdfUserPassword': pdfUserPassword,
+          'pdfOwnerPassword': pdfOwnerPassword,
+          'pdfAllowPrinting': pdfAllowPrinting,
+          'pdfAllowCopying': pdfAllowCopying,
+          'pdfAllowEditing': pdfAllowEditing,
         },
       );
 
@@ -922,9 +975,14 @@ class WatermarkProcessor {
         hiddenFileName: hiddenFileName,
         hiddenFileBytes: hiddenFileBytes,
         qrConfig: qrConfig,
+        enablePdfSecurity: enablePdfSecurity,
+        pdfUserPassword: pdfUserPassword,
+        pdfOwnerPassword: pdfOwnerPassword,
+        pdfAllowPrinting: pdfAllowPrinting,
+        pdfAllowCopying: pdfAllowCopying,
+        pdfAllowEditing: pdfAllowEditing,
         onProgress: onProgress,
-        cancellationToken: cancellationToken,
-      );
+        cancellationToken: cancellationToken);
     }
 
     final outPath = WatermarkUtils.outputPath(
@@ -993,6 +1051,12 @@ class WatermarkProcessor {
         steganographyText: params['steganographyText'] as String?,
         hiddenFileName: params['hiddenFileName'] as String?,
         hiddenFileBytes: params['hiddenFileBytes'] as Uint8List?,
+        enablePdfSecurity: params['enablePdfSecurity'] as bool,
+        pdfUserPassword: params['pdfUserPassword'] as String?,
+        pdfOwnerPassword: params['pdfOwnerPassword'] as String?,
+        pdfAllowPrinting: params['pdfAllowPrinting'] as bool,
+        pdfAllowCopying: params['pdfAllowCopying'] as bool,
+        pdfAllowEditing: params['pdfAllowEditing'] as bool,
         progressPort: sendPort,
       );
 
@@ -1028,6 +1092,12 @@ class WatermarkProcessor {
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
     QrWatermarkConfig? qrConfig,
+    bool enablePdfSecurity = false,
+    String? pdfUserPassword,
+    String? pdfOwnerPassword,
+    bool pdfAllowPrinting = false,
+    bool pdfAllowCopying = false,
+    bool pdfAllowEditing = false,
     ProgressCallback? onProgress,
     CancellationToken? cancellationToken,
   }) async {
@@ -1176,7 +1246,24 @@ class WatermarkProcessor {
       }
 
       // Save the PDF
-      final outputBytes = await doc.save();
+      Uint8List outputBytes = await doc.save();
+
+      // Apply PDF security if enabled
+      if (enablePdfSecurity) {
+        final syncDoc = sync.PdfDocument(inputBytes: outputBytes);
+        _applySecurityToSyncDocument(
+          syncDoc,
+          pdfUserPassword: pdfUserPassword,
+          pdfOwnerPassword: pdfOwnerPassword,
+          pdfAllowPrinting: pdfAllowPrinting,
+          pdfAllowCopying: pdfAllowCopying,
+          pdfAllowEditing: pdfAllowEditing,
+        );
+        final securedBytes = syncDoc.saveSync();
+        syncDoc.dispose();
+        outputBytes = Uint8List.fromList(securedBytes);
+      }
+
       final outputPath = WatermarkUtils.outputPath(
         file.path,
         '.pdf',
@@ -1255,6 +1342,12 @@ class WatermarkProcessor {
     String? steganographyText,
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
+    bool enablePdfSecurity = false,
+    String? pdfUserPassword,
+    String? pdfOwnerPassword,
+    bool pdfAllowPrinting = false,
+    bool pdfAllowCopying = false,
+    bool pdfAllowEditing = false,
     SendPort? progressPort,
   }) {
     sync.PdfDocument document;
@@ -1266,6 +1359,18 @@ class WatermarkProcessor {
         type: WatermarkErrorType.invalidPdfData,
         message: 'The PDF file appears to be malformed or corrupted. Error: $e',
         originalError: e,
+      );
+    }
+
+    // Apply PDF Security if enabled
+    if (enablePdfSecurity) {
+      _applySecurityToSyncDocument(
+        document,
+        pdfUserPassword: pdfUserPassword,
+        pdfOwnerPassword: pdfOwnerPassword,
+        pdfAllowPrinting: pdfAllowPrinting,
+        pdfAllowCopying: pdfAllowCopying,
+        pdfAllowEditing: pdfAllowEditing,
       );
     }
 
@@ -1849,5 +1954,31 @@ class WatermarkProcessor {
     );
     final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
     return byteData!.buffer.asUint8List();
+  }
+
+  /// Applies security settings to a Syncfusion PDF document
+  static void _applySecurityToSyncDocument(
+    sync.PdfDocument document, {
+    required String? pdfUserPassword,
+    required String? pdfOwnerPassword,
+    required bool pdfAllowPrinting,
+    required bool pdfAllowCopying,
+    required bool pdfAllowEditing,
+  }) {
+    final security = document.security;
+    security.algorithm = sync.PdfEncryptionAlgorithm.aesx256Bit;
+    security.userPassword = pdfUserPassword ?? '';
+    security.ownerPassword = (pdfOwnerPassword != null && pdfOwnerPassword.isNotEmpty)
+        ? pdfOwnerPassword
+        : (pdfUserPassword ?? '');
+
+    // Configure permissions
+    security.permissions.addAll([
+      if (pdfAllowPrinting) sync.PdfPermissionsFlags.print,
+      if (pdfAllowCopying) sync.PdfPermissionsFlags.copyContent,
+      if (pdfAllowEditing) sync.PdfPermissionsFlags.editAnnotations,
+      if (pdfAllowEditing) sync.PdfPermissionsFlags.editContent,
+      if (pdfAllowEditing) sync.PdfPermissionsFlags.fillFields,
+    ]);
   }
 }

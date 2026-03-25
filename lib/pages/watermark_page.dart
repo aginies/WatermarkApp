@@ -61,6 +61,10 @@ class WatermarkPageState extends State<WatermarkPage>
       TextEditingController();
   final TextEditingController _extractionPasswordController =
       TextEditingController();
+  final TextEditingController _pdfUserPasswordController =
+      TextEditingController();
+  final TextEditingController _pdfOwnerPasswordController =
+      TextEditingController();
   final TextEditingController _filePrefixController = TextEditingController();
   final TransformationController _transformationController =
       TransformationController();
@@ -76,6 +80,10 @@ class WatermarkPageState extends State<WatermarkPage>
   bool _includeTimestamp = true;
   bool _preserveMetadata = false;
   bool _rasterizePdf = false;
+  bool _enablePdfSecurity = false;
+  bool _pdfAllowPrinting = false;
+  bool _pdfAllowCopying = false;
+  bool _pdfAllowEditing = false;
   String _filePrefix = 'securemark-';
   double _antiAiLevel = 50.0;
   bool _useSteganography = false;
@@ -232,6 +240,14 @@ class WatermarkPageState extends State<WatermarkPage>
           _includeTimestamp = prefs.getBool('includeTimestamp') ?? true;
           _preserveMetadata = prefs.getBool('preserveMetadata') ?? false;
           _rasterizePdf = prefs.getBool('rasterizePdf') ?? false;
+          _enablePdfSecurity = prefs.getBool('enablePdfSecurity') ?? false;
+          _pdfAllowPrinting = prefs.getBool('pdfAllowPrinting') ?? false;
+          _pdfAllowCopying = prefs.getBool('pdfAllowCopying') ?? false;
+          _pdfAllowEditing = prefs.getBool('pdfAllowEditing') ?? false;
+          _pdfUserPasswordController.text =
+              prefs.getString('pdfUserPassword') ?? '';
+          _pdfOwnerPasswordController.text =
+              prefs.getString('pdfOwnerPassword') ?? '';
           _filePrefix = prefs.getString('filePrefix') ?? 'securemark-';
           _antiAiLevel = prefs.getDouble('antiAiLevel') ?? 50.0;
           _useAiCloaking = prefs.getBool('useAiCloaking') ?? false;
@@ -370,6 +386,14 @@ class WatermarkPageState extends State<WatermarkPage>
         final preservedQrSize = _qrSize;
         final preservedQrOpacity = _qrOpacity;
 
+        // Preserve PDF security settings
+        final preservedEnablePdfSecurity = _enablePdfSecurity;
+        final preservedPdfUserPassword = _pdfUserPasswordController.text;
+        final preservedPdfOwnerPassword = _pdfOwnerPasswordController.text;
+        final preservedPdfAllowPrinting = _pdfAllowPrinting;
+        final preservedPdfAllowCopying = _pdfAllowCopying;
+        final preservedPdfAllowEditing = _pdfAllowEditing;
+
         // Preserve output directory and file prefix
         final preservedOutputDir = _outputDirectory;
         final preservedFilePrefix = _filePrefix;
@@ -384,6 +408,12 @@ class WatermarkPageState extends State<WatermarkPage>
         _includeTimestamp = true;
         _preserveMetadata = false;
         _rasterizePdf = false;
+        _enablePdfSecurity = false;
+        _pdfAllowPrinting = false;
+        _pdfAllowCopying = false;
+        _pdfAllowEditing = false;
+        _pdfUserPasswordController.clear();
+        _pdfOwnerPasswordController.clear();
         _antiAiLevel = 50.0;
         _useSteganography = false;
         _useRobustSteganography = false;
@@ -408,6 +438,14 @@ class WatermarkPageState extends State<WatermarkPage>
         _qrPosition = preservedQrPosition;
         _qrSize = preservedQrSize;
         _qrOpacity = preservedQrOpacity;
+
+        _enablePdfSecurity = preservedEnablePdfSecurity;
+        _pdfUserPasswordController.text = preservedPdfUserPassword;
+        _pdfOwnerPasswordController.text = preservedPdfOwnerPassword;
+        _pdfAllowPrinting = preservedPdfAllowPrinting;
+        _pdfAllowCopying = preservedPdfAllowCopying;
+        _pdfAllowEditing = preservedPdfAllowEditing;
+
         _outputDirectory = preservedOutputDir;
         _filePrefix = preservedFilePrefix;
       }
@@ -492,6 +530,38 @@ class WatermarkPageState extends State<WatermarkPage>
         _steganographyTextController.text =
             prefs.getString('${pKey}steganographyText')!;
       }
+      if (prefs.containsKey('${pKey}enablePdfSecurity')) {
+        _enablePdfSecurity = prefs.getBool('${pKey}enablePdfSecurity')!;
+      } else {
+        _enablePdfSecurity = false;
+      }
+      if (prefs.containsKey('${pKey}pdfAllowPrinting')) {
+        _pdfAllowPrinting = prefs.getBool('${pKey}pdfAllowPrinting')!;
+      } else {
+        _pdfAllowPrinting = false;
+      }
+      if (prefs.containsKey('${pKey}pdfAllowCopying')) {
+        _pdfAllowCopying = prefs.getBool('${pKey}pdfAllowCopying')!;
+      } else {
+        _pdfAllowCopying = false;
+      }
+      if (prefs.containsKey('${pKey}pdfAllowEditing')) {
+        _pdfAllowEditing = prefs.getBool('${pKey}pdfAllowEditing')!;
+      } else {
+        _pdfAllowEditing = false;
+      }
+      if (prefs.containsKey('${pKey}pdfUserPassword')) {
+        _pdfUserPasswordController.text =
+            prefs.getString('${pKey}pdfUserPassword')!;
+      } else {
+        _pdfUserPasswordController.clear();
+      }
+      if (prefs.containsKey('${pKey}pdfOwnerPassword')) {
+        _pdfOwnerPasswordController.text =
+            prefs.getString('${pKey}pdfOwnerPassword')!;
+      } else {
+        _pdfOwnerPasswordController.clear();
+      }
       if (prefs.containsKey('${pKey}outputDirectory')) {
         _outputDirectory = prefs.getString('${pKey}outputDirectory');
       }
@@ -519,8 +589,10 @@ class WatermarkPageState extends State<WatermarkPage>
       if (prefs.containsKey('${pKey}qrType')) {
         _qrType = QrType.values[prefs.getInt('${pKey}qrType')!];
       }
+    });
 
-      // If no customization exists for a key, provide defaults for specific profiles
+    // If no customization exists for a key, provide defaults for specific profiles
+    setState(() {
       switch (profile) {
         case SettingsProfile.none:
           break;
@@ -661,6 +733,12 @@ class WatermarkPageState extends State<WatermarkPage>
     _savePreference('qrVisible', _qrVisible);
     _savePreference('filePrefix', _filePrefix);
     _savePreference('steganographyText', _steganographyTextController.text);
+    _savePreference('enablePdfSecurity', _enablePdfSecurity);
+    _savePreference('pdfAllowPrinting', _pdfAllowPrinting);
+    _savePreference('pdfAllowCopying', _pdfAllowCopying);
+    _savePreference('pdfAllowEditing', _pdfAllowEditing);
+    _savePreference('pdfUserPassword', _pdfUserPasswordController.text);
+    _savePreference('pdfOwnerPassword', _pdfOwnerPasswordController.text);
   }
 
   Future<void> _saveCurrentConfigToProfile(SettingsProfile profile) async {
@@ -709,6 +787,14 @@ class WatermarkPageState extends State<WatermarkPage>
     await prefs.setDouble('${pKey}qrOpacity', _qrOpacity);
     await prefs.setInt('${pKey}qrPosition', _qrPosition.index);
     await prefs.setInt('${pKey}qrType', _qrType.index);
+    await prefs.setBool('${pKey}enablePdfSecurity', _enablePdfSecurity);
+    await prefs.setBool('${pKey}pdfAllowPrinting', _pdfAllowPrinting);
+    await prefs.setBool('${pKey}pdfAllowCopying', _pdfAllowCopying);
+    await prefs.setBool('${pKey}pdfAllowEditing', _pdfAllowEditing);
+    await prefs.setString(
+        '${pKey}pdfUserPassword', _pdfUserPasswordController.text);
+    await prefs.setString(
+        '${pKey}pdfOwnerPassword', _pdfOwnerPasswordController.text);
 
     if (mounted) {
       String profileLabel = '';
@@ -2949,7 +3035,129 @@ class WatermarkPageState extends State<WatermarkPage>
                         _savePreference('rasterizePdf', value ?? false);
                       },
                     ),
-                    const SizedBox(height: 16),
+                    /*
+                    const Divider(),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.picture_as_pdf_outlined, size: 20),
+                        const SizedBox(width: 8),
+                        Text(l10n.pdfSecurityTitle,
+                            style: theme.textTheme.titleSmall),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      l10n.pdfSecuritySubtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontStyle: FontStyle.italic,
+                        color: theme.textTheme.bodySmall?.color
+                            ?.withValues(alpha: 0.7),
+                      ),
+                    ),
+                    CheckboxListTile(
+                      title: Text(l10n.enablePdfSecurity),
+                      value: _enablePdfSecurity,
+                      contentPadding: EdgeInsets.zero,
+                      onChanged: (value) {
+                        final bool enabled = value ?? false;
+                        setDialogState(() {
+                          _enablePdfSecurity = enabled;
+                        });
+                        setState(() {
+                          _enablePdfSecurity = enabled;
+                        });
+                        _savePreference('enablePdfSecurity', enabled);
+                      },
+                    ),
+                    if (_enablePdfSecurity) ...[
+                      const SizedBox(height: 8),
+                      TextField(
+                        decoration: InputDecoration(
+                          labelText: l10n.pdfUserPasswordLabel,
+                          hintText: l10n.pdfUserPasswordHint,
+                          border: const OutlineInputBorder(),
+                          prefixIcon: const Icon(Icons.lock_open_outlined),
+                        ),
+                        onChanged: (value) {
+                          _savePreference('pdfUserPassword', value);
+                        },
+                        controller: _pdfUserPasswordController,
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        decoration: InputDecoration(
+                          labelText: l10n.pdfOwnerPasswordLabel,
+                          hintText: l10n.pdfOwnerPasswordHint,
+                          border: const OutlineInputBorder(),
+                          prefixIcon: const Icon(Icons.enhanced_encryption),
+                        ),
+                        onChanged: (value) {
+                          _savePreference('pdfOwnerPassword', value);
+                        },
+                        controller: _pdfOwnerPasswordController,
+                      ),
+                      const SizedBox(height: 8),
+                      CheckboxListTile(
+                        title: Text(l10n.pdfAllowPrinting),
+                        value: _pdfAllowPrinting,
+                        contentPadding: EdgeInsets.zero,
+                        onChanged: (value) {
+                          final bool enabled = value ?? false;
+                          setDialogState(() {
+                            _pdfAllowPrinting = enabled;
+                          });
+                          setState(() {
+                            _pdfAllowPrinting = enabled;
+                          });
+                          _savePreference('pdfAllowPrinting', enabled);
+                        },
+                      ),
+                      CheckboxListTile(
+                        title: Text(l10n.pdfAllowCopying),
+                        value: _pdfAllowCopying,
+                        contentPadding: EdgeInsets.zero,
+                        onChanged: (value) {
+                          final bool enabled = value ?? false;
+                          setDialogState(() {
+                            _pdfAllowCopying = enabled;
+                          });
+                          setState(() {
+                            _pdfAllowCopying = enabled;
+                          });
+                          _savePreference('pdfAllowCopying', enabled);
+                        },
+                      ),
+                      CheckboxListTile(
+                        title: Text(l10n.pdfAllowEditing),
+                        value: _pdfAllowEditing,
+                        contentPadding: EdgeInsets.zero,
+                        onChanged: (value) {
+                          final bool enabled = value ?? false;
+                          setDialogState(() {
+                            _pdfAllowEditing = enabled;
+                          });
+                          setState(() {
+                            _pdfAllowEditing = enabled;
+                          });
+                          _savePreference('pdfAllowEditing', enabled);
+                        },
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                        child: Text(
+                          l10n.pdfSecurityNote,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontStyle: FontStyle.italic,
+                            color: theme.textTheme.bodySmall?.color
+                                ?.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ),
+                    ],
+                    */
+                    const Divider(),
+                    const SizedBox(height: 8),
                     Text(l10n.antiAiProtectionValue(_antiAiLevel.round()),
                         style: theme.textTheme.titleSmall),
                     Slider(
@@ -4280,6 +4488,7 @@ class WatermarkPageState extends State<WatermarkPage>
         _antiAiLevel > 0 ||
         _useAiCloaking ||
         _rasterizePdf ||
+        _enablePdfSecurity ||
         _preserveMetadata ||
         (_hideFileWithSteganography && _hiddenFileBytes != null))) {
       return null;
@@ -4299,6 +4508,7 @@ class WatermarkPageState extends State<WatermarkPage>
     final antiAiKey = GlobalKey<TooltipState>();
     final cloakingKey = GlobalKey<TooltipState>();
     final rasterKey = GlobalKey<TooltipState>();
+    // final pdfSecurityKey = GlobalKey<TooltipState>();
     final preserveKey = GlobalKey<TooltipState>();
 
     final bool currentIsPdf = _processedFiles.isNotEmpty &&
@@ -4311,6 +4521,22 @@ class WatermarkPageState extends State<WatermarkPage>
       alignment: WrapAlignment.start,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
+        /*
+        if (_enablePdfSecurity)
+          GestureDetector(
+            onTap: () => showTooltip(pdfSecurityKey),
+            onDoubleTap: _showExpertOptions,
+            child: Tooltip(
+              key: pdfSecurityKey,
+              message: l10n.pdfSecurityTitle,
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8.0),
+                child:
+                    Icon(Icons.lock_person_outlined, color: Colors.deepOrange),
+              ),
+            ),
+          ),
+        */
         if (_useSteganography && !_steganographyVerificationFailed)
           GestureDetector(
             onTap: () => showTooltip(steganoKey),
@@ -4964,6 +5190,12 @@ class WatermarkPageState extends State<WatermarkPage>
             hiddenFileBytes:
                 _hideFileWithSteganography ? _hiddenFileBytes : null,
             qrConfig: qrConfig,
+            enablePdfSecurity: _enablePdfSecurity,
+            pdfUserPassword: _pdfUserPasswordController.text,
+            pdfOwnerPassword: _pdfOwnerPasswordController.text,
+            pdfAllowPrinting: _pdfAllowPrinting,
+            pdfAllowCopying: _pdfAllowCopying,
+            pdfAllowEditing: _pdfAllowEditing,
             onProgress: (progress, message) {
               if (mounted) {
                 setState(() {
