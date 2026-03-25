@@ -209,8 +209,26 @@ abstract class AppLocalizations {
   /// No description provided for @takePhotoSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Camera direct use'**
+  /// **'Standard camera capture'**
   String get takePhotoSubtitle;
+
+  /// No description provided for @scanDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan Document'**
+  String get scanDocument;
+
+  /// No description provided for @scanDocumentSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan with edge detection'**
+  String get scanDocumentSubtitle;
+
+  /// No description provided for @captureMenuTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture Method'**
+  String get captureMenuTitle;
 
   /// No description provided for @selectedFile.
   ///

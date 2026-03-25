@@ -34,7 +34,10 @@
   "authorFooter": "Author: Antoine Giniès",
   "pickFiles": "Images or PDF",
   "takePhoto": "Take Photo",
-  "takePhotoSubtitle": "Camera direct use",
+  "takePhotoSubtitle": "Standard camera capture",
+  "scanDocument": "Scan Document",
+  "scanDocumentSubtitle": "Scan with edge detection",
+  "captureMenuTitle": "Capture Method",
   "selectedFile": "Selected file: {name}",
   "@selectedFile": {
     "placeholders": {

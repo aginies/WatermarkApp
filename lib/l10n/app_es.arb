@@ -33,8 +33,11 @@
   "processingFlattening": "Rasterizando PDF (aplana)...",
   "authorFooter": "Autor: Antoine Giniès",
   "pickFiles": "Imágenes o PDF",
-  "takePhoto": "Tomar Foto",
-  "takePhotoSubtitle": "Uso directo de cámara",
+  "takePhoto": "Foto clásica",
+  "takePhotoSubtitle": "Captura de cámara estándar",
+  "scanDocument": "Escanear documento",
+  "scanDocumentSubtitle": "Escaneo con detección de bordes",
+  "captureMenuTitle": "Método de captura",
   "selectedFile": "Archivo seleccionado: {name}",
   "@selectedFile": {
     "placeholders": {

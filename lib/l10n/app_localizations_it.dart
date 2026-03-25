@@ -64,10 +64,19 @@ class AppLocalizationsIt extends AppLocalizations {
   String get pickFiles => 'Immagini o PDF';
 
   @override
-  String get takePhoto => 'Scatta Foto';
+  String get takePhoto => 'Foto classica';
 
   @override
-  String get takePhotoSubtitle => 'Uso diretto';
+  String get takePhotoSubtitle => 'Cattura fotocamera standard';
+
+  @override
+  String get scanDocument => 'Scansiona documento';
+
+  @override
+  String get scanDocumentSubtitle => 'Scansione con rilevamento bordi';
+
+  @override
+  String get captureMenuTitle => 'Metodo di cattura';
 
   @override
   String selectedFile(String name) {

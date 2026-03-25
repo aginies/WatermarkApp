@@ -33,8 +33,11 @@
   "processingFlattening": "PDF wird gerastert (flattening)...",
   "authorFooter": "Autor: Antoine Giniès",
   "pickFiles": "Bilder oder PDF",
-  "takePhoto": "Foto aufnehmen",
-  "takePhotoSubtitle": "Direkte Verwendung",
+  "takePhoto": "Klassisches Foto",
+  "takePhotoSubtitle": "Standard-Kameraaufnahme",
+  "scanDocument": "Dokument scannen",
+  "scanDocumentSubtitle": "Scan mit Kantenerkennung",
+  "captureMenuTitle": "Aufnahmemethode",
   "selectedFile": "Ausgewählte Datei: {name}",
   "@selectedFile": {
     "placeholders": {

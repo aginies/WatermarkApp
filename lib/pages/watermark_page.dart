@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'package:http/http.dart' as http;
 import 'package:archive/archive.dart';
 import 'package:path/path.dart' as p;
@@ -3785,72 +3786,97 @@ class WatermarkPageState extends State<WatermarkPage>
 
     Widget buildButton(bool isDragging) {
       if (isMobile) {
-        return Row(
+        return Column(
           children: [
-            Expanded(
-              child: FilledButton(
-                onPressed: _processing ? null : _pickFile,
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: isDragging
-                      ? theme.colorScheme.primary.withValues(alpha: 0.8)
-                      : null,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: isDragging
-                        ? BorderSide(
-                            color: theme.colorScheme.onPrimary, width: 2)
-                        : BorderSide.none,
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      isDragging
-                          ? Icons.file_upload
-                          : Icons.file_upload_outlined,
-                      size: 32,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      l10n.pickFiles,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.onPrimary,
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton(
+                    onPressed: _processing ? null : _pickFile,
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: isDragging
+                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
+                          : null,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: isDragging
+                            ? BorderSide(
+                                color: theme.colorScheme.onPrimary, width: 2)
+                            : BorderSide.none,
                       ),
                     ),
-                  ],
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          isDragging
+                              ? Icons.file_upload
+                              : Icons.file_upload_outlined,
+                          size: 28,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          l10n.pickFiles,
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            color: theme.colorScheme.onPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: _processing ? null : _takePhoto,
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: theme.colorScheme.secondary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.camera_alt_outlined,
+                          size: 28,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          l10n.takePhoto,
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            color: theme.colorScheme.onSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: FilledButton(
-                onPressed: _processing ? null : _takePhoto,
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _processing ? null : _scanDocument,
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: theme.colorScheme.secondary,
+                  backgroundColor: theme.colorScheme.tertiary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.camera_alt_outlined,
-                      size: 32,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      l10n.takePhoto,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.onSecondary,
-                      ),
-                    ),
-                  ],
+                icon: const Icon(Icons.document_scanner_outlined),
+                label: Text(
+                  l10n.scanDocument,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: theme.colorScheme.onTertiary,
+                  ),
                 ),
               ),
             ),
@@ -4497,6 +4523,52 @@ class WatermarkPageState extends State<WatermarkPage>
       await _selectPaths([photo.path]);
     } catch (e) {
       _addLog('Error capturing photo: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.errorPrefix(e.toString())),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _scanDocument() async {
+    final l10n = AppLocalizations.of(context)!;
+    try {
+      if (kIsWeb || !(Platform.isAndroid || Platform.isIOS)) {
+        // Fallback to standard camera for non-mobile platforms
+        final ImagePicker picker = ImagePicker();
+        final XFile? photo = await picker.pickImage(
+          source: ImageSource.camera,
+          requestFullMetadata: true,
+        );
+
+        if (photo == null) {
+          _addLog('Camera capture cancelled.');
+          return;
+        }
+
+        _addLog('Captured photo from camera: ${photo.path}');
+        setState(() => _loadingFiles = true);
+        await _selectPaths([photo.path]);
+        return;
+      }
+
+      // Use document scanner on mobile
+      final List<String>? images = await CunningDocumentScanner.getPictures();
+
+      if (images == null || images.isEmpty) {
+        _addLog('Document scanning cancelled.');
+        return;
+      }
+
+      _addLog('Scanned ${images.length} document(s)');
+      setState(() => _loadingFiles = true);
+      await _selectPaths(images);
+    } catch (e) {
+      _addLog('Error scanning document: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

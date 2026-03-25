@@ -67,7 +67,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get takePhoto => 'Take Photo';
 
   @override
-  String get takePhotoSubtitle => 'Camera direct use';
+  String get takePhotoSubtitle => 'Standard camera capture';
+
+  @override
+  String get scanDocument => 'Scan Document';
+
+  @override
+  String get scanDocumentSubtitle => 'Scan with edge detection';
+
+  @override
+  String get captureMenuTitle => 'Capture Method';
 
   @override
   String selectedFile(String name) {

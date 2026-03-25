@@ -34,7 +34,15 @@ The project is designed for high-security document distribution: choose files, a
 - **Selected Files Modal**: Click the "Selected files" label to open a grid view of all pending files with thumbnails and individual "remove" buttons.
 - **Fast PDF Previews**: Thumbnails for PDF files are generated instantly using the first page.
 - **Loading Feedback**: Immediate visual feedback during file selection and preparation.
-- **Input Variety**: Support for File Picker, Camera Capture, Desktop Drag & Drop, and Android Share Intents.
+- **Input Variety**: Support for File Picker, Scan Document (with edge detection), Desktop Drag & Drop, and Android Share Intents.
+
+### Privacy & Offline Document Scanning
+
+SecureMark prioritizes user privacy by processing all documents **locally on the device**.
+
+- **Offline Processing**: Document scanning, edge detection, and perspective correction are performed entirely on-device using native system APIs (**Google Play Services Document Scanner** on Android and **VisionKit** on iOS).
+- **"Secure by Google" Branding**: On Android, the scanner uses official Google Play Services APIs. The "Secure by Google" badge indicates that the camera and edge-detection code is a verified, official system component.
+- **On-Device ML**: All machine learning models for document detection are downloaded to your phone. Document data is **never uploaded to the cloud** or sent to external servers, ensuring your sensitive files remain strictly private.
 
 ### Specialized Dialogs
 
