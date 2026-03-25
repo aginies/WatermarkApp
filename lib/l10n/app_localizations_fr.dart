@@ -476,6 +476,14 @@ class AppLocalizationsFr extends AppLocalizations {
       'Important : Si vous utilisez la stéganographie et partagez ces fichiers via WhatsApp, Signal ou d\'autres applications qui compressent les images, vous devez activer la compression ZIP ou les zipper manuellement. Le partage direct détruit généralement la stéganographie invisible.';
 
   @override
+  String get steganographyTextLabel =>
+      'Signature stéganographique personnalisée';
+
+  @override
+  String get steganographyTextHint =>
+      'Entrez le texte personnalisé à cacher (utilise le texte du filigrane si vide)';
+
+  @override
   String get zipAllFiles => 'Zipper tous les fichiers';
 
   @override
@@ -879,4 +887,49 @@ class AppLocalizationsFr extends AppLocalizations {
   String profileReset(String profile) {
     return 'Profil $profile réinitialisé aux valeurs d\'usine';
   }
+
+  @override
+  String get previewModeOriginal => 'Original';
+
+  @override
+  String get previewModeProcessed => 'Traité';
+
+  @override
+  String get previewModeHeatmap => 'Heatmap d\'altération';
+
+  @override
+  String get authenticityVerified => 'AUTHENTICITÉ VÉRIFIÉE';
+
+  @override
+  String get fullAuthenticityConfirmed => 'AUTHENTICITÉ TOTALE CONFIRMÉE';
+
+  @override
+  String get partialAuthenticity => 'AUTHENTICITÉ PARTIELLE';
+
+  @override
+  String get tamperingDetected => 'ALTÉRATION DÉTECTÉE';
+
+  @override
+  String get forensicLayerContent => 'Contenu (Image + Données cachées)';
+
+  @override
+  String get forensicLayerSource => 'Source (Image visible)';
+
+  @override
+  String get forensicStatusValid => 'VALIDE';
+
+  @override
+  String get forensicStatusModified => 'MODIFIÉ';
+
+  @override
+  String get verifFullIntegrity =>
+      'Intégrité totale confirmée (Image + Données cachées).';
+
+  @override
+  String get verifPartialIntegrity =>
+      'Intégrité visuelle confirmée, mais la stéganographie a été modifiée ou corrompue.';
+
+  @override
+  String get verifTamperingDetected =>
+      'Échec du contrôle forensic. Les pixels visuels et les données cachées semblent avoir été modifiés.';
 }

@@ -131,16 +131,36 @@ class ExtractedFileResult {
   final bool isEncrypted;
 }
 
+class VerificationResult {
+  const VerificationResult({
+    required this.isContentAuthentic,
+    required this.isSourceAuthentic,
+    required this.author,
+    required this.timestamp,
+    this.messageKey,
+  });
+
+  final bool isContentAuthentic;
+  final bool isSourceAuthentic;
+  final String author;
+  final DateTime timestamp;
+  final String? messageKey;
+
+  bool get isAuthentic => isContentAuthentic || isSourceAuthentic;
+}
+
 class AnalysisResult {
   const AnalysisResult({
     this.signature,
     this.robustSignature,
     this.file,
+    this.verification,
   });
 
   final String? signature;
   final String? robustSignature;
   final ExtractedFileResult? file;
+  final VerificationResult? verification;
 }
 
 /// Progress callback for reporting processing progress
@@ -368,6 +388,7 @@ class WatermarkProcessor {
     WatermarkType watermarkType = WatermarkType.text,
     Uint8List? watermarkImageBytes,
     String? steganographyPassword,
+    String? steganographyText,
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
     QrWatermarkConfig? qrConfig,
@@ -413,6 +434,7 @@ class WatermarkProcessor {
       watermarkType,
       watermarkImageBytes,
       steganographyPassword,
+      steganographyText,
       hiddenFileName,
       hiddenFileBytes,
       qrConfig,
@@ -457,6 +479,7 @@ class WatermarkProcessor {
           watermarkType: watermarkType,
           watermarkImageBytes: watermarkImageBytes,
           steganographyPassword: steganographyPassword,
+          steganographyText: steganographyText,
           hiddenFileName: hiddenFileName,
           hiddenFileBytes: hiddenFileBytes,
           qrConfig: qrConfig,
@@ -491,6 +514,7 @@ class WatermarkProcessor {
           watermarkType: watermarkType,
           watermarkImageBytes: watermarkImageBytes,
           steganographyPassword: steganographyPassword,
+          steganographyText: steganographyText,
           hiddenFileName: hiddenFileName,
           hiddenFileBytes: hiddenFileBytes,
           qrConfig: qrConfig,
@@ -700,6 +724,7 @@ class WatermarkProcessor {
     WatermarkType watermarkType,
     Uint8List? watermarkImageBytes,
     String? steganographyPassword,
+    String? steganographyText,
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
     QrWatermarkConfig? qrConfig,
@@ -712,7 +737,7 @@ class WatermarkProcessor {
     final qrHash = qrConfig != null
         ? '${qrConfig.visibleQr}-${qrConfig.author}-${qrConfig.url}-${qrConfig.position}-${qrConfig.size}'
         : 'none';
-    return '$filePath-$transparency-$density-$watermarkText-$useRandomColor-$selectedColorValue-$fontSize-${font.fontFamily}-$jpegQuality-$targetSize-$includeTimestamp-$preserveMetadata-$rasterizePdf-$filePrefix-$antiAiLevel-$useSteganography-$useRobustSteganography-$useAiCloaking-$watermarkType-$watermarkImageHash-$steganographyPassword-$hiddenFileName-$hiddenFileHash-$qrHash';
+    return '$filePath-$transparency-$density-$watermarkText-$useRandomColor-$selectedColorValue-$fontSize-${font.fontFamily}-$jpegQuality-$targetSize-$includeTimestamp-$preserveMetadata-$rasterizePdf-$filePrefix-$antiAiLevel-$useSteganography-$useRobustSteganography-$useAiCloaking-$watermarkType-$watermarkImageHash-$steganographyPassword-$steganographyText-$hiddenFileName-$hiddenFileHash-$qrHash';
   }
 
   /// Add result to cache with size management
@@ -751,6 +776,7 @@ class WatermarkProcessor {
     WatermarkType watermarkType = WatermarkType.text,
     Uint8List? watermarkImageBytes,
     String? steganographyPassword,
+    String? steganographyText,
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
     QrWatermarkConfig? qrConfig,
@@ -836,6 +862,7 @@ class WatermarkProcessor {
           watermarkType: watermarkType,
           watermarkImageBytes: watermarkImageBytes,
           steganographyPassword: steganographyPassword,
+          steganographyText: steganographyText,
           hiddenFileName: hiddenFileName,
           hiddenFileBytes: hiddenFileBytes,
           qrConfig: qrConfig,
@@ -879,6 +906,11 @@ class WatermarkProcessor {
         final analysis =
             analyzeImage(outputBytes, password: steganographyPassword);
 
+        final expectedSignature =
+            (steganographyText != null && steganographyText.isNotEmpty)
+                ? steganographyText
+                : watermarkText;
+
         if (useSteganography || hiddenFileName != null) {
           bool allVerified = true;
           if (hiddenFileName != null) {
@@ -887,14 +919,14 @@ class WatermarkProcessor {
           }
           if (useSteganography) {
             allVerified &=
-                (analysis.signature?.startsWith(watermarkText) ?? false);
+                (analysis.signature?.startsWith(expectedSignature) ?? false);
           }
           verified = allVerified;
         }
 
         if (useRobustSteganography) {
           robustVerified =
-              analysis.robustSignature?.startsWith(watermarkText) ?? false;
+              analysis.robustSignature?.startsWith(expectedSignature) ?? false;
         }
 
         if (verified || robustVerified) {
@@ -950,6 +982,7 @@ class WatermarkProcessor {
     WatermarkType watermarkType = WatermarkType.text,
     Uint8List? watermarkImageBytes,
     String? steganographyPassword,
+    String? steganographyText,
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
     QrWatermarkConfig? qrConfig,
@@ -981,6 +1014,7 @@ class WatermarkProcessor {
           watermarkType: watermarkType,
           watermarkImageBytes: watermarkImageBytes,
           steganographyPassword: steganographyPassword,
+          steganographyText: steganographyText,
           hiddenFileName: hiddenFileName,
           hiddenFileBytes: hiddenFileBytes,
           qrConfig: qrConfig,
@@ -1290,6 +1324,7 @@ class WatermarkProcessor {
     WatermarkType watermarkType = WatermarkType.text,
     Uint8List? watermarkImageBytes,
     String? steganographyPassword,
+    String? steganographyText,
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
     QrWatermarkConfig? qrConfig,
@@ -1318,6 +1353,7 @@ class WatermarkProcessor {
         watermarkType: watermarkType,
         watermarkImageBytes: watermarkImageBytes,
         steganographyPassword: steganographyPassword,
+        steganographyText: steganographyText,
         hiddenFileName: hiddenFileName,
         hiddenFileBytes: hiddenFileBytes,
         qrConfig: qrConfig,
@@ -1433,6 +1469,7 @@ class WatermarkProcessor {
     WatermarkType watermarkType = WatermarkType.text,
     Uint8List? watermarkImageBytes,
     String? steganographyPassword,
+    String? steganographyText,
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
     QrWatermarkConfig? qrConfig,
@@ -1450,6 +1487,11 @@ class WatermarkProcessor {
           filePath: filePath,
         );
       }
+
+      final steganographySignature =
+          (steganographyText != null && steganographyText.isNotEmpty)
+              ? steganographyText
+              : watermarkText;
 
       progressPort
           ?.send({'progress': 0.15, 'message': 'progressResizingImage'});
@@ -1500,7 +1542,8 @@ class WatermarkProcessor {
       if (useRobustSteganography) {
         progressPort
             ?.send({'progress': 0.80, 'message': 'progressEmbeddingRobust'});
-        outputImage = _embedRobustSignature(outputImage, watermarkText);
+        outputImage =
+            _embedRobustSignature(outputImage, steganographySignature);
       }
 
       if (useSteganography) {
@@ -1521,9 +1564,24 @@ class WatermarkProcessor {
             ?.send({'progress': 0.88, 'message': 'progressEmbeddingLsb'});
         outputImage = _embedLSB(
           outputImage,
-          watermarkText,
+          steganographySignature,
           password: steganographyPassword,
           channel: 'b', // Use Blue channel for signature
+        );
+
+        // Always embed a Deep-Link Verification seal in the Red channel if steganography is enabled
+        // This seals the final pixels with signatures of both content and source.
+        final contentHash =
+            _calculateForensicHash(outputImage, excludeRedLSB: true);
+        final sourceHash =
+            _calculateForensicHash(outputImage, excludeAllLSB: true);
+        final verificationLink = _generateVerificationLink(
+            steganographySignature, contentHash, sourceHash);
+        outputImage = _embedLSB(
+          outputImage,
+          verificationLink,
+          password: steganographyPassword,
+          channel: 'r', // Use Red channel for verification seal
         );
       }
 
@@ -1601,6 +1659,41 @@ class WatermarkProcessor {
       }
     }
     return heatmap;
+  }
+
+  /// Calculates a stable hash of the image pixels, optionally excluding bits
+  /// used for steganography. This ensures verification works even after a
+  /// seal is embedded.
+  static String _calculateForensicHash(img.Image image,
+      {bool excludeAllLSB = false, bool excludeRedLSB = false}) {
+    final int width = image.width;
+    final int height = image.height;
+    final buffer = Uint8List(width * height * 3); // R, G, B
+    var idx = 0;
+    for (final frame in image.frames) {
+      for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+          final pixel = frame.getPixel(x, y);
+          var r = pixel.r.toInt();
+          var g = pixel.g.toInt();
+          var b = pixel.b.toInt();
+
+          if (excludeAllLSB) {
+            r &= 0xFE;
+            g &= 0xFE;
+            b &= 0xFE;
+          } else if (excludeRedLSB) {
+            r &= 0xFE; // Clear LSB of Red (where verification link lives)
+          }
+
+          buffer[idx++] = r;
+          buffer[idx++] = g;
+          buffer[idx++] = b;
+        }
+      }
+      break; // Only hash the first frame
+    }
+    return sha256.convert(buffer).toString();
   }
 
   static Future<Uint8List> _renderTextWithFlutterCanvas({
@@ -1814,12 +1907,25 @@ class WatermarkProcessor {
 
       String? signature;
       ExtractedFileResult? file;
+      VerificationResult? verification;
+
+      // Calculate current pixel hashes for dual-layer verification comparison
+      final currentContentHash =
+          _calculateForensicHash(image, excludeRedLSB: true);
+      final currentSourceHash =
+          _calculateForensicHash(image, excludeAllLSB: true);
 
       // Check each channel (B, G, R) for any of our steganography types
       for (final channel in ['b', 'g', 'r']) {
         final result = _checkChannel(image, channel, password);
         if (result.signature != null) {
-          signature = result.signature;
+          // Check if this is a verification deep-link
+          if (result.signature!.startsWith('securemark://verify?v=')) {
+            verification = _verifyDeepLink(
+                result.signature!, currentContentHash, currentSourceHash);
+          } else {
+            signature = result.signature;
+          }
         }
         if (result.file != null) {
           file = result.file;
@@ -1829,7 +1935,11 @@ class WatermarkProcessor {
       final robustSignature = _extractRobustSignature(image);
 
       return AnalysisResult(
-          signature: signature, robustSignature: robustSignature, file: file);
+        signature: signature,
+        robustSignature: robustSignature,
+        file: file,
+        verification: verification,
+      );
     } catch (e) {
       return const AnalysisResult();
     }
@@ -2055,6 +2165,7 @@ class WatermarkProcessor {
     final iv = enc.IV.fromSecureRandom(16);
     final encrypter = enc.Encrypter(enc.AES(key, mode: enc.AESMode.cbc));
     final encrypted = encrypter.encryptBytes(data, iv: iv);
+
     final result = BytesBuilder();
     result.add(iv.bytes);
     result.add(encrypted.bytes);
@@ -2064,6 +2175,8 @@ class WatermarkProcessor {
   static Uint8List? _decryptBytes(Uint8List encryptedData, String password) {
     try {
       if (encryptedData.length < 16) {
+        debugPrint(
+            'Decryption failed: data too short (${encryptedData.length} bytes)');
         return null;
       }
       final iv = enc.IV(encryptedData.sublist(0, 16));
@@ -2073,7 +2186,8 @@ class WatermarkProcessor {
       final encrypter = enc.Encrypter(enc.AES(key, mode: enc.AESMode.cbc));
       final decrypted = encrypter.decryptBytes(enc.Encrypted(data), iv: iv);
       return Uint8List.fromList(decrypted);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Decryption error: $e');
       return null;
     }
   }
@@ -2612,6 +2726,74 @@ class WatermarkProcessor {
       ? _randomWatermarkColor(a)
       : img.ColorRgba8((val >> 16) & 0xFF, (val >> 8) & 0xFF, val & 0xFF, a);
 
+  // --- Deep-Linking Verification Logic ---
+
+  /// A static secret key for signing verification tokens.
+  /// In a production app, this would be per-user and stored in a secure enclave.
+  static const String _verificationSecret = 'sm-p-v-key-32-chars-long-secret!';
+
+  static String _generateVerificationLink(
+      String author, String contentHash, String sourceHash) {
+    final payload = jsonEncode({
+      'a': author,
+      't': DateTime.now().toIso8601String(),
+      'h1': contentHash,
+      'h2': sourceHash,
+    });
+
+    final key = enc.Key.fromUtf8(_verificationSecret);
+    final iv =
+        enc.IV.fromUtf8('sm-iv-16-chars!!'); // Use a fixed IV for the seal
+    final encrypter = enc.Encrypter(enc.AES(key));
+
+    final encrypted = encrypter.encrypt(payload, iv: iv);
+    return 'securemark://verify?v=${encrypted.base64}';
+  }
+
+  static VerificationResult? _verifyDeepLink(
+      String link, String currentContentHash, String currentSourceHash) {
+    try {
+      if (!link.startsWith('securemark://verify?v=')) return null;
+      final encryptedBase64 = link.split('securemark://verify?v=').last;
+
+      final key = enc.Key.fromUtf8(_verificationSecret);
+      final iv = enc.IV.fromUtf8('sm-iv-16-chars!!'); // Match the fixed IV
+      final encrypter = enc.Encrypter(enc.AES(key));
+
+      final decrypted =
+          encrypter.decrypt(enc.Encrypted.fromBase64(encryptedBase64), iv: iv);
+      final data = jsonDecode(decrypted);
+
+      final author = data['a'] as String;
+      final timestamp = DateTime.parse(data['t'] as String);
+      final originalContentHash = data['h1'] as String;
+      final originalSourceHash = data['h2'] as String;
+
+      final isContentAuthentic = originalContentHash == currentContentHash;
+      final isSourceAuthentic = originalSourceHash == currentSourceHash;
+
+      String messageKey;
+      if (isContentAuthentic) {
+        messageKey = 'verifFullIntegrity';
+      } else if (isSourceAuthentic) {
+        messageKey = 'verifPartialIntegrity';
+      } else {
+        messageKey = 'verifTamperingDetected';
+      }
+
+      return VerificationResult(
+        isContentAuthentic: isContentAuthentic,
+        isSourceAuthentic: isSourceAuthentic,
+        author: author,
+        timestamp: timestamp,
+        messageKey: messageKey,
+      );
+    } catch (e) {
+      debugPrint('Deep-link verification error: $e');
+      return null;
+    }
+  }
+
   static Future<ProcessResult> _processPdfRasterFallback({
     required Uint8List inputBytes,
     required File file,
@@ -2632,6 +2814,7 @@ class WatermarkProcessor {
     WatermarkType watermarkType = WatermarkType.text,
     Uint8List? watermarkImageBytes,
     String? steganographyPassword,
+    String? steganographyText,
     String? hiddenFileName,
     Uint8List? hiddenFileBytes,
     QrWatermarkConfig? qrConfig,
@@ -2645,6 +2828,12 @@ class WatermarkProcessor {
       var pageCount = 0;
       var processed = 0;
       Uint8List? firstPageOriginal;
+
+      final steganographySignature =
+          (steganographyText != null && steganographyText.isNotEmpty)
+              ? steganographyText
+              : watermarkText;
+
       await for (final page in Printing.raster(inputBytes, dpi: 150)) {
         if (cancellationToken?.isCancelled == true) {
           throw const WatermarkError(
@@ -2688,7 +2877,8 @@ class WatermarkProcessor {
               'Page ${processed + 1}: $message');
         });
         if (useRobustSteganography) {
-          watermarked = _embedRobustSignature(watermarked, watermarkText);
+          watermarked =
+              _embedRobustSignature(watermarked, steganographySignature);
         }
         if (useSteganography) {
           if (hiddenFileName != null && hiddenFileBytes != null) {
@@ -2697,7 +2887,7 @@ class WatermarkProcessor {
                 password: steganographyPassword, channel: 'g');
           }
           // Always embed watermark text as LSB if steganography is enabled (Blue channel)
-          watermarked = _embedLSB(watermarked, watermarkText,
+          watermarked = _embedLSB(watermarked, steganographySignature,
               password: steganographyPassword, channel: 'b');
         }
         final encoded = _encodePngForSharing(watermarked);
@@ -2735,14 +2925,16 @@ class WatermarkProcessor {
           }
           if (useSteganography) {
             allVerified &=
-                (analysis.signature?.startsWith(watermarkText) ?? false);
+                (analysis.signature?.startsWith(steganographySignature) ??
+                    false);
           }
           verified = allVerified;
         }
 
         if (useRobustSteganography) {
           robustVerified =
-              analysis.robustSignature?.startsWith(watermarkText) ?? false;
+              analysis.robustSignature?.startsWith(steganographySignature) ??
+                  false;
         }
       }
       return ProcessResult(

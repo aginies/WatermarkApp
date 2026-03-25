@@ -475,6 +475,13 @@ class AppLocalizationsIt extends AppLocalizations {
       'Importante: se utilizzi la steganografia e condividi questi file tramite WhatsApp, Signal o altre app che comprimono le immagini, è necessario abilitare la compressione ZIP o comprimerli manualmente. La condivisione diretta di solito distrugge la steganografia invisibile.';
 
   @override
+  String get steganographyTextLabel => 'Custom Steganography Signature';
+
+  @override
+  String get steganographyTextHint =>
+      'Enter custom text to hide (defaults to watermark text if empty)';
+
+  @override
   String get zipAllFiles => 'Zippa tutti i file';
 
   @override
@@ -874,4 +881,49 @@ class AppLocalizationsIt extends AppLocalizations {
   String profileReset(String profile) {
     return 'Profilo $profile ripristinato ai valori di fabbrica';
   }
+
+  @override
+  String get previewModeOriginal => 'Original';
+
+  @override
+  String get previewModeProcessed => 'Processed';
+
+  @override
+  String get previewModeHeatmap => 'Tamper Heatmap';
+
+  @override
+  String get authenticityVerified => 'AUTHENTICITY VERIFIED';
+
+  @override
+  String get fullAuthenticityConfirmed => 'FULL AUTHENTICITY CONFIRMED';
+
+  @override
+  String get partialAuthenticity => 'PARTIAL AUTHENTICITY';
+
+  @override
+  String get tamperingDetected => 'TAMPERING DETECTED';
+
+  @override
+  String get forensicLayerContent => 'Content (Image + Hidden Data)';
+
+  @override
+  String get forensicLayerSource => 'Source (Visible Image)';
+
+  @override
+  String get forensicStatusValid => 'VALID';
+
+  @override
+  String get forensicStatusModified => 'MODIFIED';
+
+  @override
+  String get verifFullIntegrity =>
+      'Full integrity confirmed (Image + Hidden Data).';
+
+  @override
+  String get verifPartialIntegrity =>
+      'Visual integrity confirmed, but hidden steganography has been modified or corrupted.';
+
+  @override
+  String get verifTamperingDetected =>
+      'Forensic check failed. Both visual pixels and hidden data appear modified.';
 }

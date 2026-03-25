@@ -41,6 +41,8 @@ class WatermarkPage extends StatefulWidget {
 class WatermarkPageState extends State<WatermarkPage>
     with WidgetsBindingObserver {
   final TextEditingController _textController = TextEditingController();
+  final TextEditingController _steganographyTextController =
+      TextEditingController();
   final TextEditingController _qrAuthorController = TextEditingController();
   final TextEditingController _qrUrlController = TextEditingController();
   final TextEditingController _vCardFirstNameController =
@@ -295,6 +297,9 @@ class WatermarkPageState extends State<WatermarkPage>
           _hidingPassword = prefs.getString('hidingPassword') ?? '';
           _hidingPasswordController.text = _hidingPassword;
 
+          _steganographyTextController.text =
+              prefs.getString('steganographyText') ?? '';
+
           _hiddenFileName = prefs.getString('hiddenFileName');
           final hiddenFileB64 = prefs.getString('hiddenFileBytes');
           if (hiddenFileB64 != null) {
@@ -476,6 +481,10 @@ class WatermarkPageState extends State<WatermarkPage>
           } catch (_) {}
         }
       }
+      if (prefs.containsKey('${pKey}steganographyText')) {
+        _steganographyTextController.text =
+            prefs.getString('${pKey}steganographyText')!;
+      }
       if (prefs.containsKey('${pKey}outputDirectory')) {
         _outputDirectory = prefs.getString('${pKey}outputDirectory');
       }
@@ -644,6 +653,7 @@ class WatermarkPageState extends State<WatermarkPage>
     _savePreference('selectedFont', _selectedFont.fontFamily);
     _savePreference('qrVisible', _qrVisible);
     _savePreference('filePrefix', _filePrefix);
+    _savePreference('steganographyText', _steganographyTextController.text);
   }
 
   Future<void> _saveCurrentConfigToProfile(SettingsProfile profile) async {
@@ -677,6 +687,8 @@ class WatermarkPageState extends State<WatermarkPage>
     await prefs.setDouble('${pKey}fontSize', _fontSize);
     await prefs.setString('${pKey}filePrefix', _filePrefix);
     await prefs.setString('${pKey}selectedFont', _selectedFont.fontFamily);
+    await prefs.setString(
+        '${pKey}steganographyText', _steganographyTextController.text);
     if (_outputDirectory != null) {
       await prefs.setString('${pKey}outputDirectory', _outputDirectory!);
     } else {
@@ -828,6 +840,7 @@ class WatermarkPageState extends State<WatermarkPage>
     _shareCheckTimer2?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _textController.dispose();
+    _steganographyTextController.dispose();
     _qrAuthorController.dispose();
     _qrUrlController.dispose();
     _vCardFirstNameController.dispose();
@@ -1655,8 +1668,10 @@ class WatermarkPageState extends State<WatermarkPage>
                     },
                     controller: _extractionPasswordController,
                   ),
-                  const SizedBox(height: 16),
-                  Text(l10n.fileAnalyzerDescription),
+                  if (!_analyzingFile && _analysisResult == null) ...[
+                    const SizedBox(height: 16),
+                    Text(l10n.fileAnalyzerDescription),
+                  ],
                   const SizedBox(height: 24),
                   if (_analyzingFile)
                     const CircularProgressIndicator()
@@ -1689,13 +1704,13 @@ class WatermarkPageState extends State<WatermarkPage>
                                   constraints: const BoxConstraints(),
                                   tooltip: l10n.copySignature,
                                   onPressed: () {
-                                    final textToCopy =
-                                        _analysisResult!.contains(': ')
+                                    final textToCopy = _extractedSignature ??
+                                        (_analysisResult!.contains(': ')
                                             ? _analysisResult!
                                                 .split(': ')
                                                 .sublist(1)
                                                 .join(': ')
-                                            : _analysisResult!;
+                                            : _analysisResult!);
                                     Clipboard.setData(
                                         ClipboardData(text: textToCopy));
                                     ScaffoldMessenger.of(context).showSnackBar(
@@ -1708,6 +1723,87 @@ class WatermarkPageState extends State<WatermarkPage>
                             ],
                           ),
                           const SizedBox(height: 8),
+                          if (_verificationResult != null) ...[
+                            Container(
+                              margin: const EdgeInsets.only(bottom: 16),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: _verificationResult!.isAuthentic
+                                    ? Colors.green.withValues(alpha: 0.1)
+                                    : Colors.red.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: _verificationResult!.isAuthentic
+                                      ? Colors.green
+                                      : Colors.red,
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        _verificationResult!.isAuthentic
+                                            ? Icons.verified_user
+                                            : Icons.gpp_maybe,
+                                        color: _verificationResult!.isAuthentic
+                                            ? Colors.green
+                                            : Colors.red,
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          _verificationResult!
+                                                  .isContentAuthentic
+                                              ? l10n.fullAuthenticityConfirmed
+                                              : _verificationResult!
+                                                      .isSourceAuthentic
+                                                  ? l10n.partialAuthenticity
+                                                  : l10n.tamperingDetected,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color:
+                                                _verificationResult!.isAuthentic
+                                                    ? Colors.green
+                                                    : Colors.red,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  _buildForensicRow(
+                                    label: l10n.forensicLayerContent,
+                                    isValid:
+                                        _verificationResult!.isContentAuthentic,
+                                    l10n: l10n,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  _buildForensicRow(
+                                    label: l10n.forensicLayerSource,
+                                    isValid:
+                                        _verificationResult!.isSourceAuthentic,
+                                    l10n: l10n,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    _getLocalizedVerificationMessage(
+                                        _verificationResult!, l10n),
+                                    style: const TextStyle(fontSize: 13),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Signed on: ${_verificationResult!.timestamp.toString().split('.').first}',
+                                    style: theme.textTheme.labelSmall,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                           Text(_analysisResult!),
                           if (_extractedFile != null &&
                               (!_extractedFile!.isEncrypted ||
@@ -1824,6 +1920,8 @@ class WatermarkPageState extends State<WatermarkPage>
 
   bool _analyzingFile = false;
   String? _analysisResult;
+  String? _extractedSignature;
+  VerificationResult? _verificationResult;
   ExtractedFileResult? _extractedFile;
 
   Future<void> _pickAndAnalyze(StateSetter setDialogState) async {
@@ -1858,7 +1956,9 @@ class WatermarkPageState extends State<WatermarkPage>
     setDialogState(() {
       _analyzingFile = true;
       _analysisResult = null;
+      _extractedSignature = null;
       _extractedFile = null;
+      _verificationResult = null;
     });
 
     try {
@@ -1870,6 +1970,7 @@ class WatermarkPageState extends State<WatermarkPage>
           password: password);
 
       final results = <String>[];
+      _verificationResult = analysis.verification;
 
       if (analysis.file != null) {
         final fileResult = analysis.file!;
@@ -1884,6 +1985,7 @@ class WatermarkPageState extends State<WatermarkPage>
 
       if (analysis.signature != null && analysis.signature!.isNotEmpty) {
         final textResult = analysis.signature!;
+        _extractedSignature = textResult;
         if (textResult.contains('[ENCRYPTED]')) {
           results.add(l10n.encryptedSignatureDetected);
         } else {
@@ -1893,6 +1995,7 @@ class WatermarkPageState extends State<WatermarkPage>
 
       if (analysis.robustSignature != null &&
           analysis.robustSignature!.isNotEmpty) {
+        _extractedSignature = analysis.robustSignature;
         results.add(l10n.robustSignatureFound(analysis.robustSignature!));
       }
 
@@ -2048,6 +2151,21 @@ class WatermarkPageState extends State<WatermarkPage>
                           _useRobustSteganography = enabled;
                         });
                         _savePreference('useRobustSteganography', enabled);
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _steganographyTextController,
+                      maxLines: 10,
+                      minLines: 1,
+                      decoration: InputDecoration(
+                        labelText: l10n.steganographyTextLabel,
+                        hintText: l10n.steganographyTextHint,
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.text_fields_rounded),
+                      ),
+                      onChanged: (value) {
+                        _savePreference('steganographyText', value);
                       },
                     ),
                     const SizedBox(height: 8),
@@ -3317,7 +3435,7 @@ class WatermarkPageState extends State<WatermarkPage>
                                                 _previewMode =
                                                     PreviewMode.original),
                                             theme: theme,
-                                            tooltip: 'Original',
+                                            tooltip: l10n.previewModeOriginal,
                                           ),
                                           _buildPreviewToggleItem(
                                             label: 'B',
@@ -3327,7 +3445,7 @@ class WatermarkPageState extends State<WatermarkPage>
                                                 _previewMode =
                                                     PreviewMode.processed),
                                             theme: theme,
-                                            tooltip: 'Processed',
+                                            tooltip: l10n.previewModeProcessed,
                                           ),
                                           if (_processedFiles[index]
                                                   .result
@@ -3341,7 +3459,7 @@ class WatermarkPageState extends State<WatermarkPage>
                                                   _previewMode =
                                                       PreviewMode.heatmap),
                                               theme: theme,
-                                              tooltip: 'Tamper Heatmap',
+                                              tooltip: l10n.previewModeHeatmap,
                                             ),
                                         ],
                                       ),
@@ -3478,6 +3596,54 @@ class WatermarkPageState extends State<WatermarkPage>
                     ],
                   ],
                 ),
+    );
+  }
+
+  String _getLocalizedVerificationMessage(
+      VerificationResult result, AppLocalizations l10n) {
+    switch (result.messageKey) {
+      case 'verifFullIntegrity':
+        return l10n.verifFullIntegrity;
+      case 'verifPartialIntegrity':
+        return l10n.verifPartialIntegrity;
+      case 'verifTamperingDetected':
+        return l10n.verifTamperingDetected;
+      default:
+        return '';
+    }
+  }
+
+  Widget _buildForensicRow(
+      {required String label,
+      required bool isValid,
+      required AppLocalizations l10n}) {
+    return Row(
+      children: [
+        Icon(
+          isValid ? Icons.check_circle_outline : Icons.error_outline,
+          size: 14,
+          color: isValid ? Colors.green : Colors.red,
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: isValid ? Colors.green[800] : Colors.red[800],
+              fontWeight: isValid ? FontWeight.normal : FontWeight.bold,
+            ),
+          ),
+        ),
+        Text(
+          isValid ? l10n.forensicStatusValid : l10n.forensicStatusModified,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            color: isValid ? Colors.green[800] : Colors.red[800],
+          ),
+        ),
+      ],
     );
   }
 
@@ -4626,6 +4792,7 @@ class WatermarkPageState extends State<WatermarkPage>
             watermarkType: _watermarkType,
             watermarkImageBytes: _watermarkImageBytes,
             steganographyPassword: _hidingPassword,
+            steganographyText: _steganographyTextController.text,
             hiddenFileName: _hideFileWithSteganography ? _hiddenFileName : null,
             hiddenFileBytes:
                 _hideFileWithSteganography ? _hiddenFileBytes : null,
@@ -4801,6 +4968,7 @@ class WatermarkPageState extends State<WatermarkPage>
     _cancellationToken?.cancel();
     _stopStopwatch();
     _textController.clear();
+    _steganographyTextController.clear();
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -4827,6 +4995,9 @@ class WatermarkPageState extends State<WatermarkPage>
       _selectedPaths = <String>[];
       _processedFiles = <ProcessedFile>[];
       _previewIndex = 0;
+      _previewMode = PreviewMode.processed;
+      _verificationResult = null;
+      _extractedSignature = null;
       _statusMessage = '';
       _cancellationToken = null;
       _rawImage = null;

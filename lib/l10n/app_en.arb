@@ -319,6 +319,8 @@
   "steganographyPasswordHint": "Enter password to protect hidden file",
   "steganographyPasswordNote": "Note: This password will be required to extract the hidden file using SecureMark. It uses AES-256 encryption.",
   "steganographyZipNote": "Important: If you use steganography and share these files via WhatsApp, Signal, or other apps that compress images, you must enable ZIP compression or ZIP them manually. Direct sharing usually destroys the invisible steganography.",
+  "steganographyTextLabel": "Custom Steganography Signature",
+  "steganographyTextHint": "Enter custom text to hide (defaults to watermark text if empty)",
   "zipAllFiles": "ZIP All Files",
   "zipEnabledHint": "ZIP compression enabled for sharing. NOTE: third‑party apps (WhatsApp, Signal, etc.) compress images, potentially destroying steganographic signatures. Enable ZIP to avoid loosing signatures.",
   "zipDisabledHint": "ZIP compression disabled",
@@ -607,5 +609,19 @@
         "type": "String"
       }
     }
-  }
+  },
+  "previewModeOriginal": "Original",
+  "previewModeProcessed": "Processed",
+  "previewModeHeatmap": "Tamper Heatmap",
+  "authenticityVerified": "AUTHENTICITY VERIFIED",
+  "fullAuthenticityConfirmed": "FULL AUTHENTICITY CONFIRMED",
+  "partialAuthenticity": "PARTIAL AUTHENTICITY",
+  "tamperingDetected": "TAMPERING DETECTED",
+  "forensicLayerContent": "Content (Image + Hidden Data)",
+  "forensicLayerSource": "Source (Visible Image)",
+  "forensicStatusValid": "VALID",
+  "forensicStatusModified": "MODIFIED",
+  "verifFullIntegrity": "Full integrity confirmed (Image + Hidden Data).",
+  "verifPartialIntegrity": "Visual integrity confirmed, but hidden steganography has been modified or corrupted.",
+  "verifTamperingDetected": "Forensic check failed. Both visual pixels and hidden data appear modified."
 }

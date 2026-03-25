@@ -319,6 +319,8 @@
   "steganographyPasswordHint": "Entrez le mot de passe pour protéger le fichier caché",
   "steganographyPasswordNote": "Remarque : Ce mot de passe sera requis pour extraire le fichier caché à l'aide de SecureMark. Il utilise le chiffrage AES-256.",
   "steganographyZipNote": "Important : Si vous utilisez la stéganographie et partagez ces fichiers via WhatsApp, Signal ou d'autres applications qui compressent les images, vous devez activer la compression ZIP ou les zipper manuellement. Le partage direct détruit généralement la stéganographie invisible.",
+  "steganographyTextLabel": "Signature stéganographique personnalisée",
+  "steganographyTextHint": "Entrez le texte personnalisé à cacher (utilise le texte du filigrane si vide)",
   "zipAllFiles": "Zipper tous les fichiers",
   "zipEnabledHint": "Compression ZIP activée pour le partage",
   "zipDisabledHint": "Compression ZIP désactivée",
@@ -607,5 +609,19 @@
         "type": "String"
       }
     }
-  }
+  },
+  "previewModeOriginal": "Original",
+  "previewModeProcessed": "Traité",
+  "previewModeHeatmap": "Heatmap d'altération",
+  "authenticityVerified": "AUTHENTICITÉ VÉRIFIÉE",
+  "fullAuthenticityConfirmed": "AUTHENTICITÉ TOTALE CONFIRMÉE",
+  "partialAuthenticity": "AUTHENTICITÉ PARTIELLE",
+  "tamperingDetected": "ALTÉRATION DÉTECTÉE",
+  "forensicLayerContent": "Contenu (Image + Données cachées)",
+  "forensicLayerSource": "Source (Image visible)",
+  "forensicStatusValid": "VALIDE",
+  "forensicStatusModified": "MODIFIÉ",
+  "verifFullIntegrity": "Intégrité totale confirmée (Image + Données cachées).",
+  "verifPartialIntegrity": "Intégrité visuelle confirmée, mais la stéganographie a été modifiée ou corrompue.",
+  "verifTamperingDetected": "Échec du contrôle forensic. Les pixels visuels et les données cachées semblent avoir été modifiés."
 }

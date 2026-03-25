@@ -830,6 +830,18 @@ abstract class AppLocalizations {
   /// **'Important: If you use steganography and share these files via WhatsApp, Signal, or other apps that compress images, you must enable ZIP compression or ZIP them manually. Direct sharing usually destroys the invisible steganography.'**
   String get steganographyZipNote;
 
+  /// No description provided for @steganographyTextLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Steganography Signature'**
+  String get steganographyTextLabel;
+
+  /// No description provided for @steganographyTextHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter custom text to hide (defaults to watermark text if empty)'**
+  String get steganographyTextHint;
+
   /// No description provided for @zipAllFiles.
   ///
   /// In en, this message translates to:
@@ -1502,6 +1514,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Profile {profile} reset to factory defaults'**
   String profileReset(String profile);
+
+  /// No description provided for @previewModeOriginal.
+  ///
+  /// In en, this message translates to:
+  /// **'Original'**
+  String get previewModeOriginal;
+
+  /// No description provided for @previewModeProcessed.
+  ///
+  /// In en, this message translates to:
+  /// **'Processed'**
+  String get previewModeProcessed;
+
+  /// No description provided for @previewModeHeatmap.
+  ///
+  /// In en, this message translates to:
+  /// **'Tamper Heatmap'**
+  String get previewModeHeatmap;
+
+  /// No description provided for @authenticityVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'AUTHENTICITY VERIFIED'**
+  String get authenticityVerified;
+
+  /// No description provided for @fullAuthenticityConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'FULL AUTHENTICITY CONFIRMED'**
+  String get fullAuthenticityConfirmed;
+
+  /// No description provided for @partialAuthenticity.
+  ///
+  /// In en, this message translates to:
+  /// **'PARTIAL AUTHENTICITY'**
+  String get partialAuthenticity;
+
+  /// No description provided for @tamperingDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'TAMPERING DETECTED'**
+  String get tamperingDetected;
+
+  /// No description provided for @forensicLayerContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Content (Image + Hidden Data)'**
+  String get forensicLayerContent;
+
+  /// No description provided for @forensicLayerSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Source (Visible Image)'**
+  String get forensicLayerSource;
+
+  /// No description provided for @forensicStatusValid.
+  ///
+  /// In en, this message translates to:
+  /// **'VALID'**
+  String get forensicStatusValid;
+
+  /// No description provided for @forensicStatusModified.
+  ///
+  /// In en, this message translates to:
+  /// **'MODIFIED'**
+  String get forensicStatusModified;
+
+  /// No description provided for @verifFullIntegrity.
+  ///
+  /// In en, this message translates to:
+  /// **'Full integrity confirmed (Image + Hidden Data).'**
+  String get verifFullIntegrity;
+
+  /// No description provided for @verifPartialIntegrity.
+  ///
+  /// In en, this message translates to:
+  /// **'Visual integrity confirmed, but hidden steganography has been modified or corrupted.'**
+  String get verifPartialIntegrity;
+
+  /// No description provided for @verifTamperingDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'Forensic check failed. Both visual pixels and hidden data appear modified.'**
+  String get verifTamperingDetected;
 }
 
 class _AppLocalizationsDelegate
