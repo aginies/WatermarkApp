@@ -4557,16 +4557,33 @@ class WatermarkPageState extends State<WatermarkPage>
       }
 
       // Use document scanner on mobile
-      final List<String>? images = await CunningDocumentScanner.getPictures();
+      try {
+        final List<String>? images = await CunningDocumentScanner.getPictures();
 
-      if (images == null || images.isEmpty) {
-        _addLog('Document scanning cancelled.');
-        return;
+        if (images == null || images.isEmpty) {
+          _addLog('Document scanning cancelled.');
+          return;
+        }
+
+        _addLog('Scanned ${images.length} document(s)');
+        setState(() => _loadingFiles = true);
+        await _selectPaths(images);
+      } catch (e) {
+        _addLog(
+            'Document scanner unavailable or failed: $e. Falling back to classical camera.');
+        // Automatic fallback to standard photo
+        final ImagePicker picker = ImagePicker();
+        final XFile? photo = await picker.pickImage(
+          source: ImageSource.camera,
+          requestFullMetadata: true,
+        );
+
+        if (photo == null) return;
+
+        _addLog('Captured photo via fallback: ${photo.path}');
+        setState(() => _loadingFiles = true);
+        await _selectPaths([photo.path]);
       }
-
-      _addLog('Scanned ${images.length} document(s)');
-      setState(() => _loadingFiles = true);
-      await _selectPaths(images);
     } catch (e) {
       _addLog('Error scanning document: $e');
       if (mounted) {
