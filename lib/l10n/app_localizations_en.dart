@@ -395,12 +395,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pickAndAnalyze => 'Pick and Analyze';
 
   @override
-  String encryptedFileDetected(Object name) {
+  String encryptedFileDetected(String name) {
     return '🔐 Encrypted file detected: $name. Please provide the correct password.';
   }
 
   @override
-  String hiddenFileDetected(Object name, Object size) {
+  String hiddenFileDetected(String name, String size) {
     return '📁 Hidden file detected: $name ($size)';
   }
 

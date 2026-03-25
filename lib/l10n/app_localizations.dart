@@ -726,13 +726,13 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'🔐 Encrypted file detected: {name}. Please provide the correct password.'**
-  String encryptedFileDetected(Object name);
+  String encryptedFileDetected(String name);
 
   /// No description provided for @hiddenFileDetected.
   ///
   /// In en, this message translates to:
   /// **'📁 Hidden file detected: {name} ({size})'**
-  String hiddenFileDetected(Object name, Object size);
+  String hiddenFileDetected(String name, String size);
 
   /// No description provided for @encryptedSignatureDetected.
   ///

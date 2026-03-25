@@ -400,12 +400,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get pickAndAnalyze => 'Choisir et analyser';
 
   @override
-  String encryptedFileDetected(Object name) {
+  String encryptedFileDetected(String name) {
     return '🔐 Fichier chiffré détecté : $name. Veuillez fournir le mot de passe correct.';
   }
 
   @override
-  String hiddenFileDetected(Object name, Object size) {
+  String hiddenFileDetected(String name, String size) {
     return '📁 Fichier caché détecté : $name ($size)';
   }
 

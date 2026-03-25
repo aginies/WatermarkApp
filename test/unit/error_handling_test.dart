@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:secure_mark/watermark_processor.dart';
+import 'package:secure_mark/watermark_error.dart';
 
 void main() {
   group('WatermarkError Tests', () {

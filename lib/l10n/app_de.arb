@@ -142,7 +142,7 @@
     }
   },
   "shareOpenedFiles": "Teilen-Dialog geöffnet für {count, plural, one {1 Datei} other {{count} Dateien}}.",
-  "@sharedFiles": {
+  "@shareOpenedFiles": {
     "placeholders": {
       "count": {
         "type": "int"
@@ -274,7 +274,24 @@
   "fileAnalyzerDescription": "Wählen Sie eine Datei aus, um nach versteckten SecureMark-Signaturen zu suchen.",
   "pickAndAnalyze": "Auswählen und analysieren",
   "encryptedFileDetected": "🔐 Verschlüsselte Datei erkannt: {name}. Bitte geben Sie das korrekte Passwort ein.",
+  "@encryptedFileDetected": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "hiddenFileDetected": "📁 Versteckte Datei erkannt: {name} ({size})",
+  "@hiddenFileDetected": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
   "encryptedSignatureDetected": "🔐 Verschlüsselte Signatur erkannt. Bitte geben Sie das korrekte Passwort ein.",
   "signatureFound": "✅ Signatur gefunden: \"{message}\"",
   "@signatureFound": {
@@ -389,7 +406,7 @@
       }
     }
   },
-  "antiAiProtectionValue": "Anti-IA-Schutz: {value}%",
+  "antiAiProtectionValue": "Anti-KI-Schutz: {value}%",
   "@antiAiProtectionValue": {
     "placeholders": {
       "value": {
@@ -398,7 +415,7 @@
     }
   },
   "antiAiProtectionNote": "Hinweis: Ein höherer Schutz erhöht die Zeit zur Generierung des SecureMark-Bildes erheblich.",
-  "antiAiEnabledHint": "Anti-IA-Schutz ist aktiviert",
+  "antiAiEnabledHint": "Anti-KI-Schutz ist aktiviert",
   "aiCloakingTitle": "KI-Cloaking (Adversarial)",
   "aiCloakingSubtitle": "Injiziert unsichtbares Rauschen, um KI-Training und Style-Diebstahl zu stören.",
   "aiCloakingEnabledHint": "KI-Cloaking ist aktiv",

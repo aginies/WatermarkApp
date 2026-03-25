@@ -31,6 +31,8 @@ import '../models/settings_profile.dart';
 import '../widgets/watermark_shader_painter.dart';
 import '../widgets/profile_chip.dart';
 import '../main.dart';
+import '../watermark_error.dart';
+import '../models/processor_models.dart';
 import 'onboarding_page.dart';
 
 class WatermarkPage extends StatefulWidget {
@@ -257,11 +259,13 @@ class WatermarkPageState extends State<WatermarkPage>
             }
           }
 
-          // Load settings profile
+          // Load settings profile and apply its settings
           final profileIndex = prefs.getInt('selectedProfile') ?? 0;
           if (profileIndex >= 0 &&
               profileIndex < SettingsProfile.values.length) {
             _selectedProfile = SettingsProfile.values[profileIndex];
+            // Apply the profile settings (will load profile-specific customizations)
+            _loadProfileSettings(_selectedProfile);
           }
 
           // Load QR watermark preferences
@@ -2171,6 +2175,26 @@ class WatermarkPageState extends State<WatermarkPage>
                         _savePreference('steganographyText', value);
                       },
                     ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _hidingPasswordController,
+                      decoration: InputDecoration(
+                        labelText: l10n.steganographyPasswordLabel,
+                        hintText: l10n.steganographyPasswordHint,
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.lock_outline),
+                      ),
+                      obscureText: true,
+                      onChanged: (value) {
+                        setState(() => _hidingPassword = value);
+                        _savePreference('hidingPassword', value);
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                        'Note: This password will be required to see signature and the hidden file using SecureMark. It uses AES-256 encryption.',
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(fontStyle: FontStyle.italic)),
                     const SizedBox(height: 8),
                     CheckboxListTile(
                       title: Text(l10n.hideFileWithSteganographyTitle),
@@ -2283,28 +2307,6 @@ class WatermarkPageState extends State<WatermarkPage>
                               : l10n.selectFileToHide,
                         ),
                       ),
-                      if (_hiddenFileBytes != null &&
-                          _hiddenFileBytes!.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: _hidingPasswordController,
-                          decoration: InputDecoration(
-                            labelText: l10n.steganographyPasswordLabel,
-                            hintText: l10n.steganographyPasswordHint,
-                            border: const OutlineInputBorder(),
-                            prefixIcon: const Icon(Icons.lock_outline),
-                          ),
-                          obscureText: true,
-                          onChanged: (value) {
-                            setState(() => _hidingPassword = value);
-                            _savePreference('hidingPassword', value);
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                        Text(l10n.steganographyPasswordNote,
-                            style: theme.textTheme.bodySmall
-                                ?.copyWith(fontStyle: FontStyle.italic)),
-                      ],
                     ],
                   ],
                 ),
@@ -4309,9 +4311,7 @@ class WatermarkPageState extends State<WatermarkPage>
       alignment: WrapAlignment.start,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        if (_useSteganography &&
-            !_steganographyVerificationFailed &&
-            !currentIsPdf)
+        if (_useSteganography && !_steganographyVerificationFailed)
           GestureDetector(
             onTap: () => showTooltip(steganoKey),
             onDoubleTap: _showSteganographyOptions,
@@ -4324,7 +4324,7 @@ class WatermarkPageState extends State<WatermarkPage>
               ),
             ),
           ),
-        if (_useRobustSteganography && !currentIsPdf)
+        if (_useRobustSteganography)
           GestureDetector(
             onTap: () => showTooltip(robustKey),
             onDoubleTap: _showSteganographyOptions,
@@ -5074,7 +5074,17 @@ class WatermarkPageState extends State<WatermarkPage>
           setState(() {
             _processedFiles = processedFiles;
             _previewIndex = 0;
-            if (_statusMessage.isEmpty || !_statusMessage.contains('\n')) {
+            // Preserve detailed error messages (resolution limits, capacity errors, etc.)
+            // Only update status if it's empty, multiline, or not a detailed error
+            final hasDetailedError = _statusMessage.contains('exceeds') ||
+                _statusMessage.contains('too large to hide') ||
+                _statusMessage.contains('resolution') ||
+                _statusMessage.contains('Maximum capacity') ||
+                _statusMessage.contains('Samsung') ||
+                _statusMessage.contains('TIFF-wrapped');
+
+            if (_statusMessage.isEmpty ||
+                (_statusMessage.contains('\n') && !hasDetailedError)) {
               _statusMessage = successMessage;
             }
             _processing = false;

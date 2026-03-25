@@ -274,7 +274,24 @@
   "fileAnalyzerDescription": "Sélectionnez un fichier pour rechercher des signatures SecureMark cachées.",
   "pickAndAnalyze": "Choisir et analyser",
   "encryptedFileDetected": "🔐 Fichier chiffré détecté : {name}. Veuillez fournir le mot de passe correct.",
+  "@encryptedFileDetected": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "hiddenFileDetected": "📁 Fichier caché détecté : {name} ({size})",
+  "@hiddenFileDetected": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
   "encryptedSignatureDetected": "🔐 Signature chiffrée détectée. Veuillez fournir le mot de passe correct.",
   "signatureFound": "✅ Signature trouvée : \"{message}\"",
   "@signatureFound": {

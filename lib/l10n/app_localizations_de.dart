@@ -398,12 +398,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get pickAndAnalyze => 'Auswählen und analysieren';
 
   @override
-  String encryptedFileDetected(Object name) {
+  String encryptedFileDetected(String name) {
     return '🔐 Verschlüsselte Datei erkannt: $name. Bitte geben Sie das korrekte Passwort ein.';
   }
 
   @override
-  String hiddenFileDetected(Object name, Object size) {
+  String hiddenFileDetected(String name, String size) {
     return '📁 Versteckte Datei erkannt: $name ($size)';
   }
 
@@ -595,7 +595,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String antiAiProtectionValue(int value) {
-    return 'Anti-IA-Schutz: $value%';
+    return 'Anti-KI-Schutz: $value%';
   }
 
   @override
@@ -603,7 +603,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Hinweis: Ein höherer Schutz erhöht die Zeit zur Generierung des SecureMark-Bildes erheblich.';
 
   @override
-  String get antiAiEnabledHint => 'Anti-IA-Schutz ist aktiviert';
+  String get antiAiEnabledHint => 'Anti-KI-Schutz ist aktiviert';
 
   @override
   String get aiCloakingTitle => 'KI-Cloaking (Adversarial)';

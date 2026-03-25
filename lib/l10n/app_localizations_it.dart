@@ -399,12 +399,12 @@ class AppLocalizationsIt extends AppLocalizations {
   String get pickAndAnalyze => 'Scegli e analizza';
 
   @override
-  String encryptedFileDetected(Object name) {
+  String encryptedFileDetected(String name) {
     return '🔐 Rilevato file crittografato: $name. Inserisci la password corretta.';
   }
 
   @override
-  String hiddenFileDetected(Object name, Object size) {
+  String hiddenFileDetected(String name, String size) {
     return '📁 Rilevato file nascosto: $name ($size)';
   }
 

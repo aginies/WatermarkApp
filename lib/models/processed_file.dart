@@ -1,4 +1,4 @@
-import '../watermark_processor.dart';
+import 'processor_models.dart';
 
 class ProcessedFile {
   const ProcessedFile({

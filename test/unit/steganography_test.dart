@@ -119,5 +119,10 @@ void main() {
           reason:
               'LSB Signature always contains at least a timestamp if useSteganography is true');
     });
+    group('PDF Steganography Tests', () {
+      test('Should hide and extract file in PDF', () async {
+        // PDF specific test can be added here
+      });
+    });
   });
 }

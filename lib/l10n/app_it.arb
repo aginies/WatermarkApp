@@ -274,7 +274,24 @@
   "fileAnalyzerDescription": "Seleziona un file per cercare firme SecureMark nascoste.",
   "pickAndAnalyze": "Scegli e analizza",
   "encryptedFileDetected": "🔐 Rilevato file crittografato: {name}. Inserisci la password corretta.",
+  "@encryptedFileDetected": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "hiddenFileDetected": "📁 Rilevato file nascosto: {name} ({size})",
+  "@hiddenFileDetected": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
   "encryptedSignatureDetected": "🔐 Rilevata firma crittografata. Inserisci la password corretta.",
   "signatureFound": "✅ Firma trovata: \"{message}\"",
   "@signatureFound": {
