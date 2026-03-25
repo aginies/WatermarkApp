@@ -1061,6 +1061,10 @@ class WatermarkProcessor {
           qrConfig: qrConfig,
           useAiCloaking: useAiCloaking,
           steganographyPassword: steganographyPassword,
+          useSteganography: useSteganography,
+          steganographyText: steganographyText,
+          hiddenFileName: hiddenFileName,
+          hiddenFileBytes: hiddenFileBytes,
           progressPort: progressSendPort,
         );
       } catch (e, stackTrace) {
@@ -1136,13 +1140,27 @@ class WatermarkProcessor {
         debugPrint('Failed to generate PDF heatmap: $e');
       }
 
+      // Verify steganography if enabled
+      bool verified = false;
+      if (useSteganography) {
+        try {
+          final analysis = await analyzeFileAsync(outputBytes, outputPath,
+              password: steganographyPassword);
+          if (analysis.signature != null || analysis.file != null) {
+            verified = true;
+          }
+        } catch (e) {
+          debugPrint('PDF Steganography verification failed: $e');
+        }
+      }
+
       return ProcessResult(
         outputPath: outputPath,
         outputBytes: outputBytes,
         previewBytes: previewBytes,
         originalBytes: originalBytesImage,
         heatmapBytes: heatmapBytes,
-        steganographyVerified: false,
+        steganographyVerified: verified,
         isPdf: true,
       );
     } catch (e) {
@@ -1171,6 +1189,10 @@ class WatermarkProcessor {
     QrWatermarkConfig? qrConfig,
     bool useAiCloaking = false,
     String? steganographyPassword,
+    bool useSteganography = false,
+    String? steganographyText,
+    String? hiddenFileName,
+    Uint8List? hiddenFileBytes,
     SendPort? progressPort,
   }) {
     sync.PdfDocument document;
@@ -1206,10 +1228,73 @@ class WatermarkProcessor {
     final pdfFont =
         sync.PdfStandardFont(sync.PdfFontFamily.helvetica, fontSize);
 
+    // --- Steganography & Hidden Data Implementation ---
+    List<int>? signatureBits;
+    if (useSteganography) {
+      String keywords = document.documentInformation.keywords;
+      if (keywords.isNotEmpty && !keywords.endsWith(' ')) {
+        keywords += ' ';
+      }
+
+      // 1. Hidden File Embedding
+      if (hiddenFileName != null && hiddenFileBytes != null) {
+        try {
+          final encryptedData = _encryptFileForSteganography(
+            fileName: hiddenFileName,
+            fileBytes: hiddenFileBytes,
+            password: steganographyPassword,
+          );
+          final base64Data = base64Encode(encryptedData);
+          keywords += 'SecureMarkHidden:$base64Data ';
+        } catch (e) {
+          debugPrint('Error embedding hidden file in PDF: $e');
+        }
+      }
+
+      // 2. Encrypted Text Signature (Vector LSB Carrier)
+      final signature =
+          steganographyText != null && steganographyText.isNotEmpty
+              ? steganographyText
+              : watermarkText;
+
+      final bool encrypt =
+          steganographyPassword != null && steganographyPassword.isNotEmpty;
+      final Uint8List originalBytes = Uint8List.fromList(utf8.encode(signature));
+      Uint8List payloadBytes = originalBytes;
+
+      if (encrypt) {
+        payloadBytes = _encryptBytes(originalBytes, steganographyPassword);
+      }
+
+      // Format: [Type 'SM' or 'SX'] [Len 4 bytes] [Payload] [CRC 2 bytes]
+      final builder = BytesBuilder();
+      builder.add(utf8.encode(encrypt ? 'SX' : 'SM'));
+      builder.add([
+        (payloadBytes.length >> 24) & 0xFF,
+        (payloadBytes.length >> 16) & 0xFF,
+        (payloadBytes.length >> 8) & 0xFF,
+        payloadBytes.length & 0xFF,
+      ]);
+      builder.add(payloadBytes);
+      final crc = _crc16(originalBytes);
+      builder.add([(crc >> 8) & 0xFF, crc & 0xFF]);
+
+      final fullPayload = builder.toBytes();
+      signatureBits = _textToBits(String.fromCharCodes(fullPayload));
+
+      // Metadata backup for robustness
+      final encodedPayload = base64Encode(fullPayload);
+      keywords += 'SecureMarkSig:$encodedPayload ';
+
+      document.documentInformation.keywords = keywords.trim();
+    }
+
     sync.PdfBitmap? logoBitmap;
     if (watermarkType == WatermarkType.image && watermarkImageBytes != null) {
       logoBitmap = sync.PdfBitmap(watermarkImageBytes);
     }
+
+    var currentBitIndex = 0;
 
     for (var i = 0; i < pageCount; i++) {
       final page = document.pages[i];
@@ -1274,7 +1359,34 @@ class WatermarkProcessor {
             final angle = _randomAngle() + jitterAngle;
             graphics.rotateTransform(angle);
             graphics.setTransparency(alpha);
-            graphics.drawString(watermarkText, pdfFont, brush: brush);
+
+            if (signatureBits != null) {
+              // Vector LSB: Draw character by character with subtle color offsets
+              double currentX = 0;
+              for (var charIdx = 0; charIdx < watermarkText.length; charIdx++) {
+                final char = watermarkText[charIdx];
+                final charWidth = pdfFont.measureString(char).width;
+
+                // Get bit to hide
+                final bit = signatureBits[currentBitIndex % signatureBits.length];
+                currentBitIndex++;
+
+                // Subtle color offset in Blue channel (Vector LSB)
+                // We ensure it stays in 0-255 range
+                final r = color.r;
+                final g = color.g;
+                final b = (color.b % 2 == bit)
+                    ? color.b
+                    : (color.b > 128 ? color.b - 1 : color.b + 1);
+
+                final charBrush = sync.PdfSolidBrush(sync.PdfColor(r, g, b));
+                graphics.drawString(char, pdfFont,
+                    brush: charBrush, bounds: ui.Rect.fromLTWH(currentX, 0, 0, 0));
+                currentX += charWidth;
+              }
+            } else {
+              graphics.drawString(watermarkText, pdfFont, brush: brush);
+            }
           } else if (logoBitmap != null) {
             // Logos are no longer rotated per user request
             graphics.setTransparency(alpha);
@@ -1400,6 +1512,10 @@ class WatermarkProcessor {
     QrWatermarkConfig? qrConfig,
     bool useAiCloaking = false,
     String? steganographyPassword,
+    bool useSteganography = false,
+    String? steganographyText,
+    String? hiddenFileName,
+    Uint8List? hiddenFileBytes,
     SendPort? progressPort,
   }) {
     return Isolate.run(
@@ -1418,6 +1534,10 @@ class WatermarkProcessor {
         qrConfig: qrConfig,
         useAiCloaking: useAiCloaking,
         steganographyPassword: steganographyPassword,
+        useSteganography: useSteganography,
+        steganographyText: steganographyText,
+        hiddenFileName: hiddenFileName,
+        hiddenFileBytes: hiddenFileBytes,
         progressPort: progressPort,
       ),
     );
@@ -1903,6 +2023,13 @@ class WatermarkProcessor {
     final ext = p.extension(fileName).toLowerCase();
 
     if (ext == '.pdf') {
+      // 1. First try Vector-based analysis (Keywords & Vector LSB)
+      final vectorResult = await _analyzePdfVector(bytes, password: password);
+      if (vectorResult.signature != null || vectorResult.file != null) {
+        return vectorResult;
+      }
+
+      // 2. Fallback to raster-based analysis if vector finds nothing
       try {
         await for (final page in Printing.raster(bytes, dpi: 150, pages: [0])) {
           final png = await page.toPng();
@@ -1914,6 +2041,70 @@ class WatermarkProcessor {
       return const AnalysisResult();
     } else {
       return await analyzeImageAsync(bytes, password: password);
+    }
+  }
+
+  static Future<AnalysisResult> _analyzePdfVector(Uint8List bytes,
+      {String? password}) async {
+    try {
+      final sync.PdfDocument document = sync.PdfDocument(inputBytes: bytes);
+      final keywords = document.documentInformation.keywords;
+
+      String? signature;
+      ExtractedFileResult? file;
+
+      // Split keywords by space and look for our tags
+      final parts = keywords.split(' ');
+      for (final part in parts) {
+        // 1. Look for hidden files in keywords
+        if (part.startsWith('SecureMarkHidden:')) {
+          final base64Data = part.substring('SecureMarkHidden:'.length);
+          try {
+            final encryptedData = base64Decode(base64Data);
+            file = _decryptFileFromSteganography(encryptedData, password);
+          } catch (e) {
+            debugPrint('Error decoding base64 hidden file: $e');
+          }
+        }
+
+        // 2. Look for signature in keywords
+        if (part.startsWith('SecureMarkSig:')) {
+          final base64Data = part.substring('SecureMarkSig:'.length);
+          try {
+            final fullPayload = base64Decode(base64Data);
+            if (fullPayload.length >= 6) {
+              final type = utf8.decode(fullPayload.sublist(0, 2));
+              final payloadLength = (fullPayload[2] << 24) |
+                  (fullPayload[3] << 16) |
+                  (fullPayload[4] << 8) |
+                  (fullPayload[5]);
+
+              if (fullPayload.length >= 6 + payloadLength + 2) {
+                final payloadBytes = fullPayload.sublist(6, 6 + payloadLength);
+                final extractedCrc =
+                    (fullPayload[6 + payloadLength] << 8) |
+                        fullPayload[6 + payloadLength + 1];
+
+                signature = _extractTextFromPayload(
+                    payloadBytes, extractedCrc, type == 'SX', password);
+              }
+            }
+          } catch (e) {
+            debugPrint('Error decoding base64 signature: $e');
+          }
+        }
+      }
+
+      // 2. Look for Vector LSB in text objects
+      // Note: Syncfusion doesn't easily expose individual character colors for existing text.
+      // We mainly support extraction from PDFs we generated.
+      // For now, if we found a file, we return it.
+      
+      document.dispose();
+      return AnalysisResult(signature: signature, file: file);
+    } catch (e) {
+      debugPrint('Vector PDF analysis failed: $e');
+      return const AnalysisResult();
     }
   }
 
@@ -2049,6 +2240,16 @@ class WatermarkProcessor {
           Uint8List.fromList(bytes.sublist(0, payloadLength));
       final extractedCrc =
           (bytes[payloadLength] << 8) | bytes[payloadLength + 1];
+      
+      return _extractTextFromPayload(payloadBytes, extractedCrc, isEncrypted, password);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static String? _extractTextFromPayload(Uint8List payloadBytes, int extractedCrc, bool isEncrypted, String? password) {
+    try {
+      Uint8List data = payloadBytes;
       if (isEncrypted) {
         if (password == null || password.isEmpty) {
           return '[ENCRYPTED] (Password required)';
@@ -2057,12 +2258,12 @@ class WatermarkProcessor {
         if (decrypted == null) {
           return '[ENCRYPTED] (Wrong password)';
         }
-        payloadBytes = decrypted;
+        data = decrypted;
       }
-      if (_crc16(payloadBytes) != extractedCrc) {
+      if (_crc16(data) != extractedCrc) {
         return isEncrypted ? '[ENCRYPTED] (Wrong password)' : null;
       }
-      return utf8.decode(payloadBytes, allowMalformed: true);
+      return utf8.decode(data, allowMalformed: true);
     } catch (_) {
       return null;
     }
@@ -3465,5 +3666,87 @@ class WatermarkProcessor {
       }
     }
     return output;
+  }
+
+  static List<int> _textToBits(String text) {
+    final bytes = utf8.encode(text);
+    final bits = <int>[];
+    for (final byte in bytes) {
+      for (var i = 7; i >= 0; i--) {
+        bits.add((byte >> i) & 1);
+      }
+    }
+    return bits;
+  }
+
+  static Uint8List _encryptFileForSteganography({
+    required String fileName,
+    required Uint8List fileBytes,
+    String? password,
+  }) {
+    final filenameBytes = utf8.encode(fileName);
+    final payload = BytesBuilder();
+
+    // Format: [Filename Length (2 bytes)] [Filename] [File Size (4 bytes)] [File Data] [CRC (2 bytes)]
+    payload.add([
+      (filenameBytes.length >> 8) & 0xFF,
+      filenameBytes.length & 0xFF,
+    ]);
+    payload.add(filenameBytes);
+
+    final fileSize = fileBytes.length;
+    payload.add([
+      (fileSize >> 24) & 0xFF,
+      (fileSize >> 16) & 0xFF,
+      (fileSize >> 8) & 0xFF,
+      fileSize & 0xFF,
+    ]);
+    payload.add(fileBytes);
+
+    final crc = _crc16(fileBytes);
+    payload.add([(crc >> 8) & 0xFF, crc & 0xFF]);
+
+    final rawPayload = payload.toBytes();
+
+    if (password != null && password.isNotEmpty) {
+      return _encryptBytes(rawPayload, password);
+    }
+    return rawPayload;
+  }
+
+  static ExtractedFileResult? _decryptFileFromSteganography(
+      Uint8List encryptedData, String? password) {
+    try {
+      Uint8List data = encryptedData;
+      if (password != null && password.isNotEmpty) {
+        final decrypted = _decryptBytes(encryptedData, password);
+        if (decrypted == null) return null;
+        data = decrypted;
+      }
+
+      final filenameLength = (data[0] << 8) | data[1];
+      if (filenameLength <= 0 || filenameLength > 255) return null;
+
+      final fileName = utf8.decode(data.sublist(2, 2 + filenameLength));
+      final fileSize = (data[2 + filenameLength] << 24) |
+          (data[3 + filenameLength] << 16) |
+          (data[4 + filenameLength] << 8) |
+          (data[5 + filenameLength]);
+
+      final fileBytes =
+          data.sublist(6 + filenameLength, 6 + filenameLength + fileSize);
+      final extractedCrc = (data[data.length - 2] << 8) | data[data.length - 1];
+
+      if (_crc16(fileBytes) != extractedCrc) return null;
+
+      return ExtractedFileResult(
+        fileName: fileName,
+        fileBytes: fileBytes,
+        isEncrypted: password != null && password.isNotEmpty,
+      );
+    } catch (e) {
+      debugPrint('Error decrypting hidden file: $e');
+      return null;
+    }
   }
 }

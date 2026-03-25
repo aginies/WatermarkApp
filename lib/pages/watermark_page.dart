@@ -2122,39 +2122,6 @@ class WatermarkPageState extends State<WatermarkPage>
                         ],
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerHighest
-                            .withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color:
-                              theme.colorScheme.outline.withValues(alpha: 0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(
-                            Icons.info_outline,
-                            color: theme.colorScheme.primary,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              l10n.steganographyImageOnlyNote,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                     const SizedBox(height: 16),
                     CheckboxListTile(
                       title: Text(l10n.steganographyTitle),
@@ -4961,13 +4928,11 @@ class WatermarkPageState extends State<WatermarkPage>
           );
         }
 
-        final isPdf = path.toLowerCase().endsWith('.pdf');
-        final bool shouldApplyStegano = !isPdf &&
-            (_useSteganography ||
-                (_hideFileWithSteganography && _hiddenFileBytes != null));
+        final bool shouldApplyStegano = _useSteganography ||
+            (_hideFileWithSteganography && _hiddenFileBytes != null);
 
         _addLog(
-            'Processing with: useSteganography=$shouldApplyStegano (isPdf=$isPdf), hideFile=$_hideFileWithSteganography, hiddenFile=$_hiddenFileName (${_hiddenFileBytes?.length ?? 0} bytes)');
+            'Processing with: useSteganography=$shouldApplyStegano, hideFile=$_hideFileWithSteganography, hiddenFile=$_hiddenFileName (${_hiddenFileBytes?.length ?? 0} bytes)');
 
         try {
           final result = await WatermarkProcessor.processFile(
@@ -4988,7 +4953,7 @@ class WatermarkPageState extends State<WatermarkPage>
             filePrefix: _filePrefix,
             antiAiLevel: _antiAiLevel,
             useSteganography: shouldApplyStegano,
-            useRobustSteganography: !isPdf && _useRobustSteganography,
+            useRobustSteganography: _useRobustSteganography,
             useAiCloaking: _useAiCloaking,
             watermarkType: _watermarkType,
             watermarkImageBytes: _watermarkImageBytes,
