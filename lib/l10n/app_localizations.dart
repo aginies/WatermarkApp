@@ -938,6 +938,30 @@ abstract class AppLocalizations {
   /// **'ZIP All Files'**
   String get zipAllFiles;
 
+  /// No description provided for @secureZipTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Secure ZIP Archive'**
+  String get secureZipTitle;
+
+  /// No description provided for @enableSecureZip.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable AES-256 Encryption'**
+  String get enableSecureZip;
+
+  /// No description provided for @secureZipPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'ZIP Password'**
+  String get secureZipPasswordLabel;
+
+  /// No description provided for @secureZipPasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Password to extract the ZIP archive'**
+  String get secureZipPasswordHint;
+
   /// No description provided for @zipEnabledHint.
   ///
   /// In en, this message translates to:

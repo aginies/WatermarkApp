@@ -535,6 +535,19 @@ class AppLocalizationsDe extends AppLocalizations {
   String get zipAllFiles => 'Alle Dateien zippen';
 
   @override
+  String get secureZipTitle => 'Sicheres ZIP-Archiv';
+
+  @override
+  String get enableSecureZip => 'AES-256-Verschlüsselung aktivieren';
+
+  @override
+  String get secureZipPasswordLabel => 'ZIP-Passwort';
+
+  @override
+  String get secureZipPasswordHint =>
+      'Passwort zum Extrahieren des ZIP-Archivs';
+
+  @override
   String get zipEnabledHint => 'ZIP-Komprimierung für den Austausch aktiviert';
 
   @override

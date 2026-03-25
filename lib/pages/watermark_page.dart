@@ -12,7 +12,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'package:http/http.dart' as http;
-import 'package:archive/archive.dart';
+import 'package:archive/archive_io.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:pub_semver/pub_semver.dart';
@@ -65,6 +65,8 @@ class WatermarkPageState extends State<WatermarkPage>
       TextEditingController();
   final TextEditingController _pdfOwnerPasswordController =
       TextEditingController();
+  final TextEditingController _secureZipPasswordController =
+      TextEditingController();
   final TextEditingController _filePrefixController = TextEditingController();
   final TransformationController _transformationController =
       TransformationController();
@@ -98,6 +100,9 @@ class WatermarkPageState extends State<WatermarkPage>
   bool _loadingFiles = false;
   bool _processing = false;
   double _progress = 0.0;
+  bool _obscureHidingPassword = true;
+  bool _obscureSecureZipPassword = true;
+  bool _obscureExtractionPassword = true;
   String _statusMessage = '';
   String _progressMessage = '';
   String _elapsedTime = '00:00';
@@ -118,6 +123,7 @@ class WatermarkPageState extends State<WatermarkPage>
   String _hidingPassword = '';
   String _extractionPassword = '';
   bool _zipOutputs = false;
+  bool _useSecureZip = false;
   WatermarkType _watermarkType = WatermarkType.text;
   Uint8List? _watermarkImageBytes;
   String? _watermarkImageName;
@@ -257,6 +263,9 @@ class WatermarkPageState extends State<WatermarkPage>
           _hideFileWithSteganography =
               prefs.getBool('hideFileWithSteganography') ?? false;
           _zipOutputs = prefs.getBool('zipOutputs') ?? false;
+          _useSecureZip = prefs.getBool('useSecureZip') ?? false;
+          _secureZipPasswordController.text =
+              prefs.getString('secureZipPassword') ?? '';
           _useRandomColor = prefs.getBool('useRandomColor') ?? true;
           _filePrefix = prefs.getString('filePrefix') ?? 'securemark-';
           _filePrefixController.text = _filePrefix;
@@ -562,6 +571,17 @@ class WatermarkPageState extends State<WatermarkPage>
       } else {
         _pdfOwnerPasswordController.clear();
       }
+      if (prefs.containsKey('${pKey}useSecureZip')) {
+        _useSecureZip = prefs.getBool('${pKey}useSecureZip')!;
+      } else {
+        _useSecureZip = false;
+      }
+      if (prefs.containsKey('${pKey}secureZipPassword')) {
+        _secureZipPasswordController.text =
+            prefs.getString('${pKey}secureZipPassword')!;
+      } else {
+        _secureZipPasswordController.clear();
+      }
       if (prefs.containsKey('${pKey}outputDirectory')) {
         _outputDirectory = prefs.getString('${pKey}outputDirectory');
       }
@@ -739,6 +759,8 @@ class WatermarkPageState extends State<WatermarkPage>
     _savePreference('pdfAllowEditing', _pdfAllowEditing);
     _savePreference('pdfUserPassword', _pdfUserPasswordController.text);
     _savePreference('pdfOwnerPassword', _pdfOwnerPasswordController.text);
+    _savePreference('useSecureZip', _useSecureZip);
+    _savePreference('secureZipPassword', _secureZipPasswordController.text);
   }
 
   Future<void> _saveCurrentConfigToProfile(SettingsProfile profile) async {
@@ -795,6 +817,9 @@ class WatermarkPageState extends State<WatermarkPage>
         '${pKey}pdfUserPassword', _pdfUserPasswordController.text);
     await prefs.setString(
         '${pKey}pdfOwnerPassword', _pdfOwnerPasswordController.text);
+    await prefs.setBool('${pKey}useSecureZip', _useSecureZip);
+    await prefs.setString(
+        '${pKey}secureZipPassword', _secureZipPasswordController.text);
 
     if (mounted) {
       String profileLabel = '';
@@ -1744,12 +1769,28 @@ class WatermarkPageState extends State<WatermarkPage>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
-                    obscureText: true,
+                    obscureText: _obscureExtractionPassword,
                     decoration: InputDecoration(
                       labelText: l10n.steganographyPasswordLabel,
                       hintText: l10n.steganographyPasswordHint,
                       border: const OutlineInputBorder(),
                       prefixIcon: const Icon(Icons.lock_outline),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureExtractionPassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                        ),
+                        onPressed: () {
+                          final newValue = !_obscureExtractionPassword;
+                          setDialogState(() {
+                            _obscureExtractionPassword = newValue;
+                          });
+                          setState(() {
+                            _obscureExtractionPassword = newValue;
+                          });
+                        },
+                      ),
                     ),
                     onChanged: (value) {
                       setDialogState(() {
@@ -2269,8 +2310,24 @@ class WatermarkPageState extends State<WatermarkPage>
                         hintText: l10n.steganographyPasswordHint,
                         border: const OutlineInputBorder(),
                         prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscureHidingPassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
+                          onPressed: () {
+                            final newValue = !_obscureHidingPassword;
+                            setDialogState(() {
+                              _obscureHidingPassword = newValue;
+                            });
+                            setState(() {
+                              _obscureHidingPassword = newValue;
+                            });
+                          },
+                        ),
                       ),
-                      obscureText: true,
+                      obscureText: _obscureHidingPassword,
                       onChanged: (value) {
                         setState(() => _hidingPassword = value);
                         _savePreference('hidingPassword', value);
@@ -3035,6 +3092,63 @@ class WatermarkPageState extends State<WatermarkPage>
                         _savePreference('rasterizePdf', value ?? false);
                       },
                     ),
+                    const Divider(),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.folder_zip_outlined, size: 20),
+                        const SizedBox(width: 8),
+                        Text(l10n.secureZipTitle,
+                            style: theme.textTheme.titleSmall),
+                      ],
+                    ),
+                    CheckboxListTile(
+                      title: Text(l10n.enableSecureZip),
+                      value: _useSecureZip,
+                      contentPadding: EdgeInsets.zero,
+                      onChanged: (value) {
+                        final bool enabled = value ?? false;
+                        setDialogState(() {
+                          _useSecureZip = enabled;
+                        });
+                        setState(() {
+                          _useSecureZip = enabled;
+                        });
+                        _savePreference('useSecureZip', enabled);
+                      },
+                    ),
+                    if (_useSecureZip) ...[
+                      const SizedBox(height: 8),
+                      TextField(
+                        obscureText: _obscureSecureZipPassword,
+                        decoration: InputDecoration(
+                          labelText: l10n.secureZipPasswordLabel,
+                          hintText: l10n.secureZipPasswordHint,
+                          border: const OutlineInputBorder(),
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscureSecureZipPassword
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                            ),
+                            onPressed: () {
+                              final newValue = !_obscureSecureZipPassword;
+                              setDialogState(() {
+                                _obscureSecureZipPassword = newValue;
+                              });
+                              setState(() {
+                                _obscureSecureZipPassword = newValue;
+                              });
+                            },
+                          ),
+                        ),
+                        onChanged: (value) {
+                          _savePreference('secureZipPassword', value);
+                        },
+                        controller: _secureZipPasswordController,
+                      ),
+                    ],
                     /*
                     const Divider(),
                     const SizedBox(height: 8),
@@ -5551,28 +5665,41 @@ class WatermarkPageState extends State<WatermarkPage>
     final failedFiles = <String>[];
 
     try {
-      for (final file in _processedFiles) {
+      if (_zipOutputs) {
         try {
-          String outputPath = file.result.outputPath;
-
-          if (_outputDirectory != null) {
-            final fileName = p.basename(file.result.outputPath);
-            outputPath = p.join(_outputDirectory!, fileName);
-          }
-
-          final outputFile = File(outputPath);
-          final directory = outputFile.parent;
-
-          if (!await directory.exists()) {
-            await directory.create(recursive: true);
-          }
-
-          await outputFile.writeAsBytes(file.result.outputBytes);
-          savedFiles.add(outputPath);
+          final zipPath =
+              await _createZipFromProcessedFiles(_processedFiles, false);
+          savedFiles.add(zipPath);
         } catch (e) {
-          failedFiles.add(file.sourcePath);
-          final logPath = _outputDirectory ?? p.dirname(file.result.outputPath);
-          _addLog('Failed to save to $logPath: $e');
+          _addLog('Failed to save ZIP: $e');
+          // In case of general failure, we might not have a specific source file to report
+          failedFiles.add('ZIP Archive');
+        }
+      } else {
+        for (final file in _processedFiles) {
+          try {
+            String outputPath = file.result.outputPath;
+
+            if (_outputDirectory != null) {
+              final fileName = p.basename(file.result.outputPath);
+              outputPath = p.join(_outputDirectory!, fileName);
+            }
+
+            final outputFile = File(outputPath);
+            final directory = outputFile.parent;
+
+            if (!await directory.exists()) {
+              await directory.create(recursive: true);
+            }
+
+            await outputFile.writeAsBytes(file.result.outputBytes);
+            savedFiles.add(outputPath);
+          } catch (e) {
+            failedFiles.add(file.sourcePath);
+            final logPath =
+                _outputDirectory ?? p.dirname(file.result.outputPath);
+            _addLog('Failed to save to $logPath: $e');
+          }
         }
       }
 
@@ -5620,6 +5747,10 @@ class WatermarkPageState extends State<WatermarkPage>
     final displayPath = displayDir.length > 40
         ? '...${displayDir.substring(displayDir.length - 37)}'
         : displayDir;
+
+    if (_zipOutputs) {
+      return l10n.willSaveAsIn('securemark-files-YYYYMMDD_HHMM.zip', displayPath);
+    }
 
     if (_processedFiles.length == 1) {
       final fileName = p.basenameWithoutExtension(firstFile.result.outputPath);
@@ -5735,6 +5866,45 @@ class WatermarkPageState extends State<WatermarkPage>
     );
   }
 
+  Future<String> _createZipFromProcessedFiles(
+      List<ProcessedFile> processedFiles, bool useTemporaryDir) async {
+    final now = DateTime.now();
+    final timestamp =
+        "${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}";
+    final fileName = 'securemark-files-$timestamp.zip';
+
+    String zipPath;
+    if (useTemporaryDir) {
+      final tempDir = await getTemporaryDirectory();
+      zipPath = p.join(tempDir.path, fileName);
+    } else {
+      final firstFile = processedFiles.first;
+      final directory = _outputDirectory ?? p.dirname(firstFile.sourcePath);
+      zipPath = p.join(directory, fileName);
+    }
+
+    final String? zipPassword =
+        _useSecureZip && _secureZipPasswordController.text.isNotEmpty
+            ? _secureZipPasswordController.text
+            : null;
+
+    final encoder = ZipFileEncoder(password: zipPassword);
+    encoder.create(zipPath);
+
+    for (final file in processedFiles) {
+      final fileName = p.basename(file.result.outputPath);
+      final archiveFile = ArchiveFile(
+        fileName,
+        file.result.outputBytes.length,
+        file.result.outputBytes,
+      );
+      encoder.addArchiveFile(archiveFile);
+    }
+
+    encoder.close();
+    return zipPath;
+  }
+
   Future<void> _shareCurrent() async {
     final l10n = AppLocalizations.of(context)!;
     final box = context.findRenderObject() as RenderBox?;
@@ -5748,26 +5918,7 @@ class WatermarkPageState extends State<WatermarkPage>
     final shareFiles = <XFile>[];
 
     if (_zipOutputs) {
-      final encoder = ZipEncoder();
-      final archive = Archive();
-
-      for (final file in _processedFiles) {
-        final fileName = p.basename(file.result.outputPath);
-        final archiveFile = ArchiveFile(
-          fileName,
-          file.result.outputBytes.length,
-          file.result.outputBytes,
-        );
-        archive.addFile(archiveFile);
-      }
-
-      final zipData = encoder.encode(archive);
-      final now = DateTime.now();
-      final timestamp =
-          "${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}";
-      final tempDir = await getTemporaryDirectory();
-      final zipPath = p.join(tempDir.path, 'securemark-files-$timestamp.zip');
-      await File(zipPath).writeAsBytes(zipData);
+      final zipPath = await _createZipFromProcessedFiles(_processedFiles, true);
       _tempFiles.add(zipPath);
       shareFiles.add(XFile(zipPath, mimeType: 'application/zip'));
     } else {
