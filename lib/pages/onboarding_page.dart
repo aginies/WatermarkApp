@@ -63,7 +63,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
         ],
         images: [
           'images/guide/save_profile.png',
-          if (widget.hasCamera) 'images/guide/import.png',
+          'images/guide/import.png',
           'images/guide/apply.png',
           'images/guide/share.png',
         ],
