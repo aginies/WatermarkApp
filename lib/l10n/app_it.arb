@@ -319,6 +319,9 @@
   "steganographyPasswordHint": "Inserisci la password per proteggere il file nascosto",
   "steganographyPasswordNote": "Nota: questa password sarà richiesta per estrarre il file nascosto utilizzando SecureMark. Utilizza la crittografia AES-256.",
   "steganographyZipNote": "Importante: se utilizzi la steganografia e condividi questi file tramite WhatsApp, Signal o altre app che comprimono le immagini, è necessario abilitare la compressione ZIP o comprimerli manualmente. La condivisione diretta di solito distrugge la steganografia invisibile.",
+  "steganographyImageOnlyNote": "Nota: la steganografia (firme invisibili e file nascosti) è supportata solo per i file immagine (JPG, PNG, WebP). Verrà saltata per i file PDF.",
+  "steganographyTextLabel": "Firma steganografica personalizzata",
+  "steganographyTextHint": "Inserisci il testo personalizzato da nascondere (usa il testo della filigrana se vuoto)",
   "zipAllFiles": "Zippa tutti i file",
   "zipEnabledHint": "Compressione ZIP abilitata per la condivisione. NOTA: le applicazioni di terze parti (WhatsApp, Signal, ecc.) comprimono le immagini, il che può distruggere le firme di steganografia. Abilitate ZIP per evitare la perdita di firme.",
   "zipDisabledHint": "Compressione ZIP disabilitata",
@@ -607,5 +610,19 @@
         "type": "String"
       }
     }
-  }
+  },
+  "previewModeOriginal": "Originale",
+  "previewModeProcessed": "Elaborato",
+  "previewModeHeatmap": "Heatmap di manomissione",
+  "authenticityVerified": "AUTENTICITÀ VERIFICATA",
+  "fullAuthenticityConfirmed": "AUTENTICITÀ TOTALE CONFERMATA",
+  "partialAuthenticity": "AUTENTICITÀ PARZIALE",
+  "tamperingDetected": "MANOMISSIONE RILEVATA",
+  "forensicLayerContent": "Contenuto (Immagine + Dati nascosti)",
+  "forensicLayerSource": "Sorgente (Immagine visibile)",
+  "forensicStatusValid": "VALIDO",
+  "forensicStatusModified": "MODIFICATO",
+  "verifFullIntegrity": "Integrità totale confermata (Immagine + Dati nascosti).",
+  "verifPartialIntegrity": "Integrità visiva confermata, ma la steganografia nascosta è stata modificata o danneggiata.",
+  "verifTamperingDetected": "Controllo forense fallito. Sia i pixel visivi che i dati nascosti sembrano modificati."
 }
