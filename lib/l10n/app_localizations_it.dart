@@ -972,6 +972,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get onboardingStep2 => '2. Importa le tue immagini o i tuoi file PDF.';
 
   @override
+  String get onboardingStep2NoCamera =>
+      '2. Scegli le tue immagini o i tuoi file PDF.';
+
+  @override
   String get onboardingStep3 =>
       '3. Clicca su Applica per generare le filigrane.';
 

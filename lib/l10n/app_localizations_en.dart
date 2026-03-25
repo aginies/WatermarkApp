@@ -964,6 +964,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingStep2 => '2. Import your Images or PDF files.';
 
   @override
+  String get onboardingStep2NoCamera => '2. Pick your Images or PDF files.';
+
+  @override
   String get onboardingStep3 => '3. Click Apply to generate the watermarks.';
 
   @override

@@ -974,6 +974,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get onboardingStep2 => '2. Importa tus imágenes o archivos PDF.';
 
   @override
+  String get onboardingStep2NoCamera => '2. Elige tus imágenes o archivos PDF.';
+
+  @override
   String get onboardingStep3 =>
       '3. Haz clic en Aplicar para generar las marcas de agua.';
 

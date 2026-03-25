@@ -637,6 +637,7 @@
   "onboardingStepTitle": "Come funziona",
   "onboardingStep1": "1. Scegli un profilo predefinito per il tuo caso d'uso.",
   "onboardingStep2": "2. Importa le tue immagini o i tuoi file PDF.",
+  "onboardingStep2NoCamera": "2. Scegli le tue immagini o i tuoi file PDF.",
   "onboardingStep3": "3. Clicca su Applica per generare le filigrane.",
   "onboardingStep4": "4. Condividi o salva i risultati.",
   "onboardingExpertTitle": "Profili e Opzioni",

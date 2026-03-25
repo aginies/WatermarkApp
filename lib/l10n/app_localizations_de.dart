@@ -976,6 +976,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get onboardingStep2 => '2. Importieren Sie Bilder oder PDF-Dateien.';
 
   @override
+  String get onboardingStep2NoCamera =>
+      '2. Wählen Sie Bilder oder PDF-Dateien aus.';
+
+  @override
   String get onboardingStep3 =>
       '3. Klicken Sie auf Anwenden, um Wasserzeichen zu generieren.';
 

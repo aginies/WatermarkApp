@@ -1,4 +1,7 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -26,6 +29,8 @@ class SecureMarkAppState extends State<SecureMarkApp> {
   AppTheme _appTheme = AppTheme.system;
   bool _isFirstLaunch = false;
   bool _isLoading = true;
+  bool _hasCamera = true;
+  static const _platform = MethodChannel('secure_mark/sharing');
 
   AppTheme get appTheme => _appTheme;
 
@@ -40,13 +45,35 @@ class SecureMarkAppState extends State<SecureMarkApp> {
     final themeIndex = prefs.getInt('appTheme');
     final isFirstLaunch = prefs.getBool('isFirstLaunch') ?? true;
 
+    if (themeIndex != null) {
+      _appTheme = AppTheme.values[themeIndex];
+    }
+
+    await _checkCameraHardware();
+
     setState(() {
-      if (themeIndex != null) {
-        _appTheme = AppTheme.values[themeIndex];
-      }
       _isFirstLaunch = isFirstLaunch;
       _isLoading = false;
     });
+  }
+
+  Future<void> _checkCameraHardware() async {
+    if (kIsWeb) {
+      _hasCamera = false;
+      return;
+    }
+
+    if (Platform.isAndroid) {
+      try {
+        _hasCamera = await _platform.invokeMethod('checkCameraHardware') ?? false;
+      } catch (e) {
+        _hasCamera = false;
+      }
+    } else if (Platform.isIOS) {
+      _hasCamera = true; // Most iOS devices have cameras
+    } else {
+      _hasCamera = false; // Desktop usually doesn't have a direct camera API here
+    }
   }
 
   Future<void> _completeOnboarding() async {
@@ -120,8 +147,8 @@ class SecureMarkAppState extends State<SecureMarkApp> {
           ? ThemeMode.dark
           : _getThemeMode(_appTheme),
       home: _isFirstLaunch
-          ? OnboardingPage(onDone: _completeOnboarding)
-          : const WatermarkPage(),
+          ? OnboardingPage(onDone: _completeOnboarding, hasCamera: _hasCamera)
+          : WatermarkPage(hasCamera: _hasCamera),
     );
   }
 

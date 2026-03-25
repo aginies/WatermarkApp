@@ -1677,6 +1677,12 @@ abstract class AppLocalizations {
   /// **'2. Import your Images or PDF files.'**
   String get onboardingStep2;
 
+  /// No description provided for @onboardingStep2NoCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'2. Pick your Images or PDF files.'**
+  String get onboardingStep2NoCamera;
+
   /// No description provided for @onboardingStep3.
   ///
   /// In en, this message translates to:

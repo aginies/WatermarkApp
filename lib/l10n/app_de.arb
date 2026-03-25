@@ -637,6 +637,7 @@
   "onboardingStepTitle": "So funktioniert es",
   "onboardingStep1": "1. Wählen Sie ein Profil für Ihren Anwendungsfall.",
   "onboardingStep2": "2. Importieren Sie Bilder oder PDF-Dateien.",
+  "onboardingStep2NoCamera": "2. Wählen Sie Bilder oder PDF-Dateien aus.",
   "onboardingStep3": "3. Klicken Sie auf Anwenden, um Wasserzeichen zu generieren.",
   "onboardingStep4": "4. Teilen oder Speichern Sie die Ergebnisse.",
   "onboardingExpertTitle": "Profile & Optionen",

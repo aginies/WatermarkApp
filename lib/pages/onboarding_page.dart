@@ -3,8 +3,9 @@ import '../l10n/app_localizations.dart';
 
 class OnboardingPage extends StatefulWidget {
   final VoidCallback onDone;
+  final bool hasCamera;
 
-  const OnboardingPage({super.key, required this.onDone});
+  const OnboardingPage({super.key, required this.onDone, this.hasCamera = true});
 
   @override
   State<OnboardingPage> createState() => _OnboardingPageState();
@@ -53,13 +54,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
         title: l10n.onboardingStepTitle,
         steps: [
           l10n.onboardingStep1,
-          l10n.onboardingStep2,
+          widget.hasCamera ? l10n.onboardingStep2 : l10n.onboardingStep2NoCamera,
           l10n.onboardingStep3,
           l10n.onboardingStep4,
         ],
-        images: const [
+        images: [
           'images/guide/save_profile.png',
-          'images/guide/import.png',
+          if (widget.hasCamera) 'images/guide/import.png',
           'images/guide/apply.png',
           'images/guide/share.png',
         ],

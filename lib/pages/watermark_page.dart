@@ -34,7 +34,8 @@ import '../main.dart';
 import 'onboarding_page.dart';
 
 class WatermarkPage extends StatefulWidget {
-  const WatermarkPage({super.key});
+  final bool hasCamera;
+  const WatermarkPage({super.key, this.hasCamera = true});
 
   @override
   State<WatermarkPage> createState() => WatermarkPageState();
@@ -596,7 +597,7 @@ class WatermarkPageState extends State<WatermarkPage>
           break;
 
         case SettingsProfile.shareDocument:
-          if (!prefs.containsKey('${pKey}targetSize')) _targetSize = 1600;
+          if (!prefs.containsKey('${pKey}targetSize')) _targetSize = 1280;
           if (!prefs.containsKey('${pKey}transparency')) _transparency = 50;
           if (!prefs.containsKey('${pKey}density')) _density = 40;
           if (!prefs.containsKey('${pKey}jpegQuality')) _jpegQuality = 80;
@@ -3772,6 +3773,7 @@ class WatermarkPageState extends State<WatermarkPage>
       MaterialPageRoute(
         builder: (context) => OnboardingPage(
           onDone: () => Navigator.of(context).pop(),
+          hasCamera: widget.hasCamera,
         ),
         fullscreenDialog: true,
       ),
@@ -3786,6 +3788,44 @@ class WatermarkPageState extends State<WatermarkPage>
 
     Widget buildButton(bool isDragging) {
       if (isMobile) {
+        if (!widget.hasCamera) {
+          return SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: _processing ? null : _pickFile,
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                backgroundColor: isDragging
+                    ? theme.colorScheme.primary.withValues(alpha: 0.8)
+                    : null,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: isDragging
+                      ? BorderSide(color: theme.colorScheme.onPrimary, width: 2)
+                      : BorderSide.none,
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    isDragging ? Icons.file_upload : Icons.file_upload_outlined,
+                    size: 32,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.pickFiles,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.onPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
         return Column(
           children: [
             Row(

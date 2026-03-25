@@ -12,6 +12,7 @@ import android.os.Bundle // Import for Bundle
 import java.io.File // Added import
 import java.io.FileOutputStream // Added import
 import java.io.InputStream // Added import
+import android.content.pm.PackageManager
 
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "secure_mark/sharing"
@@ -41,6 +42,11 @@ class MainActivity : FlutterActivity() {
                     Log.d("SecureMark", "Clearing shared files")
                     sharedFiles = listOf()
                     result.success(true)
+                }
+                "checkCameraHardware" -> {
+                    val hasCamera = packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
+                    Log.d("SecureMark", "Checking camera hardware: $hasCamera")
+                    result.success(hasCamera)
                 }
                 else -> {
                     result.notImplemented()
