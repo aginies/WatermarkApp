@@ -6926,11 +6926,9 @@ class WatermarkPageState extends State<WatermarkPage>
                                 child: Row(
                                   children: [
                                     Expanded(
-                                        child:
-                                            Container(color: Colors.orange)),
+                                        child: Container(color: Colors.orange)),
                                     Expanded(
-                                        child:
-                                            Container(color: Colors.purple)),
+                                        child: Container(color: Colors.purple)),
                                     Expanded(
                                         child: Container(color: Colors.cyan)),
                                   ],
@@ -7034,7 +7032,8 @@ class WatermarkPageState extends State<WatermarkPage>
         final size = constraints.maxWidth;
         // Map current values to 0.0-1.0 range for the UI dot position
         final x = _transparency / 100;
-        final y = 1.0 - ((_density - 10) / 80); // Invert Y because 0 is top in UI
+        final y =
+            1.0 - ((_density - 10) / 80); // Invert Y because 0 is top in UI
 
         return GestureDetector(
           onPanUpdate: (details) {
@@ -7084,7 +7083,8 @@ class WatermarkPageState extends State<WatermarkPage>
                     painter: _XYPadPainter(
                         x: x,
                         y: y,
-                        color: theme.colorScheme.primary.withValues(alpha: 0.2)),
+                        color:
+                            theme.colorScheme.primary.withValues(alpha: 0.2)),
                   ),
                 ),
                 // The draggable dot
@@ -7121,8 +7121,9 @@ class WatermarkPageState extends State<WatermarkPage>
 
     // Calculate high-contrast background color
     final baseColor = _useRandomColor ? Colors.red : _selectedColor;
-    final backgroundColor =
-        baseColor.computeLuminance() > 0.5 ? Colors.black : Colors.white;
+    final backgroundColor = _useRandomColor
+        ? Colors.white
+        : (baseColor.computeLuminance() > 0.5 ? Colors.black : Colors.white);
 
     return Container(
       // Remove hardcoded height to allow CrossAxisAlignment.stretch to work
@@ -7143,6 +7144,7 @@ class WatermarkPageState extends State<WatermarkPage>
                   density: _density,
                   color: baseColor,
                   isPreview: true,
+                  useRandomColor: _useRandomColor,
                 ),
               ),
             ),
@@ -9227,35 +9229,34 @@ class WatermarkPageState extends State<WatermarkPage>
   }
 }
 
-class _CheckerboardPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.grey.shade300;
-    const squareSize = 4.0;
-
-    for (double i = 0; i < size.width; i += squareSize) {
-      for (double j = 0; j < size.height; j += squareSize) {
-        if ((i / squareSize).floor() % 2 == (j / squareSize).floor() % 2) {
-          canvas.drawRect(Rect.fromLTWH(i, j, squareSize, squareSize), paint);
-        }
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
 class _DensityPainter extends CustomPainter {
   final double density;
   final Color color;
   final bool isPreview;
+  final bool useRandomColor;
 
-  _DensityPainter(
-      {required this.density, required this.color, this.isPreview = false});
+  _DensityPainter({
+    required this.density,
+    required this.color,
+    this.isPreview = false,
+    this.useRandomColor = false,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
+    final List<Color> randomPalette = [
+      Colors.red,
+      Colors.blue,
+      Colors.green,
+      Colors.orange,
+      Colors.purple,
+      Colors.pink,
+      Colors.teal,
+      Colors.amber,
+    ];
+    final Random random =
+        Random(42); // Seed for consistent randomness per frame
+
     final paint = Paint()
       ..color = color.withValues(alpha: 0.6)
       ..style = PaintingStyle.fill;
@@ -9267,13 +9268,34 @@ class _DensityPainter extends CustomPainter {
 
     for (int i = 1; i <= count; i++) {
       for (int j = 1; j <= count; j++) {
+        if (useRandomColor) {
+          paint.color = randomPalette[random.nextInt(randomPalette.length)]
+              .withValues(alpha: 0.6);
+        }
         canvas.drawCircle(Offset(i * stepX, j * stepY), 3.0, paint);
       }
     }
 
     if (isPreview) {
-      final textPainter = TextPainter(
-        text: TextSpan(
+      InlineSpan textSpan;
+      if (useRandomColor) {
+        // Each letter with a random color
+        final String text = 'SecureMark';
+        textSpan = TextSpan(
+          children: text.split('').map((char) {
+            return TextSpan(
+              text: char,
+              style: TextStyle(
+                color: randomPalette[random.nextInt(randomPalette.length)],
+                fontSize: 21,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 4,
+              ),
+            );
+          }).toList(),
+        );
+      } else {
+        textSpan = TextSpan(
           text: 'SecureMark',
           style: TextStyle(
             color: color,
@@ -9281,7 +9303,11 @@ class _DensityPainter extends CustomPainter {
             fontWeight: FontWeight.bold,
             letterSpacing: 4,
           ),
-        ),
+        );
+      }
+
+      final textPainter = TextPainter(
+        text: textSpan,
         textDirection: TextDirection.ltr,
       )..layout();
 
@@ -9297,7 +9323,8 @@ class _DensityPainter extends CustomPainter {
   bool shouldRepaint(covariant _DensityPainter oldDelegate) {
     return oldDelegate.density != density ||
         oldDelegate.color != color ||
-        oldDelegate.isPreview != isPreview;
+        oldDelegate.isPreview != isPreview ||
+        oldDelegate.useRandomColor != useRandomColor;
   }
 }
 
@@ -9315,12 +9342,14 @@ class _XYPadPainter extends CustomPainter {
       ..strokeWidth = 1.0;
 
     // Vertical line
-    canvas.drawLine(Offset(x * size.width, 0), Offset(x * size.width, size.height), paint);
+    canvas.drawLine(
+        Offset(x * size.width, 0), Offset(x * size.width, size.height), paint);
     // Horizontal line
-    canvas.drawLine(Offset(0, y * size.height), Offset(size.width, y * size.height), paint);
+    canvas.drawLine(
+        Offset(0, y * size.height), Offset(size.width, y * size.height), paint);
   }
 
   @override
-  bool shouldRepaint(covariant _XYPadPainter oldDelegate) => 
-    oldDelegate.x != x || oldDelegate.y != y || oldDelegate.color != color;
+  bool shouldRepaint(covariant _XYPadPainter oldDelegate) =>
+      oldDelegate.x != x || oldDelegate.y != y || oldDelegate.color != color;
 }
