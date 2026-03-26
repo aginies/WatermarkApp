@@ -1194,4 +1194,43 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get longPressConfigure => 'Lange drücken: konfigurieren';
+
+  @override
+  String get noBookmarksYet => 'Noch keine Lesezeichen.';
+
+  @override
+  String get statusEnabled => 'Status: Aktiviert';
+
+  @override
+  String get statusDisabled => 'Status: Deaktiviert';
+
+  @override
+  String get doubleTapToToggle => 'Doppeltippen zum Umschalten';
+
+  @override
+  String get requiresSteganography => 'Erfordert Steganographie';
+
+  @override
+  String get preserveMetadata => 'Metadaten beibehalten';
+
+  @override
+  String get tapInfo => 'Tippen: Info';
+
+  @override
+  String get doubleTapToggle => 'Doppeltippen: Umschalten';
+
+  @override
+  String get tapInfoDoubleTapToggle =>
+      'Tippen: Info • Doppeltippen: Umschalten';
+
+  @override
+  String statusLabel(Object status) {
+    return 'Status: $status';
+  }
+
+  @override
+  String get enabled => 'aktiviert';
+
+  @override
+  String get disabled => 'deaktiviert';
 }

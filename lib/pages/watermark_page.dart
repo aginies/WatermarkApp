@@ -2449,9 +2449,9 @@ class WatermarkPageState extends State<WatermarkPage>
                     ),
                     const Divider(),
                     if (_identityBookmarks.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 20),
-                        child: Text("No bookmarks yet."),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        child: Text(l10n.noBookmarksYet),
                       )
                     else
                       Flexible(
@@ -5955,7 +5955,8 @@ class WatermarkPageState extends State<WatermarkPage>
         enabledColor: Colors.indigo,
         isEnabled: _useRobustSteganography,
         isAvailable: _useSteganography,
-        unavailableReason: _useSteganography ? null : 'Requires steganography',
+        unavailableReason:
+            _useSteganography ? null : l10n.requiresSteganography,
         onToggle: () {
           if (_useSteganography) {
             setState(() {
@@ -6011,7 +6012,8 @@ class WatermarkPageState extends State<WatermarkPage>
         enabledColor: Colors.brown,
         isEnabled: _hideFileWithSteganography && _hiddenFileBytes != null,
         isAvailable: _useSteganography,
-        unavailableReason: _useSteganography ? null : 'Requires steganography',
+        unavailableReason:
+            _useSteganography ? null : l10n.requiresSteganography,
         subtitle: _hiddenFileBytes != null ? l10n.hideFileEnabledHint : null,
         onToggle: () {
           if (_useSteganography) {
@@ -6090,7 +6092,7 @@ class WatermarkPageState extends State<WatermarkPage>
       // Preserve Metadata
       WatermarkOption(
         id: 'preserve_metadata',
-        label: 'Preserve Metadata',
+        label: l10n.preserveMetadata,
         icon: Icons.info_outline,
         enabledColor: Colors.lightBlue,
         isEnabled: _preserveMetadata,
@@ -6126,7 +6128,7 @@ class WatermarkPageState extends State<WatermarkPage>
       // File Prefix (Info only)
       WatermarkOption(
         id: 'file_prefix',
-        label: 'File Prefix',
+        label: l10n.filePrefixLabel,
         icon: Icons.label_outline,
         enabledColor: Colors.blueGrey,
         isEnabled: true,

@@ -1188,4 +1188,43 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get longPressConfigure => 'Pulsación larga: configurar';
+
+  @override
+  String get noBookmarksYet => 'No hay marcadores todavía.';
+
+  @override
+  String get statusEnabled => 'Estado: Habilitado';
+
+  @override
+  String get statusDisabled => 'Estado: Deshabilitado';
+
+  @override
+  String get doubleTapToToggle => 'Toca dos veces para alternar';
+
+  @override
+  String get requiresSteganography => 'Requiere esteganografía';
+
+  @override
+  String get preserveMetadata => 'Preservar metadatos';
+
+  @override
+  String get tapInfo => 'Tocar: info';
+
+  @override
+  String get doubleTapToggle => 'Tocar dos veces: alternar';
+
+  @override
+  String get tapInfoDoubleTapToggle =>
+      'Tocar: info • Tocar dos veces: alternar';
+
+  @override
+  String statusLabel(Object status) {
+    return 'Estado: $status';
+  }
+
+  @override
+  String get enabled => 'habilitado';
+
+  @override
+  String get disabled => 'deshabilitado';
 }

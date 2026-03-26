@@ -1173,4 +1173,42 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get longPressConfigure => 'Long-press: configure';
+
+  @override
+  String get noBookmarksYet => 'No bookmarks yet.';
+
+  @override
+  String get statusEnabled => 'Status: Enabled';
+
+  @override
+  String get statusDisabled => 'Status: Disabled';
+
+  @override
+  String get doubleTapToToggle => 'Double-tap to toggle';
+
+  @override
+  String get requiresSteganography => 'Requires steganography';
+
+  @override
+  String get preserveMetadata => 'Preserve Metadata';
+
+  @override
+  String get tapInfo => 'Tap: info';
+
+  @override
+  String get doubleTapToggle => 'Double-tap: toggle';
+
+  @override
+  String get tapInfoDoubleTapToggle => 'Tap: info • Double-tap: toggle';
+
+  @override
+  String statusLabel(Object status) {
+    return 'Status: $status';
+  }
+
+  @override
+  String get enabled => 'enabled';
+
+  @override
+  String get disabled => 'disabled';
 }

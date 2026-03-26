@@ -726,5 +726,17 @@
   "configExportSuccess": "Configuración exportada con éxito a: {path}",
   "fontConfigTitle": "Configuración de Fuente",
   "longPressToConfigure": "Pulsación larga para configurar",
-  "longPressConfigure": "Pulsación larga: configurar"
+  "longPressConfigure": "Pulsación larga: configurar",
+  "noBookmarksYet": "No hay marcadores todavía.",
+  "statusEnabled": "Estado: Habilitado",
+  "statusDisabled": "Estado: Deshabilitado",
+  "doubleTapToToggle": "Toca dos veces para alternar",
+  "requiresSteganography": "Requiere esteganografía",
+  "preserveMetadata": "Preservar metadatos",
+  "tapInfo": "Tocar: info",
+  "doubleTapToggle": "Tocar dos veces: alternar",
+  "tapInfoDoubleTapToggle": "Tocar: info • Tocar dos veces: alternar",
+  "statusLabel": "Estado: {status}",
+  "enabled": "habilitado",
+  "disabled": "deshabilitado"
 }

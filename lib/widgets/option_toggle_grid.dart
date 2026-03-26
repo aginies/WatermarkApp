@@ -93,36 +93,76 @@ class _OptionTileState extends State<_OptionTile>
 
   void _handleTap() {
     final l10n = AppLocalizations.of(context)!;
-    // Single tap: Show info
-    final parts = <String>[widget.option.label];
+    final theme = Theme.of(context);
+
+    // Single tap: Show info using RichText for bold labels
+    final content = <TextSpan>[
+      TextSpan(
+        text: '${widget.option.label}\n',
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+      ),
+    ];
 
     if (!widget.option.isAvailable && widget.option.unavailableReason != null) {
-      parts.add(widget.option.unavailableReason!);
+      content.add(TextSpan(
+        text: '${widget.option.unavailableReason!}\n',
+        style: TextStyle(color: theme.colorScheme.errorContainer),
+      ));
     } else {
       if (widget.option.subtitle != null) {
-        parts.add(widget.option.subtitle!);
+        content.add(TextSpan(text: '${widget.option.subtitle!}\n'));
       }
+
+      // Add a small divider if we have more info
+      if (widget.option.onToggle != null || widget.option.onConfigure != null) {
+        content.add(const TextSpan(text: '\n'));
+      }
+
       // Only show status if it's toggleable
       if (widget.option.onToggle != null) {
-        parts.add(
-            widget.option.isEnabled ? 'Status: Enabled' : 'Status: Disabled');
-        parts.add('Double-tap to toggle');
+        final statusText =
+            widget.option.isEnabled ? l10n.statusEnabled : l10n.statusDisabled;
+        content.add(TextSpan(
+          text: '$statusText\n',
+          style: const TextStyle(fontWeight: FontWeight.w500),
+        ));
+        content.add(TextSpan(
+          text: '${l10n.doubleTapToToggle}\n',
+          style: TextStyle(
+              fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+        ));
       }
+
       if (widget.option.onConfigure != null) {
-        parts.add(l10n.longPressToConfigure);
+        content.add(TextSpan(
+          text: l10n.longPressToConfigure,
+          style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.primary),
+        ));
       }
     }
 
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(parts.join('\n')),
-        duration: const Duration(seconds: 2),
+        content: RichText(
+          text: TextSpan(
+            children: content,
+            style: TextStyle(color: theme.colorScheme.onSurface),
+          ),
+        ),
+        backgroundColor: theme.colorScheme.surfaceContainerHighest,
+        duration: const Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
 
   void _handleDoubleTap() {
+    final l10n = AppLocalizations.of(context)!;
     if (!widget.option.isAvailable) {
       // Show unavailable reason
       if (widget.option.unavailableReason != null) {
@@ -151,9 +191,8 @@ class _OptionTileState extends State<_OptionTile>
     widget.option.onToggle!.call();
 
     // Show confirmation snackbar
-    final message = widget.option.isEnabled
-        ? '${widget.option.label} disabled'
-        : '${widget.option.label} enabled';
+    final status = widget.option.isEnabled ? l10n.enabled : l10n.disabled;
+    final message = '${widget.option.label} $status';
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -322,9 +361,9 @@ class _OptionTileState extends State<_OptionTile>
       }
       // Only mention toggle if it's available
       if (widget.option.onToggle != null) {
-        parts.add('Tap: info • Double-tap: toggle');
+        parts.add(l10n.tapInfoDoubleTapToggle);
       } else {
-        parts.add('Tap: info');
+        parts.add(l10n.tapInfo);
       }
       if (widget.option.onConfigure != null) {
         parts.add(l10n.longPressConfigure);

@@ -726,5 +726,17 @@
   "importConfigButton": "Import",
   "configExportSuccess": "Configuration exported successfully to: {path}",
   "longPressToConfigure": "Long-press to configure",
-  "longPressConfigure": "Long-press: configure"
+  "longPressConfigure": "Long-press: configure",
+  "noBookmarksYet": "No bookmarks yet.",
+  "statusEnabled": "Status: Enabled",
+  "statusDisabled": "Status: Disabled",
+  "doubleTapToToggle": "Double-tap to toggle",
+  "requiresSteganography": "Requires steganography",
+  "preserveMetadata": "Preserve Metadata",
+  "tapInfo": "Tap: info",
+  "doubleTapToggle": "Double-tap: toggle",
+  "tapInfoDoubleTapToggle": "Tap: info • Double-tap: toggle",
+  "statusLabel": "Status: {status}",
+  "enabled": "enabled",
+  "disabled": "disabled"
 }

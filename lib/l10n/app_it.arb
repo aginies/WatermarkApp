@@ -726,5 +726,17 @@
   "configExportSuccess": "Configurazione esportata con successo in: {path}",
   "fontConfigTitle": "Configurazione Carattere",
   "longPressToConfigure": "Pressione lunga per configurare",
-  "longPressConfigure": "Pressione lunga: configurare"
+  "longPressConfigure": "Pressione lunga: configurare",
+  "noBookmarksYet": "Ancora nessun segnalibro.",
+  "statusEnabled": "Stato: Abilitato",
+  "statusDisabled": "Stato: Disabilitato",
+  "doubleTapToToggle": "Tocca due volte per cambiare",
+  "requiresSteganography": "Richiede steganografia",
+  "preserveMetadata": "Preserva metadati",
+  "tapInfo": "Tocca: info",
+  "doubleTapToggle": "Tocca due volte: cambia",
+  "tapInfoDoubleTapToggle": "Tocca: info • Tocca due volte: cambia",
+  "statusLabel": "Stato: {status}",
+  "enabled": "abilitato",
+  "disabled": "disabilitato"
 }

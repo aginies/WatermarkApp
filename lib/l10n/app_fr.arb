@@ -726,5 +726,17 @@
   "configExportSuccess": "Configuration exportée avec succès vers : {path}",
   "fontConfigTitle": "Configuration de Police",
   "longPressToConfigure": "Appui long pour configurer",
-  "longPressConfigure": "Appui long : configurer"
+  "longPressConfigure": "Appui long : configurer",
+  "noBookmarksYet": "Aucun signet pour le moment.",
+  "statusEnabled": "Statut : Activé",
+  "statusDisabled": "Statut : Désactivé",
+  "doubleTapToToggle": "Appuyez deux fois pour basculer",
+  "requiresSteganography": "Nécessite la stéganographie",
+  "preserveMetadata": "Préserver les métadonnées",
+  "tapInfo": "Appuyer : info",
+  "doubleTapToggle": "Appuyer deux fois : basculer",
+  "tapInfoDoubleTapToggle": "Appuyer : info • Appuyer deux fois : basculer",
+  "statusLabel": "Statut : {status}",
+  "enabled": "activé",
+  "disabled": "désactivé"
 }

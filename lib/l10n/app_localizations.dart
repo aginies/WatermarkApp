@@ -2072,6 +2072,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Long-press: configure'**
   String get longPressConfigure;
+
+  /// No description provided for @noBookmarksYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No bookmarks yet.'**
+  String get noBookmarksYet;
+
+  /// No description provided for @statusEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Status: Enabled'**
+  String get statusEnabled;
+
+  /// No description provided for @statusDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Status: Disabled'**
+  String get statusDisabled;
+
+  /// No description provided for @doubleTapToToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Double-tap to toggle'**
+  String get doubleTapToToggle;
+
+  /// No description provided for @requiresSteganography.
+  ///
+  /// In en, this message translates to:
+  /// **'Requires steganography'**
+  String get requiresSteganography;
+
+  /// No description provided for @preserveMetadata.
+  ///
+  /// In en, this message translates to:
+  /// **'Preserve Metadata'**
+  String get preserveMetadata;
+
+  /// No description provided for @tapInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap: info'**
+  String get tapInfo;
+
+  /// No description provided for @doubleTapToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Double-tap: toggle'**
+  String get doubleTapToggle;
+
+  /// No description provided for @tapInfoDoubleTapToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap: info • Double-tap: toggle'**
+  String get tapInfoDoubleTapToggle;
+
+  /// No description provided for @statusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Status: {status}'**
+  String statusLabel(Object status);
+
+  /// No description provided for @enabled.
+  ///
+  /// In en, this message translates to:
+  /// **'enabled'**
+  String get enabled;
+
+  /// No description provided for @disabled.
+  ///
+  /// In en, this message translates to:
+  /// **'disabled'**
+  String get disabled;
 }
 
 class _AppLocalizationsDelegate

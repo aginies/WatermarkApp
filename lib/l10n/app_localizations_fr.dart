@@ -1194,4 +1194,43 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get longPressConfigure => 'Appui long : configurer';
+
+  @override
+  String get noBookmarksYet => 'Aucun signet pour le moment.';
+
+  @override
+  String get statusEnabled => 'Statut : Activé';
+
+  @override
+  String get statusDisabled => 'Statut : Désactivé';
+
+  @override
+  String get doubleTapToToggle => 'Appuyez deux fois pour basculer';
+
+  @override
+  String get requiresSteganography => 'Nécessite la stéganographie';
+
+  @override
+  String get preserveMetadata => 'Préserver les métadonnées';
+
+  @override
+  String get tapInfo => 'Appuyer : info';
+
+  @override
+  String get doubleTapToggle => 'Appuyer deux fois : basculer';
+
+  @override
+  String get tapInfoDoubleTapToggle =>
+      'Appuyer : info • Appuyer deux fois : basculer';
+
+  @override
+  String statusLabel(Object status) {
+    return 'Statut : $status';
+  }
+
+  @override
+  String get enabled => 'activé';
+
+  @override
+  String get disabled => 'désactivé';
 }

@@ -94,10 +94,27 @@ class _ProfileChipState extends State<ProfileChip>
                 widget.icon,
                 size: 16,
                 color: widget.isSelected
-                    ? theme.colorScheme.onPrimaryContainer
+                    ? theme.colorScheme.primary
                     : theme.colorScheme.onSurfaceVariant,
               ),
               selected: widget.isSelected,
+              showCheckmark: false,
+              side: BorderSide(
+                color: widget.isSelected
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.outlineVariant,
+                width: widget.isSelected ? 2.0 : 1.0,
+              ),
+              backgroundColor: theme.colorScheme.surface,
+              selectedColor:
+                  theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
+              labelStyle: TextStyle(
+                color: widget.isSelected
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurfaceVariant,
+                fontWeight:
+                    widget.isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
             ),
           ),
         ),

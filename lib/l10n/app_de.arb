@@ -726,5 +726,17 @@
   "configExportSuccess": "Konfiguration erfolgreich exportiert nach: {path}",
   "fontConfigTitle": "Schriftkonfiguration",
   "longPressToConfigure": "Lange drücken zum Konfigurieren",
-  "longPressConfigure": "Lange drücken: konfigurieren"
+  "longPressConfigure": "Lange drücken: konfigurieren",
+  "noBookmarksYet": "Noch keine Lesezeichen.",
+  "statusEnabled": "Status: Aktiviert",
+  "statusDisabled": "Status: Deaktiviert",
+  "doubleTapToToggle": "Doppeltippen zum Umschalten",
+  "requiresSteganography": "Erfordert Steganographie",
+  "preserveMetadata": "Metadaten beibehalten",
+  "tapInfo": "Tippen: Info",
+  "doubleTapToggle": "Doppeltippen: Umschalten",
+  "tapInfoDoubleTapToggle": "Tippen: Info • Doppeltippen: Umschalten",
+  "statusLabel": "Status: {status}",
+  "enabled": "aktiviert",
+  "disabled": "deaktiviert"
 }
