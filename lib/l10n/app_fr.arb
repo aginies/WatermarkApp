@@ -738,5 +738,16 @@
   "tapInfoDoubleTapToggle": "Appuyer : info • Appuyer deux fois : basculer",
   "statusLabel": "Statut : {status}",
   "enabled": "activé",
-  "disabled": "désactivé"
+  "disabled": "désactivé",
+  "localShareTitle": "Partage Réseau Local",
+  "sendTab": "Envoyer",
+  "receiveTab": "Recevoir",
+  "sendingFile": "Envoi de : {name}",
+  "noFilesToSend": "Traitez des fichiers d'abord pour les envoyer.",
+  "receivingFile": "Réception du fichier",
+  "connectingToServer": "Connexion à l'expéditeur...",
+  "downloadingFile": "Téléchargement : {name}",
+  "saveToWhere": "Enregistrer le fichier sous...",
+  "localShareInstructions": "Le destinataire doit être sur le même réseau. Scannez le code QR pour télécharger.",
+  "sendAllZip": "Tout envoyer (ZIP)"
 }

@@ -1233,4 +1233,43 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get disabled => 'deaktiviert';
+
+  @override
+  String get localShareTitle => 'Lokale Netzwerkfreigabe';
+
+  @override
+  String get sendTab => 'Senden';
+
+  @override
+  String get receiveTab => 'Empfangen';
+
+  @override
+  String sendingFile(Object name) {
+    return 'Senden von: $name';
+  }
+
+  @override
+  String get noFilesToSend =>
+      'Verarbeiten Sie zuerst einige Dateien, um sie zu senden.';
+
+  @override
+  String get receivingFile => 'Datei empfangen';
+
+  @override
+  String get connectingToServer => 'Verbindung zum Absender...';
+
+  @override
+  String downloadingFile(Object name) {
+    return 'Herunterladen: $name';
+  }
+
+  @override
+  String get saveToWhere => 'Datei speichern unter...';
+
+  @override
+  String get localShareInstructions =>
+      'Der Empfänger muss sich im selben Netzwerk befinden. Scannen Sie den QR-Code zum Herunterladen.';
+
+  @override
+  String get sendAllZip => 'Alles als ZIP senden';
 }

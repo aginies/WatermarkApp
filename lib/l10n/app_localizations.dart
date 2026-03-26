@@ -2144,6 +2144,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'disabled'**
   String get disabled;
+
+  /// No description provided for @localShareTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Local Network Share'**
+  String get localShareTitle;
+
+  /// No description provided for @sendTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get sendTab;
+
+  /// No description provided for @receiveTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Receive'**
+  String get receiveTab;
+
+  /// No description provided for @sendingFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending: {name}'**
+  String sendingFile(Object name);
+
+  /// No description provided for @noFilesToSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Process some files first to send them.'**
+  String get noFilesToSend;
+
+  /// No description provided for @receivingFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Receiving File'**
+  String get receivingFile;
+
+  /// No description provided for @connectingToServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting to sender...'**
+  String get connectingToServer;
+
+  /// No description provided for @downloadingFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading: {name}'**
+  String downloadingFile(Object name);
+
+  /// No description provided for @saveToWhere.
+  ///
+  /// In en, this message translates to:
+  /// **'Save file to...'**
+  String get saveToWhere;
+
+  /// No description provided for @localShareInstructions.
+  ///
+  /// In en, this message translates to:
+  /// **'The receiver must be on the same network. Scan the QR code to download.'**
+  String get localShareInstructions;
+
+  /// No description provided for @sendAllZip.
+  ///
+  /// In en, this message translates to:
+  /// **'Send All as ZIP'**
+  String get sendAllZip;
 }
 
 class _AppLocalizationsDelegate

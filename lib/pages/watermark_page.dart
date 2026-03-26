@@ -38,6 +38,7 @@ import '../main.dart';
 import '../watermark_error.dart';
 import '../models/processor_models.dart';
 import '../utils/identity_manager.dart';
+import '../utils/local_server_manager.dart';
 import '../models/watermark_option.dart';
 import '../widgets/option_toggle_grid.dart';
 import 'onboarding_page.dart';
@@ -153,6 +154,12 @@ class WatermarkPageState extends State<WatermarkPage>
   QrPosition _qrPosition = QrPosition.bottomRight;
   double _qrSize = 100.0;
   double _qrOpacity = 0.8;
+
+  // Local Share State
+  List<String> _localIps = [];
+  int _servingPort = 0;
+  String? _sendingFileName;
+  int _selectedLocalIpIndex = 0;
 
   Future<void> _loadShader() async {
     try {
@@ -1214,6 +1221,11 @@ class WatermarkPageState extends State<WatermarkPage>
               icon: const Icon(Icons.font_download_outlined),
               onPressed: _showFontOptions,
               tooltip: l10n.fontConfigTitle,
+            ),
+            IconButton(
+              icon: const Icon(Icons.sensors),
+              onPressed: _showLocalShareDialog,
+              tooltip: l10n.localShareTitle,
             ),
             IconButton(
               icon: const Icon(Icons.person_pin_outlined),
@@ -2573,6 +2585,383 @@ class WatermarkPageState extends State<WatermarkPage>
         );
       },
     );
+  }
+
+  void _showLocalShareDialog() async {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+
+    // Get local IPs
+    _localIps = await LocalServerManager.getLocalIps();
+    _selectedLocalIpIndex = 0;
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return DefaultTabController(
+          length: 2,
+          child: StatefulBuilder(
+            builder: (context, setDialogState) {
+              return AlertDialog(
+                title: Row(
+                  children: [
+                    const Icon(Icons.sensors, color: Colors.blue),
+                    const SizedBox(width: 12),
+                    Text(l10n.localShareTitle),
+                  ],
+                ),
+                content: SizedBox(
+                  width: 400,
+                  height: 600,
+                  child: Column(
+                    children: [
+                      TabBar(
+                        tabs: [
+                          Tab(
+                              text: l10n.sendTab,
+                              icon: const Icon(Icons.upload_file)),
+                          Tab(
+                              text: l10n.receiveTab,
+                              icon: const Icon(Icons.download_for_offline)),
+                        ],
+                        labelColor: theme.colorScheme.primary,
+                        unselectedLabelColor:
+                            theme.colorScheme.onSurfaceVariant,
+                      ),
+                      Expanded(
+                        child: TabBarView(
+                          children: [
+                            // Send Tab
+                            _buildSendTab(setDialogState),
+                            // Receive Tab
+                            _buildReceiveTab(setDialogState),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      LocalServerManager.stopServer();
+                      setState(() {
+                        _servingPort = 0;
+                        _sendingFileName = null;
+                      });
+                      Navigator.pop(context);
+                    },
+                    child: Text(l10n.close),
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Future<Uint8List> _createProcessedZipBytes() async {
+    final archive = Archive();
+    for (final file in _processedFiles) {
+      final fileName = p.basename(file.result.outputPath);
+      archive.addFile(ArchiveFile(
+          fileName, file.result.outputBytes.length, file.result.outputBytes));
+    }
+    return Uint8List.fromList(ZipEncoder().encode(archive));
+  }
+
+  Widget _buildSendTab(StateSetter setDialogState) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+
+    if (_processedFiles.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Text(
+            l10n.noFilesToSend,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+          ),
+        ),
+      );
+    }
+
+    final isRunning = LocalServerManager.isRunning;
+
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          const SizedBox(height: 16),
+          if (!isRunning) ...[
+            Text(l10n.localShareInstructions,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 12)),
+            const SizedBox(height: 16),
+            if (_processedFiles.length > 1) ...[
+              ListTile(
+                title: Text(l10n.sendAllZip,
+                    style: TextStyle(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.bold)),
+                leading: Icon(Icons.folder_zip_outlined,
+                    color: theme.colorScheme.primary),
+                onTap: () async {
+                  final bytes = await _createProcessedZipBytes();
+                  final fileName = 'securemark_batch.zip';
+                  final port =
+                      await LocalServerManager.startServer(bytes, fileName);
+                  setDialogState(() {
+                    _servingPort = port;
+                    _sendingFileName = fileName;
+                  });
+                },
+              ),
+              const Divider(),
+            ],
+            // File list
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _processedFiles.length,
+              itemBuilder: (context, index) {
+                final file = _processedFiles[index];
+                final fileName = p.basename(file.result.outputPath);
+                return ListTile(
+                  title: Text(fileName, style: const TextStyle(fontSize: 14)),
+                  leading: const Icon(Icons.description_outlined),
+                  onTap: () async {
+                    final bytes = file.result.outputBytes;
+                    final port =
+                        await LocalServerManager.startServer(bytes, fileName);
+                    setDialogState(() {
+                      _servingPort = port;
+                      _sendingFileName = fileName;
+                    });
+                  },
+                );
+              },
+            ),
+          ] else ...[
+            Text(l10n.sendingFile(_sendingFileName ?? '')),
+            const SizedBox(height: 8),
+            if (_localIps.length > 1)
+              DropdownButton<int>(
+                value: _selectedLocalIpIndex,
+                isExpanded: true,
+                items: List.generate(
+                    _localIps.length,
+                    (i) => DropdownMenuItem(
+                          value: i,
+                          child: Text(_localIps[i]),
+                        )),
+                onChanged: (val) {
+                  if (val != null) {
+                    setDialogState(() => _selectedLocalIpIndex = val);
+                  }
+                },
+              )
+            else if (_localIps.isNotEmpty)
+              Text(_localIps.first,
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: QrImageView(
+                data:
+                    'http://${_localIps[_selectedLocalIpIndex]}:$_servingPort/${LocalServerManager.token}/download',
+                version: QrVersions.auto,
+                size: 200.0,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () {
+                LocalServerManager.stopServer();
+                setDialogState(() {
+                  _servingPort = 0;
+                  _sendingFileName = null;
+                });
+              },
+              icon: const Icon(Icons.stop),
+              label: Text(l10n.reset),
+              style: ElevatedButton.styleFrom(
+                foregroundColor: theme.colorScheme.error,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReceiveTab(StateSetter setDialogState) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const SizedBox(height: 16),
+        Expanded(
+          child: Container(
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                  color: Colors.blue.withValues(alpha: 0.5), width: 2),
+            ),
+            child: MobileScanner(
+              onDetect: (capture) {
+                final List<Barcode> barcodes = capture.barcodes;
+                if (barcodes.isNotEmpty) {
+                  final String? code = barcodes.first.rawValue;
+                  if (code != null &&
+                      code.startsWith('http') &&
+                      code.contains('/download')) {
+                    // Stop scanner and pop dialog
+                    Navigator.pop(context);
+                    _downloadFromLocalUrl(code);
+                  }
+                }
+              },
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(l10n.localShareInstructions, textAlign: TextAlign.center),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Future<void> _downloadFromLocalUrl(String url) async {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+
+    _elapsedTime = '00:00';
+    _startStopwatch();
+
+    // Show progress dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      useRootNavigator: true,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setProgressState) {
+            _progressListener = () {
+              if (context.mounted) setProgressState(() {});
+            };
+
+            return AlertDialog(
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(l10n.receivingFile,
+                          style: theme.textTheme.titleMedium),
+                      Text(_elapsedTime,
+                          style: theme.textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 24),
+                  Text(l10n.connectingToServer, textAlign: TextAlign.center),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    try {
+      final response =
+          await http.get(Uri.parse(url)).timeout(const Duration(seconds: 30));
+      _stopStopwatch();
+      _progressListener = null;
+      if (mounted) Navigator.of(context, rootNavigator: true).pop();
+
+      if (response.statusCode == 200) {
+        // Extract filename from header or URL
+        String fileName = 'downloaded_file';
+        final disp = response.headers['content-disposition'];
+        if (disp != null && disp.contains('filename=')) {
+          fileName = disp.split('filename=').last.replaceAll('"', '');
+        } else {
+          // Fallback to URL path
+          fileName = p.basename(Uri.parse(url).path);
+          if (fileName == 'download') fileName = 'securemark_file';
+        }
+
+        final bytes = response.bodyBytes;
+        await _saveDownloadedFile(bytes, fileName);
+      } else {
+        throw Exception('Server returned ${response.statusCode}');
+      }
+    } catch (e) {
+      _stopStopwatch();
+      _progressListener = null;
+      if (mounted) Navigator.of(context, rootNavigator: true).pop();
+
+      _addLog('Error downloading file: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Download failed: $e'),
+              backgroundColor: theme.colorScheme.error),
+        );
+      }
+    }
+  }
+
+  Future<void> _saveDownloadedFile(Uint8List bytes, String fileName) async {
+    final l10n = AppLocalizations.of(context)!;
+
+    // Create a temporary file to use our existing saving logic
+    final tempDir = await getTemporaryDirectory();
+    final tempPath = p.join(tempDir.path, fileName);
+    final tempFile = File(tempPath);
+    await tempFile.writeAsBytes(bytes);
+
+    _tempFiles.add(tempPath);
+
+    if (_outputDirectory != null) {
+      final outputPath = p.join(_outputDirectory!, fileName);
+      await File(outputPath).writeAsBytes(bytes);
+      _addLog('Saved downloaded file to: $outputPath');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.fileSaved(fileName))),
+        );
+      }
+    } else {
+      // Prompt user to save if no output dir
+      final result = await FilePicker.platform.saveFile(
+        fileName: fileName,
+        bytes: bytes,
+      );
+      if (result != null) {
+        _addLog('Saved downloaded file to: $result');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.fileSaved(fileName))),
+          );
+        }
+      }
+    }
   }
 
   void _showIdentityQrScanner(StateSetter setParentDialogState) {

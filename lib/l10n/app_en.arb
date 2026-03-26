@@ -738,5 +738,16 @@
   "tapInfoDoubleTapToggle": "Tap: info • Double-tap: toggle",
   "statusLabel": "Status: {status}",
   "enabled": "enabled",
-  "disabled": "disabled"
+  "disabled": "disabled",
+  "localShareTitle": "Local Network Share",
+  "sendTab": "Send",
+  "receiveTab": "Receive",
+  "sendingFile": "Sending: {name}",
+  "noFilesToSend": "Process some files first to send them.",
+  "receivingFile": "Receiving File",
+  "connectingToServer": "Connecting to sender...",
+  "downloadingFile": "Downloading: {name}",
+  "saveToWhere": "Save file to...",
+  "localShareInstructions": "The receiver must be on the same network. Scan the QR code to download.",
+  "sendAllZip": "Send All as ZIP"
 }

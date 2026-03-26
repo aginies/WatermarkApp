@@ -1211,4 +1211,42 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get disabled => 'disabled';
+
+  @override
+  String get localShareTitle => 'Local Network Share';
+
+  @override
+  String get sendTab => 'Send';
+
+  @override
+  String get receiveTab => 'Receive';
+
+  @override
+  String sendingFile(Object name) {
+    return 'Sending: $name';
+  }
+
+  @override
+  String get noFilesToSend => 'Process some files first to send them.';
+
+  @override
+  String get receivingFile => 'Receiving File';
+
+  @override
+  String get connectingToServer => 'Connecting to sender...';
+
+  @override
+  String downloadingFile(Object name) {
+    return 'Downloading: $name';
+  }
+
+  @override
+  String get saveToWhere => 'Save file to...';
+
+  @override
+  String get localShareInstructions =>
+      'The receiver must be on the same network. Scan the QR code to download.';
+
+  @override
+  String get sendAllZip => 'Send All as ZIP';
 }
