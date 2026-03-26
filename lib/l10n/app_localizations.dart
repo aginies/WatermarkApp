@@ -1827,42 +1827,6 @@ abstract class AppLocalizations {
   /// **'Forensic check failed. Both visual pixels and hidden data appear modified.'**
   String get verifTamperingDetected;
 
-  /// No description provided for @onboardingPage1Title.
-  ///
-  /// In en, this message translates to:
-  /// **'Protect your documents'**
-  String get onboardingPage1Title;
-
-  /// No description provided for @onboardingPage1Body.
-  ///
-  /// In en, this message translates to:
-  /// **'Visible and invisible watermarks for safe sharing.'**
-  String get onboardingPage1Body;
-
-  /// No description provided for @onboardingPage2Title.
-  ///
-  /// In en, this message translates to:
-  /// **'Steganography'**
-  String get onboardingPage2Title;
-
-  /// No description provided for @onboardingPage2Body.
-  ///
-  /// In en, this message translates to:
-  /// **'Embed hidden signatures or entire files inside images.'**
-  String get onboardingPage2Body;
-
-  /// No description provided for @onboardingPage3Title.
-  ///
-  /// In en, this message translates to:
-  /// **'AI Protection'**
-  String get onboardingPage3Title;
-
-  /// No description provided for @onboardingPage3Body.
-  ///
-  /// In en, this message translates to:
-  /// **'Anti-AI protection and Cloaking to disrupt AI models.'**
-  String get onboardingPage3Body;
-
   /// No description provided for @onboardingStepTitle.
   ///
   /// In en, this message translates to:

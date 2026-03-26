@@ -1041,27 +1041,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Forensic check failed. Both visual pixels and hidden data appear modified.';
 
   @override
-  String get onboardingPage1Title => 'Protect your documents';
-
-  @override
-  String get onboardingPage1Body =>
-      'Visible and invisible watermarks for safe sharing.';
-
-  @override
-  String get onboardingPage2Title => 'Steganography';
-
-  @override
-  String get onboardingPage2Body =>
-      'Embed hidden signatures or entire files inside images.';
-
-  @override
-  String get onboardingPage3Title => 'AI Protection';
-
-  @override
-  String get onboardingPage3Body =>
-      'Anti-AI protection and Cloaking to disrupt AI models.';
-
-  @override
   String get onboardingStepTitle => 'How it works';
 
   @override

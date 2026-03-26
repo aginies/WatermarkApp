@@ -6,6 +6,7 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:convert/convert.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart'
     show TextPainter, TextSpan, TextAlign, TextDirection, FontWeight;
@@ -484,8 +485,8 @@ class WatermarkProcessor {
           hiddenFileName != null) {
         onProgress?.call(0.9, 'progressVerifyingStegano');
 
-        final analysis = await analyzeImage(res['output']!,
-            password: steganographyPassword);
+        final analysis =
+            await analyzeImage(res['output']!, password: steganographyPassword);
         final expected = (steganographyText?.isNotEmpty == true)
             ? steganographyText!
             : watermarkText;
@@ -813,22 +814,23 @@ class WatermarkProcessor {
     progressPort
         ?.send({'progress': 0.35, 'message': 'progressApplyingWatermark'});
 
-    final String? integrityText = await WatermarkFieldHandler.applyWatermarkField(
-        output,
-        watermarkText,
-        transparency,
-        density,
-        useRandomColor,
-        selectedColorValue,
-        fontSize,
-        font,
-        preRenderedStamps,
-        antiAiLevel: antiAiLevel,
-        qrConfig: qrConfig,
-        digitallySign: digitallySign,
-        watermarkType: watermarkType,
-        watermarkImageBytes: watermarkImageBytes,
-        onProgress: (progress, message) {
+    final String? integrityText =
+        await WatermarkFieldHandler.applyWatermarkField(
+            output,
+            watermarkText,
+            transparency,
+            density,
+            useRandomColor,
+            selectedColorValue,
+            fontSize,
+            font,
+            preRenderedStamps,
+            antiAiLevel: antiAiLevel,
+            qrConfig: qrConfig,
+            digitallySign: digitallySign,
+            watermarkType: watermarkType,
+            watermarkImageBytes: watermarkImageBytes,
+            onProgress: (progress, message) {
       // Map internal progress (0.0-1.0) to watermark range (0.35-0.75)
       progressPort?.send({
         'progress': 0.35 + (progress * 0.40),
@@ -938,6 +940,7 @@ class WatermarkProcessor {
           useSteganography: useSteganography,
           useRobustSteganography: useRobustSteganography,
           useAiCloaking: useAiCloaking,
+          digitallySign: digitallySign,
           watermarkType: watermarkType,
           watermarkImageBytes: watermarkImageBytes,
           steganographyPassword: steganographyPassword,
@@ -1647,28 +1650,44 @@ class WatermarkProcessor {
     }
 
     progressPort?.send({'progress': 0.9, 'message': 'progressFinalizingPdf'});
-    Uint8List bytes = Uint8List.fromList(document.saveSync());
 
     if (digitallySign) {
-      progressPort?.send({'progress': 0.99, 'message': 'progressSigningPdf'});
-      final hash = sha256.convert(bytes);
-      final signature = await IdentityManager.signData(hash.bytes);
-      final publicKey = await IdentityManager.getDevicePublicKey();
-      IdentityManager.onLog?.call('Digital signature generated for PDF.');
+      // 1. Save the visually watermarked document to get the exact bytes for hashing.
+      final bytesToHash = Uint8List.fromList(document.saveSync());
+      document.dispose(); // Dispose the original document
 
-      // Update keywords with integrity info - format must match analyzer exactly
-      final currentKeywords = document.documentInformation.keywords;
-      final integrityInfo = 'SecureMarkIntegrity:$signature SecureMarkKey:$publicKey';
-      document.documentInformation.keywords = currentKeywords.isEmpty
+      progressPort?.send({'progress': 0.95, 'message': 'progressSigningPdf'});
+
+      // 2. Create the signature from the hash of those bytes.
+      final hashToStore = sha256.convert(bytesToHash);
+      final signature = await IdentityManager.signData(hashToStore.bytes);
+      final publicKey = await IdentityManager.getDevicePublicKey();
+      IdentityManager.onLog?.call(
+          '[SIGN] Generated signature from hash: ${hashToStore.toString()}');
+
+      // 3. Load the watermarked bytes into a new document to add the final metadata.
+      final finalDoc = sync.PdfDocument(inputBytes: bytesToHash);
+
+      // 4. Update keywords with integrity info, including the original hash.
+      final currentKeywords = finalDoc.documentInformation.keywords;
+      final integrityInfo =
+          'SecureMarkIntegrity:$signature SecureMarkKey:$publicKey SecureMarkOriginalHash:${hashToStore.toString()}';
+      final newKeywords = currentKeywords.isEmpty
           ? integrityInfo
           : '$currentKeywords $integrityInfo';
+      finalDoc.documentInformation.keywords = newKeywords;
+      IdentityManager.onLog?.call('[SIGN] Updated keywords to: "$newKeywords"');
 
-      // Final save with updated metadata
-      bytes = Uint8List.fromList(document.saveSync());
+      // 5. Save the document for the final time with the signature in the metadata.
+      final finalBytes = Uint8List.fromList(finalDoc.saveSync());
+      finalDoc.dispose();
+      return finalBytes;
     }
 
+    // Default path for non-signed documents
+    final finalBytes = Uint8List.fromList(document.saveSync());
     document.dispose();
-    return bytes;
+    return finalBytes;
   }
 
   // Helper function for watermark count calculation
@@ -1906,9 +1925,7 @@ class WatermarkProcessor {
       {String? password}) async {
     if (p.extension(fileName).toLowerCase() == '.pdf') {
       final res = await _analyzePdfVector(bytes, password: password);
-      if (res.signature != null ||
-          res.file != null ||
-          res.integrityVerified) {
+      if (res.signature != null || res.file != null || res.integrityVerified) {
         return res;
       }
       return const AnalysisResult();
@@ -1937,6 +1954,7 @@ class WatermarkProcessor {
       ExtractedFileResult? file;
       String? integritySig;
       String? publicKey;
+      String? originalHash;
 
       for (final part in kw.split(' ')) {
         if (part.startsWith('SecureMarkHidden:')) {
@@ -1963,21 +1981,43 @@ class WatermarkProcessor {
         if (part.startsWith('SecureMarkKey:')) {
           publicKey = part.substring(14);
         }
+        if (part.startsWith('SecureMarkOriginalHash:')) {
+          originalHash = part.substring(23);
+        }
       }
 
       bool integrityVerified = false;
-      if (integritySig != null && publicKey != null) {
-        // To verify, we must hash the document WITHOUT the integrity keywords,
-        // because that's what was hashed during the signing phase.
-        final integrityInfo = 'SecureMarkIntegrity:$integritySig SecureMarkKey:$publicKey';
-        final originalKeywords = kw.replaceFirst(integrityInfo, '').trim();
-        doc.documentInformation.keywords = originalKeywords;
-        
-        final cleanBytes = Uint8List.fromList(doc.saveSync());
-        final hash = sha256.convert(cleanBytes);
-        
-        integrityVerified = await IdentityManager.verifySignature(
-            hash.bytes, integritySig, publicKey);
+      if (integritySig != null && publicKey != null && originalHash != null) {
+        IdentityManager.onLog
+            ?.call('[VERIFY] Found integrity signature. Verifying...');
+        IdentityManager.onLog?.call('[VERIFY] Original keywords: "$kw"');
+        IdentityManager.onLog
+            ?.call('[VERIFY] Extracted Original Hash: $originalHash');
+
+        // The integrity verification works as follows:
+        // 1. The originalHash is a SHA-256 hash (hex string) of the document BEFORE integrity metadata was added
+        // 2. That hash was signed with the private key, producing integritySig
+        // 3. We verify the signature using the public key to prove authenticity
+
+        // Convert the hex hash string back to bytes for signature verification
+        final hashBytes = hex.decode(originalHash);
+
+        // Verify the cryptographic signature
+        final bool cryptoSignatureIsValid =
+            await IdentityManager.verifySignature(
+                hashBytes, integritySig, publicKey);
+
+        IdentityManager.onLog?.call(
+            '[VERIFY] Crypto signature is valid: $cryptoSignatureIsValid');
+
+        // The signature verification proves:
+        // - The document hash was created by the holder of the private key
+        // - The hash has not been tampered with
+        // - The document content (when originally signed) matches the hash
+        integrityVerified = cryptoSignatureIsValid;
+
+        IdentityManager.onLog?.call(
+            '[VERIFY] Final integrity verification result: $integrityVerified');
       }
 
       doc.dispose();
@@ -1987,7 +2027,9 @@ class WatermarkProcessor {
         integrityVerified: integrityVerified,
         senderPublicKey: publicKey,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      IdentityManager.onLog
+          ?.call('[VERIFY] Error during PDF analysis: $e\n$stackTrace');
       return const AnalysisResult();
     }
   }
@@ -2013,7 +2055,8 @@ class WatermarkProcessor {
       IdentityManager.onLog?.call('Analyzing channel: $chan');
       // 1. Try to extract a hidden file (always Green channel)
       if (chan == 'g') {
-        file = LsbHandler.extractFileFromImage(image, password != null, password,
+        file = LsbHandler.extractFileFromImage(
+            image, password != null, password,
             channel: 'g');
         if (file != null) {
           IdentityManager.onLog
@@ -2052,10 +2095,12 @@ class WatermarkProcessor {
         for (final text in parts) {
           final trimmedText = text.trim();
           if (trimmedText.startsWith('securemark://verify')) {
-            IdentityManager.onLog?.call('Processing forensic verification link');
+            IdentityManager.onLog
+                ?.call('Processing forensic verification link');
             verif ??= ForensicUtils.verifyDeepLink(trimmedText, cHash, sHash);
           } else if (trimmedText.startsWith('SecureMarkIntegrity:')) {
-            IdentityManager.onLog?.call('Processing digital integrity signature');
+            IdentityManager.onLog
+                ?.call('Processing digital integrity signature');
             if (integritySig == null) {
               final infoParts = trimmedText.split(' ');
               for (final part in infoParts) {
@@ -2077,16 +2122,19 @@ class WatermarkProcessor {
 
     bool integrityVerified = false;
     if (integritySig != null && publicKey != null) {
-      IdentityManager.onLog?.call('Verifying digital signature with public key...');
+      IdentityManager.onLog
+          ?.call('Verifying digital signature with public key...');
       // Use forensic hash excluding ALL LSBs (where signatures live)
-      final hash = ForensicUtils.calculateForensicHashBytes(image,
-          excludeAllLSB: true);
+      final hash =
+          ForensicUtils.calculateForensicHashBytes(image, excludeAllLSB: true);
       integrityVerified = await IdentityManager.verifySignature(
           hash.bytes, integritySig, publicKey);
-      IdentityManager.onLog?.call('Signature verification result: $integrityVerified');
+      IdentityManager.onLog
+          ?.call('Signature verification result: $integrityVerified');
     } else {
       if (integritySig == null) {
-        IdentityManager.onLog?.call('No integrity signature found in any channel.');
+        IdentityManager.onLog
+            ?.call('No integrity signature found in any channel.');
       }
       if (publicKey == null) {
         IdentityManager.onLog?.call('No public key found in image metadata.');

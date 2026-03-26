@@ -1059,27 +1059,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'Échec du contrôle forensic. Les pixels visuels et les données cachées semblent avoir été modifiés.';
 
   @override
-  String get onboardingPage1Title => 'Protégez vos documents';
-
-  @override
-  String get onboardingPage1Body =>
-      'Filigranes visibles et invisibles pour un partage sûr.';
-
-  @override
-  String get onboardingPage2Title => 'Stéganographie';
-
-  @override
-  String get onboardingPage2Body =>
-      'Signatures ou fichiers cachés dans vos images.';
-
-  @override
-  String get onboardingPage3Title => 'Protection IA';
-
-  @override
-  String get onboardingPage3Body =>
-      'Protection Anti-IA pour perturber les modèles d\'IA.';
-
-  @override
   String get onboardingStepTitle => 'Comment ça marche';
 
   @override

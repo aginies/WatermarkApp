@@ -95,3 +95,52 @@ class ValidationResult {
   final dynamic error;
   final int pageCount;
 }
+
+/// Result of analyzing a single file from a batch/ZIP
+class FileAnalysisItem {
+  const FileAnalysisItem({
+    required this.fileName,
+    required this.analysis,
+    this.error,
+  });
+
+  final String fileName;
+  final AnalysisResult? analysis;
+  final String? error;
+
+  bool get hasError => error != null;
+  bool get hasSignature =>
+      analysis?.signature != null || analysis?.robustSignature != null;
+  bool get hasHiddenFile => analysis?.file != null;
+  bool get hasIntegrity => analysis?.integrityVerified == true;
+  String? get senderKey => analysis?.senderPublicKey;
+}
+
+/// Result of batch analysis (ZIP or multiple files)
+class BatchAnalysisResult {
+  const BatchAnalysisResult({
+    required this.items,
+    this.zipPassword,
+  });
+
+  final List<FileAnalysisItem> items;
+  final String? zipPassword;
+
+  int get totalFiles => items.length;
+  int get filesWithSignatures =>
+      items.where((item) => item.hasSignature).length;
+  int get filesWithHiddenFiles =>
+      items.where((item) => item.hasHiddenFile).length;
+  int get filesWithIntegrity => items.where((item) => item.hasIntegrity).length;
+  int get filesWithErrors => items.where((item) => item.hasError).length;
+
+  /// Groups files by sender public key
+  Map<String, List<FileAnalysisItem>> groupBySender() {
+    final Map<String, List<FileAnalysisItem>> groups = {};
+    for (final item in items) {
+      final key = item.senderKey ?? 'unsigned';
+      groups.putIfAbsent(key, () => []).add(item);
+    }
+    return groups;
+  }
+}

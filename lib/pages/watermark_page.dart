@@ -251,9 +251,8 @@ class WatermarkPageState extends State<WatermarkPage>
       try {
         final List<dynamic> decoded = jsonDecode(bookmarksJson);
         setState(() {
-          _identityBookmarks = decoded
-              .map((item) => IdentityBookmark.fromJson(item))
-              .toList();
+          _identityBookmarks =
+              decoded.map((item) => IdentityBookmark.fromJson(item)).toList();
         });
       } catch (e) {
         _addLog('Error loading bookmarks: $e');
@@ -1821,6 +1820,16 @@ class WatermarkPageState extends State<WatermarkPage>
     setState(() {
       _extractionPassword = '';
       _extractionPasswordController.text = '';
+      // Reset analysis state
+      _analysisResult = null;
+      _extractedFile = null;
+      _batchAnalysisResult = null;
+      _selectedFileIndex = null;
+      _extractedSignature = null;
+      _verificationResult = null;
+      _integrityVerified = false;
+      _senderPublicKey = null;
+      _analyzingFile = false;
     });
 
     showDialog(
@@ -1878,13 +1887,17 @@ class WatermarkPageState extends State<WatermarkPage>
                     },
                     controller: _extractionPasswordController,
                   ),
-                  if (!_analyzingFile && _analysisResult == null) ...[
+                  if (!_analyzingFile &&
+                      _analysisResult == null &&
+                      _batchAnalysisResult == null) ...[
                     const SizedBox(height: 16),
                     Text(l10n.fileAnalyzerDescription),
                   ],
                   const SizedBox(height: 24),
                   if (_analyzingFile)
                     const CircularProgressIndicator()
+                  else if (_batchAnalysisResult != null)
+                    _buildBatchAnalysisView(setDialogState, theme, l10n)
                   else if (_analysisResult != null)
                     Container(
                       padding: const EdgeInsets.all(16),
@@ -2154,14 +2167,15 @@ class WatermarkPageState extends State<WatermarkPage>
                                                         onPressed: () =>
                                                             Navigator.pop(
                                                                 context, false),
-                                                        child:
-                                                            const Text('Cancel'),
+                                                        child: const Text(
+                                                            'Cancel'),
                                                       ),
                                                       TextButton(
                                                         onPressed: () =>
                                                             Navigator.pop(
                                                                 context, true),
-                                                        child: const Text('Save'),
+                                                        child:
+                                                            const Text('Save'),
                                                       ),
                                                     ],
                                                   ),
@@ -2181,15 +2195,16 @@ class WatermarkPageState extends State<WatermarkPage>
                                                   _saveBookmarks();
                                                   messenger.showSnackBar(
                                                     SnackBar(
-                                                        content: Text(
-                                                            l10n.bookmarkSaved)),
+                                                        content: Text(l10n
+                                                            .bookmarkSaved)),
                                                   );
                                                 }
                                               }
                                             },
                                           ),
                                           IconButton(
-                                            icon: const Icon(Icons.copy, size: 18),
+                                            icon: const Icon(Icons.copy,
+                                                size: 18),
                                             tooltip: l10n.copyPublicKey,
                                             onPressed: () {
                                               Clipboard.setData(ClipboardData(
@@ -2306,12 +2321,17 @@ class WatermarkPageState extends State<WatermarkPage>
                   Text(l10n.fileAnalyzerTitle),
                 ],
               ),
-              content: dialogContent,
+              content: SizedBox(
+                width: double.maxFinite,
+                child: dialogContent,
+              ),
               actions: [
                 TextButton(
                   onPressed: () {
                     _analysisResult = null;
                     _extractedFile = null;
+                    _batchAnalysisResult = null;
+                    _selectedFileIndex = null;
                     Navigator.of(context).pop();
                   },
                   child: Text(l10n.close),
@@ -2331,12 +2351,23 @@ class WatermarkPageState extends State<WatermarkPage>
   bool _integrityVerified = false;
   String? _senderPublicKey;
   ExtractedFileResult? _extractedFile;
+  BatchAnalysisResult? _batchAnalysisResult;
+  int? _selectedFileIndex;
 
   Future<void> _pickAndAnalyze(StateSetter setDialogState) async {
     final result = await FilePicker.platform.pickFiles(
       allowMultiple: false,
       type: FileType.custom,
-      allowedExtensions: ['jpg', 'jpeg', 'png', 'webp', 'pdf', 'heic', 'heif'],
+      allowedExtensions: [
+        'jpg',
+        'jpeg',
+        'png',
+        'webp',
+        'pdf',
+        'heic',
+        'heif',
+        'zip'
+      ],
       withData: true,
     );
 
@@ -2347,7 +2378,14 @@ class WatermarkPageState extends State<WatermarkPage>
       final bytes =
           pickedFile.bytes ?? await File(pickedFile.path!).readAsBytes();
       if (!mounted) return;
-      await _performFileAnalysis(bytes, pickedFile.name, setDialogState);
+
+      // Check if it's a ZIP file
+      final extension = p.extension(pickedFile.name).toLowerCase();
+      if (extension == '.zip') {
+        await _performBatchAnalysis(bytes, pickedFile.name, setDialogState);
+      } else {
+        await _performFileAnalysis(bytes, pickedFile.name, setDialogState);
+      }
     } catch (e) {
       if (!mounted) return;
       final l10n = AppLocalizations.of(context)!;
@@ -2469,15 +2507,16 @@ class WatermarkPageState extends State<WatermarkPage>
                                     ),
                                   ),
                                   IconButton(
-                                    icon: const Icon(Icons.remove_circle_outline,
+                                    icon: const Icon(
+                                        Icons.remove_circle_outline,
                                         color: Colors.red),
                                     onPressed: () async {
                                       final confirm = await showDialog<bool>(
                                         context: context,
                                         builder: (context) => AlertDialog(
                                           title: Text(l10n.delete),
-                                          content: Text(
-                                              l10n.removeIdentityConfirm),
+                                          content:
+                                              Text(l10n.removeIdentityConfirm),
                                           actions: [
                                             TextButton(
                                               onPressed: () =>
@@ -2632,6 +2671,15 @@ class WatermarkPageState extends State<WatermarkPage>
         results.add(l10n.robustSignatureFound(analysis.robustSignature!));
       }
 
+      // Handle digital integrity signature
+      if (analysis.senderPublicKey != null) {
+        if (analysis.integrityVerified) {
+          results.add(l10n.signatureVerified);
+        } else {
+          results.add(l10n.tamperDetected);
+        }
+      }
+
       setDialogState(() {
         if (results.isEmpty) {
           _analysisResult = l10n.noSignatureFound;
@@ -2647,6 +2695,617 @@ class WatermarkPageState extends State<WatermarkPage>
       setDialogState(() {
         _analyzingFile = false;
       });
+    }
+  }
+
+  Future<void> _performBatchAnalysis(
+      Uint8List zipBytes, String fileName, StateSetter setDialogState) async {
+    final l10n = AppLocalizations.of(context)!;
+
+    setDialogState(() {
+      _analyzingFile = true;
+      _analysisResult = null;
+      _batchAnalysisResult = null;
+      _selectedFileIndex = null;
+      _extractedSignature = null;
+      _extractedFile = null;
+      _verificationResult = null;
+    });
+
+    try {
+      String? password =
+          _extractionPassword.isNotEmpty ? _extractionPassword : null;
+
+      // Try to extract ZIP
+      Archive? archive;
+      try {
+        archive = ZipDecoder().decodeBytes(zipBytes, password: password);
+      } catch (e) {
+        // If extraction failed, prompt for password
+        if (!mounted) return;
+        password = await _promptForZipPassword();
+        if (password == null) {
+          setDialogState(() {
+            _analyzingFile = false;
+            _analysisResult = 'Analysis cancelled';
+          });
+          return;
+        }
+
+        try {
+          archive = ZipDecoder().decodeBytes(zipBytes, password: password);
+        } catch (e) {
+          setDialogState(() {
+            _analyzingFile = false;
+            _analysisResult = 'Wrong password';
+          });
+          return;
+        }
+      }
+
+      // Analyze all supported files in the ZIP
+      final List<FileAnalysisItem> items = [];
+      final supportedExtensions = [
+        '.jpg',
+        '.jpeg',
+        '.png',
+        '.webp',
+        '.pdf',
+        '.heic',
+        '.heif'
+      ];
+
+      for (final file in archive.files) {
+        if (file.isFile) {
+          final ext = p.extension(file.name).toLowerCase();
+          if (supportedExtensions.contains(ext)) {
+            try {
+              final fileBytes = file.content as List<int>;
+              final analysis = await WatermarkProcessor.analyzeFileAsync(
+                  Uint8List.fromList(fileBytes), file.name,
+                  password: password);
+
+              items.add(FileAnalysisItem(
+                fileName: file.name,
+                analysis: analysis,
+              ));
+            } catch (e) {
+              items.add(FileAnalysisItem(
+                fileName: file.name,
+                analysis: null,
+                error: e.toString(),
+              ));
+            }
+          }
+        }
+      }
+
+      if (items.isEmpty) {
+        setDialogState(() {
+          _analysisResult = 'No supported files found in ZIP';
+        });
+      } else {
+        setDialogState(() {
+          _batchAnalysisResult = BatchAnalysisResult(
+            items: items,
+            zipPassword: password,
+          );
+        });
+      }
+    } catch (e) {
+      setDialogState(() {
+        _analysisResult = l10n.analysisError(e.toString());
+      });
+    } finally {
+      setDialogState(() {
+        _analyzingFile = false;
+      });
+    }
+  }
+
+  Future<String?> _promptForZipPassword() async {
+    final l10n = AppLocalizations.of(context)!;
+    final controller = TextEditingController();
+    String? result;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Password Required'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              labelText: 'ZIP Password',
+              border: OutlineInputBorder(),
+            ),
+            obscureText: true,
+            autofocus: true,
+            onSubmitted: (value) {
+              result = value;
+              Navigator.of(dialogContext).pop();
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+              child: Text(l10n.cancel),
+            ),
+            FilledButton(
+              onPressed: () {
+                result = controller.text;
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+
+    return result;
+  }
+
+  Widget _buildBatchAnalysisView(
+      StateSetter setDialogState, ThemeData theme, AppLocalizations l10n) {
+    final batch = _batchAnalysisResult!;
+    final senderGroups = batch.groupBySender();
+
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Summary card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: theme.colorScheme.primary),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.summarize, color: theme.colorScheme.primary),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Batch Analysis Summary',
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _buildSummaryRow('Total Files', '${batch.totalFiles}',
+                    Icons.insert_drive_file),
+                _buildSummaryRow('Files with Signatures',
+                    '${batch.filesWithSignatures}', Icons.edit_note),
+                _buildSummaryRow('Files with Hidden Files',
+                    '${batch.filesWithHiddenFiles}', Icons.attach_file),
+                _buildSummaryRow('Files with Integrity Verified',
+                    '${batch.filesWithIntegrity}', Icons.verified),
+                if (batch.filesWithErrors > 0)
+                  _buildSummaryRow('Files with Errors',
+                      '${batch.filesWithErrors}', Icons.error,
+                      color: Colors.red),
+                const SizedBox(height: 12),
+                Text(
+                  'Signed by ${senderGroups.length} sender(s)',
+                  style: theme.textTheme.labelSmall
+                      ?.copyWith(fontStyle: FontStyle.italic),
+                ),
+                // List senders
+                for (final entry in senderGroups.entries)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      '  • ${entry.key == "unsigned" ? "Unsigned" : _getSenderName(entry.key)}: ${entry.value.length} file(s)',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Files list
+          Text(
+            'Files in Archive',
+            style: theme.textTheme.titleSmall
+                ?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          // Use Column with ExpansionTiles instead of ListView
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: theme.colorScheme.outlineVariant),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (int index = 0; index < batch.items.length; index++) ...[
+                  if (index > 0)
+                    Divider(
+                      height: 1,
+                      color: theme.colorScheme.outlineVariant,
+                    ),
+                  _buildFileListItem(
+                      batch.items[index], index, setDialogState, theme, l10n),
+                  // Show detail view inline if this item is selected
+                  if (_selectedFileIndex == index) ...[
+                    Divider(
+                      height: 1,
+                      color: theme.colorScheme.outlineVariant,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: _buildFileDetailView(
+                          batch.items[index], setDialogState, theme, l10n),
+                    ),
+                  ],
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFileListItem(FileAnalysisItem item, int index,
+      StateSetter setDialogState, ThemeData theme, AppLocalizations l10n) {
+    final isSelected = _selectedFileIndex == index;
+
+    return ListTile(
+      selected: isSelected,
+      selectedTileColor:
+          theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+      leading: Icon(
+        _getFileIcon(item.fileName),
+        color: item.hasError
+            ? Colors.red
+            : item.hasIntegrity
+                ? Colors.blue
+                : null,
+      ),
+      title: Text(
+        p.basename(item.fileName),
+        style: const TextStyle(fontSize: 14),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      subtitle: Text(
+        item.hasError
+            ? 'Error: ${item.error}'
+            : item.hasIntegrity
+                ? 'Signed & Verified'
+                : item.hasSignature
+                    ? 'Has signature'
+                    : 'No signature',
+        style: TextStyle(
+          fontSize: 12,
+          color: item.hasError
+              ? Colors.red
+              : item.hasIntegrity
+                  ? Colors.blue
+                  : theme.textTheme.bodySmall?.color,
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (item.hasSignature) const Icon(Icons.edit_note, size: 16),
+          if (item.hasHiddenFile) const Icon(Icons.attach_file, size: 16),
+          if (item.hasIntegrity)
+            const Icon(Icons.verified, size: 16, color: Colors.blue),
+          const SizedBox(width: 4),
+          Icon(
+            isSelected ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+            size: 20,
+          ),
+        ],
+      ),
+      onTap: () {
+        setDialogState(() {
+          _selectedFileIndex = isSelected ? null : index;
+        });
+      },
+    );
+  }
+
+  Widget _buildSummaryRow(String label, String value, IconData icon,
+      {Color? color}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 8),
+          Text(label, style: const TextStyle(fontSize: 13)),
+          const Spacer(),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  IconData _getFileIcon(String fileName) {
+    final ext = p.extension(fileName).toLowerCase();
+    switch (ext) {
+      case '.pdf':
+        return Icons.picture_as_pdf;
+      case '.jpg':
+      case '.jpeg':
+      case '.png':
+      case '.webp':
+      case '.heic':
+      case '.heif':
+        return Icons.image;
+      default:
+        return Icons.insert_drive_file;
+    }
+  }
+
+  String _getSenderName(String publicKey) {
+    if (publicKey == _devicePublicKey) {
+      return 'Me (${_deviceName.isNotEmpty ? _deviceName : 'This Device'})';
+    }
+    final bookmark =
+        _identityBookmarks.where((b) => b.publicKey == publicKey).firstOrNull;
+    if (bookmark != null) {
+      return bookmark.name;
+    }
+    return '${publicKey.substring(0, 8)}...${publicKey.substring(publicKey.length - 8)}';
+  }
+
+  Widget _buildFileDetailView(FileAnalysisItem item, StateSetter setDialogState,
+      ThemeData theme, AppLocalizations l10n) {
+    final analysis = item.analysis;
+    if (analysis == null) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.red.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.error, color: Colors.red, size: 20),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Error analyzing file',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              item.error ?? 'Unknown error',
+              style: const TextStyle(fontSize: 12),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final results = <Widget>[];
+
+    if (analysis.integrityVerified && analysis.senderPublicKey != null) {
+      results.add(
+        Container(
+          padding: const EdgeInsets.all(10),
+          margin: const EdgeInsets.only(bottom: 8),
+          decoration: BoxDecoration(
+            color: Colors.blue.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.verified, color: Colors.blue, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Digitally Signed & Verified',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue,
+                        fontSize: 12,
+                      ),
+                    ),
+                    Text(
+                      'By: ${_getSenderName(analysis.senderPublicKey!)}',
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (analysis.file != null) {
+      final fileResult = analysis.file!;
+      results.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Row(
+            children: [
+              const Icon(Icons.attach_file, size: 16),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  fileResult.isEncrypted && fileResult.fileBytes.isEmpty
+                      ? 'Encrypted file: ${fileResult.fileName}'
+                      : 'Hidden file: ${fileResult.fileName} (${_formatFileSize(fileResult.fileBytes.length)})',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (analysis.signature != null && analysis.signature!.isNotEmpty) {
+      results.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.message, size: 16),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  analysis.signature!,
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (analysis.robustSignature != null &&
+        analysis.robustSignature!.isNotEmpty) {
+      results.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.security, size: 16),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Robust: ${analysis.robustSignature!}',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (results.isNotEmpty)
+            ...results
+          else
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'No signature or hidden data found',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+          if (analysis.file != null &&
+              (!analysis.file!.isEncrypted ||
+                  analysis.file!.fileBytes.isNotEmpty)) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () => _saveExtractedFileFromBatch(analysis.file!),
+                icon: const Icon(Icons.save_alt, size: 16),
+                label:
+                    const Text('Extract File', style: TextStyle(fontSize: 12)),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Future<void> _saveExtractedFileFromBatch(ExtractedFileResult file) async {
+    final l10n = AppLocalizations.of(context)!;
+    if (file.isEncrypted && file.fileBytes.isEmpty) {
+      _addLog('Cannot save: file is encrypted and no password provided');
+      return;
+    }
+
+    try {
+      final FileSaveLocation? saveLocation = await getSaveLocation(
+        suggestedName: file.fileName,
+      );
+
+      if (saveLocation == null) {
+        _addLog('Save cancelled by user');
+        return;
+      }
+
+      final outputFile = XFile.fromData(
+        file.fileBytes,
+        name: file.fileName,
+      );
+
+      await outputFile.saveTo(saveLocation.path);
+
+      _addLog('Extracted file saved to: ${saveLocation.path}');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.fileSaved(p.basename(saveLocation.path))),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      _addLog('Error saving extracted file: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.errorSavingFile(e.toString())),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
     }
   }
 
@@ -3351,6 +4010,7 @@ class WatermarkPageState extends State<WatermarkPage>
                                                               double.infinity,
                                                         );
                                                       }
+
                                                       return Icon(
                                                           Icons.picture_as_pdf,
                                                           size: 40,
@@ -3600,11 +4260,22 @@ class WatermarkPageState extends State<WatermarkPage>
                         final bool enabled = value ?? false;
                         setDialogState(() {
                           _digitallySign = enabled;
+                          // Automatically enable ZIP when digital signature is enabled
+                          // because signed images are converted to PNG (can be larger)
+                          if (enabled && !_useSecureZip) {
+                            _useSecureZip = true;
+                          }
                         });
                         setState(() {
                           _digitallySign = enabled;
+                          if (enabled && !_useSecureZip) {
+                            _useSecureZip = true;
+                          }
                         });
                         _savePreference('digitallySign', enabled);
+                        if (enabled) {
+                          _savePreference('useSecureZip', true);
+                        }
                       },
                     ),
                     const Divider(),
@@ -5379,12 +6050,18 @@ class WatermarkPageState extends State<WatermarkPage>
           .add((Icons.fingerprint, Colors.blueAccent, l10n.digitallySignTitle));
     }
     if (_useSteganography && !_steganographyVerificationFailed) {
-      activeOptions.add(
-          (Icons.verified_user_outlined, Colors.green, l10n.steganographyTitle));
+      activeOptions.add((
+        Icons.verified_user_outlined,
+        Colors.green,
+        l10n.steganographyTitle
+      ));
     }
     if (_useRobustSteganography) {
-      activeOptions.add(
-          (Icons.shield_outlined, Colors.indigo, l10n.robustSteganographyTitle));
+      activeOptions.add((
+        Icons.shield_outlined,
+        Colors.indigo,
+        l10n.robustSteganographyTitle
+      ));
     }
     if (_targetSize != null) {
       activeOptions.add((
@@ -5394,15 +6071,20 @@ class WatermarkPageState extends State<WatermarkPage>
       ));
     }
     if (_steganographyVerificationFailed) {
-      activeOptions.add(
-          (Icons.warning_outlined, Colors.red, l10n.steganographyVerificationFailed));
+      activeOptions.add((
+        Icons.warning_outlined,
+        Colors.red,
+        l10n.steganographyVerificationFailed
+      ));
     }
     if (_qrVisible) {
       activeOptions.add((
         Icons.qr_code_2,
         Colors.blue,
         l10n.qrWatermarkTitle +
-            (_qrType != QrType.metadata ? ' (${_qrType.name.toUpperCase()})' : '')
+            (_qrType != QrType.metadata
+                ? ' (${_qrType.name.toUpperCase()})'
+                : '')
       ));
     }
     if (_hideFileWithSteganography && _hiddenFileBytes != null) {
@@ -5420,12 +6102,15 @@ class WatermarkPageState extends State<WatermarkPage>
       ));
     }
     if (_useAiCloaking) {
-      activeOptions.add(
-          (Icons.visibility_off_outlined, Colors.teal, l10n.aiCloakingEnabledHint));
+      activeOptions.add((
+        Icons.visibility_off_outlined,
+        Colors.teal,
+        l10n.aiCloakingEnabledHint
+      ));
     }
     if (_rasterizePdf) {
-      activeOptions
-          .add((Icons.picture_as_pdf, Colors.redAccent, l10n.rasterizePdfTitle));
+      activeOptions.add(
+          (Icons.picture_as_pdf, Colors.redAccent, l10n.rasterizePdfTitle));
     }
     if (_preserveMetadata) {
       activeOptions.add((
@@ -6874,8 +7559,10 @@ class WatermarkPageState extends State<WatermarkPage>
       final now = DateTime.now();
       final timestamp =
           "${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}";
-      final String versionSuffix = _appVersion.isNotEmpty ? "_v$_appVersion" : "";
-      final zipPath = p.join(tempDir.path, 'SecureMark_Backup${versionSuffix}_$timestamp.zip');
+      final String versionSuffix =
+          _appVersion.isNotEmpty ? "_v$_appVersion" : "";
+      final zipPath = p.join(
+          tempDir.path, 'SecureMark_Backup${versionSuffix}_$timestamp.zip');
 
       final encoder = ZipFileEncoder(password: passwordController.text);
       encoder.create(zipPath);
@@ -6973,7 +7660,8 @@ class WatermarkPageState extends State<WatermarkPage>
 
       final zipFile = File(result.files.single.path!);
       final bytes = await zipFile.readAsBytes();
-      final archive = ZipDecoder().decodeBytes(bytes, password: passwordController.text);
+      final archive =
+          ZipDecoder().decodeBytes(bytes, password: passwordController.text);
 
       for (final file in archive) {
         if (file.name == 'securemark_config.json') {
@@ -7004,9 +7692,11 @@ class WatermarkPageState extends State<WatermarkPage>
           // Reload all settings
           await _loadPreferences();
           await _loadBookmarks();
-          
+
           messenger.showSnackBar(
-            const SnackBar(content: Text("Configuration imported successfully. Restarting UI...")),
+            const SnackBar(
+                content: Text(
+                    "Configuration imported successfully. Restarting UI...")),
           );
           break;
         }
@@ -7014,7 +7704,8 @@ class WatermarkPageState extends State<WatermarkPage>
     } catch (e) {
       _addLog('Error importing configuration: $e');
       messenger.showSnackBar(
-        SnackBar(content: Text("Import failed: check password or file format.")),
+        SnackBar(
+            content: Text("Import failed: check password or file format.")),
       );
     }
   }
@@ -7094,7 +7785,8 @@ class WatermarkPageState extends State<WatermarkPage>
                     controller: TextEditingController(text: publicKey),
                     readOnly: true,
                     maxLines: 2,
-                    style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
+                    style:
+                        const TextStyle(fontFamily: 'monospace', fontSize: 11),
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
                       contentPadding: EdgeInsets.all(8),

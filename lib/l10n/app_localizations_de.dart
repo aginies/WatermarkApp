@@ -1059,27 +1059,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Forensische Prüfung fehlgeschlagen. Sowohl visuelle Pixel als auch versteckte Daten scheinen geändert worden zu sein.';
 
   @override
-  String get onboardingPage1Title => 'Dokumente schützen';
-
-  @override
-  String get onboardingPage1Body =>
-      'Sichtbare und unsichtbare Wasserzeichen für sicheres Teilen.';
-
-  @override
-  String get onboardingPage2Title => 'Steganographie';
-
-  @override
-  String get onboardingPage2Body =>
-      'Versteckte Signaturen oder ganze Dateien in Bildern einbetten.';
-
-  @override
-  String get onboardingPage3Title => 'KI-Schutz';
-
-  @override
-  String get onboardingPage3Body =>
-      'Anti-KI-Schutz und Cloaking gegen KI-Manipulation.';
-
-  @override
   String get onboardingStepTitle => 'So funktioniert es';
 
   @override

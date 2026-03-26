@@ -60,11 +60,12 @@ class IdentityManager {
       if (privateKeyB64 != null) {
         final String? publicKeyB64 = prefs.getString(_publicKeyPref);
         if (publicKeyB64 != null) {
-          _log('Found existing keys in prefs (PK length: ${publicKeyB64.length})');
+          _log(
+              'Found existing keys in prefs (PK length: ${publicKeyB64.length})');
           // Load existing key
           final privateKeyBytes = base64Decode(privateKeyB64);
           final publicKeyBytes = base64Decode(publicKeyB64);
-          
+
           _cachedKeyPair = SimpleKeyPairData(
             privateKeyBytes,
             publicKey: SimplePublicKey(
@@ -85,13 +86,16 @@ class IdentityManager {
       final publicKey = keyPairData.publicKey;
 
       _log('Keys generated, saving to SharedPreferences...');
-      final successPriv = await prefs.setString(_privateKeyPref, base64Encode(privateKey));
-      final successPub = await prefs.setString(_publicKeyPref, base64Encode(publicKey.bytes));
+      final successPriv =
+          await prefs.setString(_privateKeyPref, base64Encode(privateKey));
+      final successPub =
+          await prefs.setString(_publicKeyPref, base64Encode(publicKey.bytes));
 
       _log('Save results: private=$successPriv, public=$successPub');
 
       _cachedKeyPair = keyPairData;
-      return _cachedKeyPair!;    } catch (e, stack) {
+      return _cachedKeyPair!;
+    } catch (e, stack) {
       _log('ERROR in getIdentityKeyPair: $e');
       _log('Stack: $stack');
       rethrow;

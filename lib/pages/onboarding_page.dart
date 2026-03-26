@@ -26,28 +26,52 @@ class _OnboardingPageState extends State<OnboardingPage> {
         title: l10n.appTitle,
         features: [
           _FeatureItem(
-            title: l10n.onboardingPage1Title,
-            body: l10n.onboardingPage1Body,
-            icon: Icons.security,
+            title: l10n.watermarkTypeText,
+            body: l10n.watermarkTextHint,
+            icon: Icons.text_fields,
             color: Colors.blue,
           ),
           _FeatureItem(
-            title: l10n.onboardingPage2Title,
-            body: l10n.onboardingPage2Body,
+            title: l10n.steganographyTitle,
+            body: l10n.steganographySubtitle,
             icon: Icons.visibility_off,
             color: Colors.green,
           ),
           _FeatureItem(
-            title: l10n.onboardingPage3Title,
-            body: l10n.onboardingPage3Body,
+            title: l10n.robustSteganographyTitle,
+            body: l10n.robustSteganographySubtitle,
+            icon: Icons.shield_outlined,
+            color: Colors.indigo,
+          ),
+          _FeatureItem(
+            title: l10n.digitallySignTitle,
+            body: l10n.digitallySignSubtitle,
+            icon: Icons.fingerprint,
+            color: Colors.red,
+          ),
+          _FeatureItem(
+            title: l10n.aiCloakingTitle,
+            body: l10n.aiCloakingSubtitle,
             icon: Icons.auto_awesome,
             color: Colors.purple,
           ),
           _FeatureItem(
             title: l10n.qrWatermarkTitle,
-            body: l10n.onboardingQrCodeNote,
+            body: l10n.enableQrWatermarkSubtitle,
             icon: Icons.qr_code_2,
             color: Colors.orange,
+          ),
+          _FeatureItem(
+            title: l10n.rasterizePdfTitle,
+            body: l10n.rasterizePdfSubtitle,
+            icon: Icons.picture_as_pdf,
+            color: Colors.redAccent,
+          ),
+          _FeatureItem(
+            title: l10n.secureZipTitle,
+            body: l10n.enableSecureZip,
+            icon: Icons.folder_zip,
+            color: Colors.amber,
           ),
         ],
       ),
@@ -82,12 +106,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
             body: l10n.onboardingProfileSave,
             icon: Icons.save_outlined,
             image: 'images/guide/save_profile.png',
-          ),
-          _ExpertCardData(
-            title: l10n.onboardingLiveStatusTitle,
-            body: l10n.onboardingOptionsNote,
-            icon: Icons.settings_input_component_outlined,
-            image: 'images/guide/enabled_options.png',
           ),
           _ExpertCardData(
             title: l10n.onboardingFileAnalyzerTitle,
@@ -210,7 +228,6 @@ class _OnboardingFeaturesSlide extends StatelessWidget {
           Expanded(
             child: ListView.separated(
               shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
               itemCount: features.length,
               separatorBuilder: (context, index) => const SizedBox(height: 20),
               itemBuilder: (context, index) {

@@ -1052,27 +1052,6 @@ class AppLocalizationsIt extends AppLocalizations {
       'Controllo forense fallito. Sia i pixel visivi che i dati nascosti sembrano modificati.';
 
   @override
-  String get onboardingPage1Title => 'Proteggi i tuoi documenti';
-
-  @override
-  String get onboardingPage1Body =>
-      'Filigrane visibili e invisibili per una condivisione sicura.';
-
-  @override
-  String get onboardingPage2Title => 'Steganografia';
-
-  @override
-  String get onboardingPage2Body =>
-      'Incorpora firme nascoste o interi file nelle immagini.';
-
-  @override
-  String get onboardingPage3Title => 'Protezione IA';
-
-  @override
-  String get onboardingPage3Body =>
-      'Protezione Anti-IA e Cloaking per contrastare i modelli IA.';
-
-  @override
   String get onboardingStepTitle => 'Come funziona';
 
   @override

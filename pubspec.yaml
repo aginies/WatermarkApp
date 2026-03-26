@@ -1,7 +1,7 @@
 name: secure_mark
 description: SecureMark - A professional application to secure documents with watermarks for safe sharing.
 publish_to: 'none'
-version: 1.5.1+16
+version: 1.6.0+16
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -37,6 +37,7 @@ dependencies:
   crypto: ^3.0.6
   archive: ^4.0.9
   cryptography: ^2.7.0
+  convert: ^3.1.1
 
 dev_dependencies:
   flutter_test:

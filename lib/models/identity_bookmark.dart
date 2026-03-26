@@ -9,7 +9,8 @@ class IdentityBookmark {
         'publicKey': publicKey,
       };
 
-  factory IdentityBookmark.fromJson(Map<String, dynamic> json) => IdentityBookmark(
+  factory IdentityBookmark.fromJson(Map<String, dynamic> json) =>
+      IdentityBookmark(
         name: json['name'] as String,
         publicKey: json['publicKey'] as String,
       );

@@ -1054,27 +1054,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Error en la comprobación forense. Tanto los píxeles visuales como los datos ocultos parecen modificados.';
 
   @override
-  String get onboardingPage1Title => 'Protege tus documentos';
-
-  @override
-  String get onboardingPage1Body =>
-      'Marcas de agua visibles e invisibles para compartir con seguridad.';
-
-  @override
-  String get onboardingPage2Title => 'Estenografía';
-
-  @override
-  String get onboardingPage2Body =>
-      'Incrusta firmas ocultas o archivos completos dentro de imágenes.';
-
-  @override
-  String get onboardingPage3Title => 'Protección IA';
-
-  @override
-  String get onboardingPage3Body =>
-      'Protección Anti-IA y Cloaking para frustrar modelos de IA.';
-
-  @override
   String get onboardingStepTitle => 'Cómo funciona';
 
   @override
