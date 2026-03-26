@@ -1186,56 +1186,58 @@ class WatermarkPageState extends State<WatermarkPage>
       appBar: AppBar(
         title: Row(
           children: [
-            Text(l10n.appTitle),
+            IconButton(
+              icon: Icon(_zipOutputs || _digitallySign
+                  ? Icons.folder_zip
+                  : Icons.folder_zip_outlined),
+              onPressed: _digitallySign
+                  ? null
+                  : () {
+                      setState(() {
+                        _zipOutputs = !_zipOutputs;
+                      });
+                      _savePreference('zipOutputs', _zipOutputs);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(_zipOutputs
+                              ? l10n.zipEnabledHint
+                              : l10n.zipDisabledHint),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    },
+              tooltip: _digitallySign
+                  ? '${l10n.zipAllFiles} (Required)'
+                  : l10n.zipAllFiles,
+            ),
+            IconButton(
+              icon: const Icon(Icons.search_rounded),
+              onPressed: _showFileAnalyzer,
+              tooltip: l10n.analyzeFile,
+            ),
+            IconButton(
+              icon: const Icon(Icons.password_outlined),
+              onPressed: _showSteganographyOptions,
+              tooltip: l10n.steganographyTitle,
+            ),
+            IconButton(
+              icon: const Icon(Icons.qr_code_2),
+              onPressed: _showQrWatermarkOptions,
+              tooltip: l10n.qrWatermarkTitle,
+            ),
+            IconButton(
+              icon: const Icon(Icons.settings_suggest_outlined),
+              onPressed: _showExpertOptions,
+              tooltip: l10n.expertOptions,
+            ),
+            IconButton(
+              icon: const Icon(Icons.person_pin_outlined),
+              onPressed: _showIdentityDialog,
+              tooltip: l10n.myIdentityTitle,
+            ),
           ],
         ),
         centerTitle: false,
-        actions: [
-          IconButton(
-            icon: Icon(
-                _zipOutputs ? Icons.folder_zip : Icons.folder_zip_outlined),
-            onPressed: () {
-              setState(() {
-                _zipOutputs = !_zipOutputs;
-              });
-              _savePreference('zipOutputs', _zipOutputs);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                      _zipOutputs ? l10n.zipEnabledHint : l10n.zipDisabledHint),
-                  duration: const Duration(seconds: 2),
-                ),
-              );
-            },
-            tooltip: l10n.zipAllFiles,
-          ),
-          IconButton(
-            icon: const Icon(Icons.search_rounded),
-            onPressed: _showFileAnalyzer,
-            tooltip: l10n.analyzeFile,
-          ),
-          IconButton(
-            icon: const Icon(Icons.password_outlined),
-            onPressed: _showSteganographyOptions,
-            tooltip: l10n.steganographyTitle,
-          ),
-          IconButton(
-            icon: const Icon(Icons.qr_code_2),
-            onPressed: _showQrWatermarkOptions,
-            tooltip: l10n.qrWatermarkTitle,
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings_suggest_outlined),
-            onPressed: _showExpertOptions,
-            tooltip: l10n.expertOptions,
-          ),
-          IconButton(
-            icon: const Icon(Icons.person_pin_outlined),
-            onPressed: _showIdentityDialog,
-            tooltip: l10n.myIdentityTitle,
-          ),
-          const SizedBox(width: 8),
-        ],
       ),
       body: SafeArea(
         child: LayoutBuilder(
@@ -2314,11 +2316,14 @@ class WatermarkPageState extends State<WatermarkPage>
             }
 
             return AlertDialog(
+              insetPadding: MediaQuery.of(context).size.width < 600
+                  ? const EdgeInsets.symmetric(horizontal: 16, vertical: 24)
+                  : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
               title: Row(
                 children: [
                   const Icon(Icons.search_rounded),
                   const SizedBox(width: 12),
-                  Text(l10n.fileAnalyzerTitle),
+                  Expanded(child: Text(l10n.fileAnalyzerTitle)),
                 ],
               ),
               content: SizedBox(
@@ -3128,6 +3133,11 @@ class WatermarkPageState extends State<WatermarkPage>
     final results = <Widget>[];
 
     if (analysis.integrityVerified && analysis.senderPublicKey != null) {
+      final isBookmarked = _identityBookmarks
+          .any((b) => b.publicKey == analysis.senderPublicKey);
+      final senderName = _getSenderName(analysis.senderPublicKey!);
+      final isOwnDevice = analysis.senderPublicKey == _devicePublicKey;
+
       results.add(
         Container(
           padding: const EdgeInsets.all(10),
@@ -3153,12 +3163,59 @@ class WatermarkPageState extends State<WatermarkPage>
                       ),
                     ),
                     Text(
-                      'By: ${_getSenderName(analysis.senderPublicKey!)}',
+                      'By: $senderName',
                       style: const TextStyle(fontSize: 11),
                     ),
                   ],
                 ),
               ),
+              if (!isBookmarked && !isOwnDevice)
+                IconButton(
+                  icon: const Icon(Icons.bookmark_add_outlined, size: 18),
+                  tooltip: 'Bookmark this identity',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () async {
+                    final messenger = ScaffoldMessenger.of(context);
+                    final nameController = TextEditingController();
+                    final save = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Bookmark Identity'),
+                        content: TextField(
+                          controller: nameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Name',
+                            hintText: 'e.g. John Doe',
+                          ),
+                          autofocus: true,
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: const Text('Save'),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (save == true && nameController.text.isNotEmpty) {
+                      setDialogState(() {
+                        _identityBookmarks.add(IdentityBookmark(
+                            name: nameController.text,
+                            publicKey: analysis.senderPublicKey!));
+                      });
+                      _saveBookmarks();
+                      messenger.showSnackBar(
+                        SnackBar(content: Text(l10n.bookmarkSaved)),
+                      );
+                    }
+                  },
+                ),
             ],
           ),
         ),
@@ -4274,20 +4331,20 @@ class WatermarkPageState extends State<WatermarkPage>
                         setDialogState(() {
                           _digitallySign = enabled;
                           // Automatically enable ZIP when digital signature is enabled
-                          // because signed images are converted to PNG (can be larger)
-                          if (enabled && !_useSecureZip) {
-                            _useSecureZip = true;
+                          // to preserve integrity metadata
+                          if (enabled) {
+                            _zipOutputs = true;
                           }
                         });
                         setState(() {
                           _digitallySign = enabled;
-                          if (enabled && !_useSecureZip) {
-                            _useSecureZip = true;
+                          if (enabled) {
+                            _zipOutputs = true;
                           }
                         });
                         _savePreference('digitallySign', enabled);
                         if (enabled) {
-                          _savePreference('useSecureZip', true);
+                          _savePreference('zipOutputs', true);
                         }
                       },
                     ),
@@ -6993,8 +7050,29 @@ class WatermarkPageState extends State<WatermarkPage>
     }
   }
 
+  /// Validates that QR code has required content based on selected type
+  bool _isQrContentValid() {
+    switch (_qrType) {
+      case QrType.metadata:
+        // Metadata type is always valid (at minimum includes timestamp and app info)
+        return true;
+      case QrType.url:
+        // URL type requires a non-empty URL
+        return _qrUrl.isNotEmpty && Uri.tryParse(_qrUrl)?.hasScheme == true;
+      case QrType.vcard:
+        // vCard type requires at least first name or last name
+        return _vCardFirstName.isNotEmpty || _vCardLastName.isNotEmpty;
+    }
+  }
+
   Future<void> _applyWatermark() async {
     if (_selectedPaths.isEmpty) {
+      return;
+    }
+
+    // Validate QR code content if QR is enabled
+    if (_qrVisible && !_isQrContentValid()) {
+      _showQrWatermarkOptions();
       return;
     }
 
@@ -7380,19 +7458,6 @@ class WatermarkPageState extends State<WatermarkPage>
       }
     }
 
-    final googleFonts = FontManager.googleFonts;
-    if (googleFonts.isNotEmpty) {
-      for (final font in googleFonts) {
-        items.add(DropdownMenuItem<WatermarkFont>(
-          value: font,
-          child: Text(
-            font.displayName,
-            style: font.getTextStyle(fontSize: 14),
-          ),
-        ));
-      }
-    }
-
     return items;
   }
 
@@ -7401,8 +7466,6 @@ class WatermarkPageState extends State<WatermarkPage>
     switch (_selectedFont.source) {
       case FontSource.bitmap:
         return l10n.fontSelectionNote;
-      case FontSource.google:
-        return l10n.fontSelectionNoteGoogle;
       case FontSource.asset:
         return l10n.fontSelectionNoteAsset;
     }

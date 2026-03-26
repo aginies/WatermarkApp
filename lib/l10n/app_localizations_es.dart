@@ -427,10 +427,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get viewUpdate => 'Ver';
 
   @override
-  String get analyzeFile => 'Analizar archivo (LSB)';
+  String get analyzeFile => 'Analizar archivo';
 
   @override
-  String get fileAnalyzerTitle => 'Analizador de archivos (LSB)';
+  String get fileAnalyzerTitle => 'Analizador de archivos';
 
   @override
   String get fileAnalyzerDescription =>
@@ -1124,7 +1124,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get activeOptionsHelpTitle => 'Opciones de seguridad activas';
 
   @override
-  String get identityBookmarksTitle => 'Marcadores de identidad de firma';
+  String get identityBookmarksTitle => 'Contactos de firma';
 
   @override
   String get bookmarkNameLabel => 'Nombre de identidad';
@@ -1133,10 +1133,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get identityKeyLabel => 'Firma (clave pública)';
 
   @override
-  String get addIdentity => 'Añadir identidad';
+  String get addIdentity => 'Contacto';
 
   @override
-  String get addWithQrCode => 'Añadir mediante código QR';
+  String get addWithQrCode => 'Código QR';
 
   @override
   String get removeIdentityConfirm => '¿Eliminar este marcador de identidad?';

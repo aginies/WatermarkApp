@@ -773,13 +773,13 @@ abstract class AppLocalizations {
   /// No description provided for @analyzeFile.
   ///
   /// In en, this message translates to:
-  /// **'Analyze File (LSB)'**
+  /// **'Analyze File'**
   String get analyzeFile;
 
   /// No description provided for @fileAnalyzerTitle.
   ///
   /// In en, this message translates to:
-  /// **'File Analyzer (LSB)'**
+  /// **'File Analyzer'**
   String get fileAnalyzerTitle;
 
   /// No description provided for @fileAnalyzerDescription.
@@ -1956,7 +1956,7 @@ abstract class AppLocalizations {
   /// No description provided for @identityBookmarksTitle.
   ///
   /// In en, this message translates to:
-  /// **'Signature Identity Bookmarks'**
+  /// **'Signature Contacts'**
   String get identityBookmarksTitle;
 
   /// No description provided for @bookmarkNameLabel.
@@ -1974,13 +1974,13 @@ abstract class AppLocalizations {
   /// No description provided for @addIdentity.
   ///
   /// In en, this message translates to:
-  /// **'Add Identity'**
+  /// **'Contact'**
   String get addIdentity;
 
   /// No description provided for @addWithQrCode.
   ///
   /// In en, this message translates to:
-  /// **'Add via QR Code'**
+  /// **'QR Code'**
   String get addWithQrCode;
 
   /// No description provided for @removeIdentityConfirm.

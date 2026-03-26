@@ -1,6 +1,5 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
 import 'font_manager.dart';
 
 /// Manages loading and caching of TrueType font files for watermark rendering
@@ -29,15 +28,9 @@ class FontLoader {
     try {
       Uint8List? bytes;
 
-      switch (font.source) {
-        case FontSource.asset:
-          bytes = await _loadAssetFont(font);
-          break;
-        case FontSource.google:
-          bytes = await _loadGoogleFont(font);
-          break;
-        case FontSource.bitmap:
-          return null; // Already handled above
+      // All non-bitmap fonts are asset fonts now
+      if (font.source == FontSource.asset) {
+        bytes = await _loadAssetFont(font);
       }
 
       if (bytes != null) {
@@ -61,26 +54,6 @@ class FontLoader {
       return data.buffer.asUint8List();
     } catch (e) {
       debugPrint('Failed to load asset font $assetPath: $e');
-      return null;
-    }
-  }
-
-  /// Load Google Font from Google Fonts API
-  /// Downloads the TTF file and caches it
-  Future<Uint8List?> _loadGoogleFont(WatermarkFont font) async {
-    final url = font.getGoogleFontUrl();
-    if (url == null) return null;
-
-    try {
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode == 200) {
-        return response.bodyBytes;
-      } else {
-        debugPrint('Failed to download Google Font: ${response.statusCode}');
-        return null;
-      }
-    } catch (e) {
-      debugPrint('Error downloading Google Font ${font.fontFamily}: $e');
       return null;
     }
   }
@@ -125,10 +98,11 @@ class FontLoader {
 
   /// Pre-load commonly used fonts to improve performance
   Future<void> preloadCommonFonts() async {
-    // Pre-load the most popular fonts
+    // Pre-load all bundled asset fonts
     final commonFonts = [
-      WatermarkFont.roboto,
-      WatermarkFont.openSans,
+      WatermarkFont.liberationMono,
+      WatermarkFont.liberationSerif,
+      WatermarkFont.vera,
     ];
 
     for (final font in commonFonts) {

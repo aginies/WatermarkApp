@@ -426,10 +426,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get viewUpdate => 'Visualizza';
 
   @override
-  String get analyzeFile => 'Analizza file (LSB)';
+  String get analyzeFile => 'Analizza file';
 
   @override
-  String get fileAnalyzerTitle => 'Analizzatore file (LSB)';
+  String get fileAnalyzerTitle => 'Analizzatore file';
 
   @override
   String get fileAnalyzerDescription =>
@@ -1123,7 +1123,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get activeOptionsHelpTitle => 'Opzioni di sicurezza attive';
 
   @override
-  String get identityBookmarksTitle => 'Segnalibri identità firma';
+  String get identityBookmarksTitle => 'Contatti firma';
 
   @override
   String get bookmarkNameLabel => 'Nome identità';
@@ -1132,10 +1132,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get identityKeyLabel => 'Firma (chiave pubblica)';
 
   @override
-  String get addIdentity => 'Aggiungi identità';
+  String get addIdentity => 'Contatto';
 
   @override
-  String get addWithQrCode => 'Aggiungi tramite codice QR';
+  String get addWithQrCode => 'Codice QR';
 
   @override
   String get removeIdentityConfirm =>

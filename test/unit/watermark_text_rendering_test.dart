@@ -106,7 +106,7 @@ void main() {
         false,
         0xFF00FF00, // green
         24.0,
-        WatermarkFont.roboto,
+        WatermarkFont.vera,
         preRenderedStamps,
         watermarkType: WatermarkType.text,
       );

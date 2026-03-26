@@ -420,10 +420,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewUpdate => 'View';
 
   @override
-  String get analyzeFile => 'Analyze File (LSB)';
+  String get analyzeFile => 'Analyze File';
 
   @override
-  String get fileAnalyzerTitle => 'File Analyzer (LSB)';
+  String get fileAnalyzerTitle => 'File Analyzer';
 
   @override
   String get fileAnalyzerDescription =>
@@ -1109,7 +1109,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activeOptionsHelpTitle => 'Active Security Options';
 
   @override
-  String get identityBookmarksTitle => 'Signature Identity Bookmarks';
+  String get identityBookmarksTitle => 'Signature Contacts';
 
   @override
   String get bookmarkNameLabel => 'Identity Name';
@@ -1118,10 +1118,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get identityKeyLabel => 'Signature (public key)';
 
   @override
-  String get addIdentity => 'Add Identity';
+  String get addIdentity => 'Contact';
 
   @override
-  String get addWithQrCode => 'Add via QR Code';
+  String get addWithQrCode => 'QR Code';
 
   @override
   String get removeIdentityConfirm => 'Remove this identity bookmark?';
