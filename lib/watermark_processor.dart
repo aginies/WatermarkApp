@@ -798,6 +798,18 @@ class WatermarkProcessor {
         'SecureMark (https://github.com/aginies/SecureMark)';
     output.textData!['Software'] = 'SecureMark';
 
+    final expected = (steganographyText?.isNotEmpty == true)
+        ? steganographyText!
+        : watermarkText;
+
+    // IMPORTANT: Apply Robust Steganography (DCT) BEFORE signing
+    // because it modifies pixel values significantly.
+    if (useRobustSteganography) {
+      progressPort
+          ?.send({'progress': 0.30, 'message': 'progressEmbeddingRobust'});
+      output = DctHandler.embedRobustSignature(output, expected);
+    }
+
     progressPort
         ?.send({'progress': 0.35, 'message': 'progressApplyingWatermark'});
 
@@ -824,14 +836,6 @@ class WatermarkProcessor {
       });
     });
 
-    final expected = (steganographyText?.isNotEmpty == true)
-        ? steganographyText!
-        : watermarkText;
-    if (useRobustSteganography) {
-      progressPort
-          ?.send({'progress': 0.80, 'message': 'progressEmbeddingRobust'});
-      output = DctHandler.embedRobustSignature(output, expected);
-    }
     if (useSteganography) {
       if (hiddenFileName != null && hiddenFileBytes != null) {
         progressPort?.send({'progress': 0.85, 'message': 'progressHidingFile'});
