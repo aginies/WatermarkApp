@@ -38,6 +38,8 @@ import '../main.dart';
 import '../watermark_error.dart';
 import '../models/processor_models.dart';
 import '../utils/identity_manager.dart';
+import '../models/watermark_option.dart';
+import '../widgets/option_toggle_grid.dart';
 import 'onboarding_page.dart';
 
 class WatermarkPage extends StatefulWidget {
@@ -5839,12 +5841,11 @@ class WatermarkPageState extends State<WatermarkPage>
               );
             }
 
-            final sliders = Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            final sliders = Row(
               children: [
-                _buildTransparencyControl(),
-                const SizedBox(height: 18),
-                _buildDensityControl(),
+                Expanded(child: _buildTransparencyControl()),
+                const SizedBox(width: 16),
+                Expanded(child: _buildDensityControl()),
               ],
             );
 
@@ -5881,338 +5882,277 @@ class WatermarkPageState extends State<WatermarkPage>
     );
   }
 
+  /// Builds the complete list of toggleable watermark options
+  List<WatermarkOption> _buildAllOptions(AppLocalizations l10n) {
+    // Check if steganography password is set
+    final bool hasStegoPassword = _hidingPasswordController.text.isNotEmpty;
+
+    return [
+      // Digital Signature
+      WatermarkOption(
+        id: 'digital_sign',
+        label: l10n.digitallySignTitle,
+        icon: Icons.fingerprint,
+        enabledColor: Colors.blueAccent,
+        isEnabled: _digitallySign,
+        subtitle: _digitallySign ? 'Integrity protection enabled' : null,
+        onToggle: () {
+          setState(() {
+            _digitallySign = !_digitallySign;
+            if (_digitallySign) {
+              _zipOutputs = true; // Auto-enable zip for signing
+            }
+          });
+          _savePreference('digitallySign', _digitallySign);
+          if (_digitallySign) {
+            _savePreference('zipOutputs', true);
+          }
+        },
+        onConfigure: _showExpertOptions,
+      ),
+
+      // Steganography
+      WatermarkOption(
+        id: 'steganography',
+        label: l10n.steganographyTitle,
+        icon: Icons.verified_user_outlined,
+        enabledColor: Colors.green,
+        isEnabled: _useSteganography,
+        isAvailable: hasStegoPassword,
+        unavailableReason: hasStegoPassword ? null : 'Password required',
+        subtitle: _useSteganography ? l10n.steganographyEnabledHint : null,
+        onToggle: () {
+          if (hasStegoPassword) {
+            setState(() {
+              _useSteganography = !_useSteganography;
+            });
+            _savePreference('useSteganography', _useSteganography);
+          }
+        },
+        onConfigure: _showSteganographyOptions,
+      ),
+
+      // Robust Steganography
+      WatermarkOption(
+        id: 'robust_stego',
+        label: l10n.robustSteganographyTitle,
+        icon: Icons.shield_outlined,
+        enabledColor: Colors.indigo,
+        isEnabled: _useRobustSteganography,
+        isAvailable: _useSteganography,
+        unavailableReason: _useSteganography ? null : 'Requires steganography',
+        onToggle: () {
+          if (_useSteganography) {
+            setState(() {
+              _useRobustSteganography = !_useRobustSteganography;
+            });
+            _savePreference('useRobustSteganography', _useRobustSteganography);
+          }
+        },
+        onConfigure: _showSteganographyOptions,
+      ),
+
+      // AI Cloaking
+      WatermarkOption(
+        id: 'ai_cloaking',
+        label: l10n.aiCloakingTitle,
+        icon: Icons.visibility_off_outlined,
+        enabledColor: Colors.teal,
+        isEnabled: _useAiCloaking,
+        subtitle: _useAiCloaking ? l10n.aiCloakingEnabledHint : null,
+        onToggle: () {
+          setState(() {
+            _useAiCloaking = !_useAiCloaking;
+          });
+          _savePreference('useAiCloaking', _useAiCloaking);
+        },
+        onConfigure: _showExpertOptions,
+      ),
+
+      // QR Code Watermark
+      WatermarkOption(
+        id: 'qr_watermark',
+        label: l10n.qrWatermarkTitle,
+        icon: Icons.qr_code_2,
+        enabledColor: Colors.blue,
+        isEnabled: _qrVisible,
+        subtitle: _qrVisible && _qrType != QrType.metadata
+            ? 'Type: ${_qrType.name.toUpperCase()}'
+            : null,
+        onToggle: () {
+          setState(() {
+            _qrVisible = !_qrVisible;
+          });
+          _savePreference('qrVisible', _qrVisible);
+        },
+        onConfigure: _showQrWatermarkOptions,
+      ),
+
+      // Hide File (Steganography)
+      WatermarkOption(
+        id: 'hide_file',
+        label: 'Hide File',
+        icon: Icons.attachment,
+        enabledColor: Colors.brown,
+        isEnabled: _hideFileWithSteganography && _hiddenFileBytes != null,
+        isAvailable: _useSteganography,
+        unavailableReason: _useSteganography ? null : 'Requires steganography',
+        subtitle: _hiddenFileBytes != null ? l10n.hideFileEnabledHint : null,
+        onToggle: () {
+          if (_useSteganography) {
+            setState(() {
+              _hideFileWithSteganography = !_hideFileWithSteganography;
+            });
+            _savePreference(
+                'hideFileWithSteganography', _hideFileWithSteganography);
+          }
+        },
+        onConfigure: _showSteganographyOptions,
+      ),
+
+      // ZIP Outputs
+      WatermarkOption(
+        id: 'zip_outputs',
+        label: l10n.zipAllFiles,
+        icon: Icons.folder_zip,
+        enabledColor: Colors.amber,
+        isEnabled: _zipOutputs,
+        isAvailable: !_digitallySign, // Disabled if signing (auto-required)
+        unavailableReason: _digitallySign ? 'Required for signing' : null,
+        subtitle: _zipOutputs ? l10n.zipEnabledHint : null,
+        onToggle: () {
+          if (!_digitallySign) {
+            setState(() {
+              _zipOutputs = !_zipOutputs;
+            });
+            _savePreference('zipOutputs', _zipOutputs);
+          }
+        },
+        onConfigure: null, // No settings dialog
+      ),
+
+      // Anti-AI Protection
+      WatermarkOption(
+        id: 'anti_ai',
+        label: 'Anti-AI Protection',
+        icon: Icons.auto_awesome,
+        enabledColor: Colors.purple,
+        isEnabled: _antiAiLevel > 0,
+        subtitle: _antiAiLevel > 0
+            ? l10n.antiAiProtectionValue(_antiAiLevel.round())
+            : null,
+        onToggle: () {
+          setState(() {
+            _antiAiLevel = _antiAiLevel > 0 ? 0 : 50.0;
+          });
+          _savePreference('antiAiLevel', _antiAiLevel);
+        },
+        onConfigure: _showExpertOptions,
+      ),
+
+      // PDF Rasterization
+      WatermarkOption(
+        id: 'rasterize_pdf',
+        label: l10n.rasterizePdfTitle,
+        icon: Icons.picture_as_pdf,
+        enabledColor: Colors.redAccent,
+        isEnabled: _rasterizePdf,
+        subtitle: _rasterizePdf ? l10n.rasterizePdfEnabledHint : null,
+        onToggle: () {
+          setState(() {
+            _rasterizePdf = !_rasterizePdf;
+          });
+          _savePreference('rasterizePdf', _rasterizePdf);
+        },
+        onConfigure: _showExpertOptions,
+      ),
+
+      // Preserve Metadata
+      WatermarkOption(
+        id: 'preserve_metadata',
+        label: 'Preserve Metadata',
+        icon: Icons.info_outline,
+        enabledColor: Colors.lightBlue,
+        isEnabled: _preserveMetadata,
+        subtitle: _preserveMetadata ? l10n.preserveMetadataEnabledHint : null,
+        onToggle: () {
+          setState(() {
+            _preserveMetadata = !_preserveMetadata;
+          });
+          _savePreference('preserveMetadata', _preserveMetadata);
+        },
+        onConfigure: _showExpertOptions,
+      ),
+
+      // Image Resizing
+      WatermarkOption(
+        id: 'resize_image',
+        label: 'Image Resizing',
+        icon: Icons.photo_size_select_large,
+        enabledColor: Colors.orange,
+        isEnabled: _targetSize != null,
+        subtitle: _targetSize != null
+            ? l10n.imageResizingLabel(l10n.pixelUnit(_targetSize!))
+            : null,
+        onToggle: () {
+          setState(() {
+            _targetSize = _targetSize == null ? 1280 : null;
+          });
+          _savePreference('targetSize', _targetSize);
+        },
+        onConfigure: _showExpertOptions,
+      ),
+    ];
+  }
+
   Widget? _buildStatusIcons(AppLocalizations l10n) {
-    if (!((_useSteganography && !_steganographyVerificationFailed) ||
-        _useRobustSteganography ||
-        _steganographyVerificationFailed ||
-        _qrVisible ||
-        _targetSize != null ||
-        _zipOutputs ||
-        _antiAiLevel > 0 ||
-        _useAiCloaking ||
-        _rasterizePdf ||
-        _digitallySign ||
-        _enablePdfSecurity ||
-        _preserveMetadata ||
-        (_hideFileWithSteganography && _hiddenFileBytes != null))) {
-      return null;
-    }
+    final allOptions = _buildAllOptions(l10n);
 
-    void showTooltip(GlobalKey<TooltipState> key) {
-      key.currentState?.ensureTooltipVisible();
-    }
-
-    final steganoKey = GlobalKey<TooltipState>();
-    final robustKey = GlobalKey<TooltipState>();
-    final resizeKey = GlobalKey<TooltipState>();
-    final warningKey = GlobalKey<TooltipState>();
-    final qrKey = GlobalKey<TooltipState>();
-    final hideKey = GlobalKey<TooltipState>();
-    final zipKey = GlobalKey<TooltipState>();
-    final antiAiKey = GlobalKey<TooltipState>();
-    final cloakingKey = GlobalKey<TooltipState>();
-    final rasterKey = GlobalKey<TooltipState>();
-    final digitallySignKey = GlobalKey<TooltipState>();
-    // final pdfSecurityKey = GlobalKey<TooltipState>();
-    final preserveKey = GlobalKey<TooltipState>();
-
+    // Check if we need to show verification failed warning
     final bool currentIsPdf = _processedFiles.isNotEmpty &&
         _previewIndex < _processedFiles.length &&
         _processedFiles[_previewIndex].result.isPdf;
+    final showVerificationWarning =
+        _steganographyVerificationFailed && !currentIsPdf;
 
-    return Wrap(
-      spacing: 0,
-      runSpacing: 8,
-      alignment: WrapAlignment.start,
-      crossAxisAlignment: WrapCrossAlignment.center,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        GestureDetector(
-          onTap: () => _showActiveOptionsHelp(l10n),
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8.0),
-            child: Icon(Icons.help_outline, color: Colors.blueGrey, size: 20),
-          ),
+        // Compact toggle grid (4 icons per row)
+        OptionToggleGrid(
+          options: allOptions,
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          iconSize: 36,
+          spacing: 8,
         ),
-        if (_digitallySign)
-          GestureDetector(
-            onTap: () => showTooltip(digitallySignKey),
-            onDoubleTap: _showExpertOptions,
-            child: Tooltip(
-              key: digitallySignKey,
-              message: l10n.digitallySignEnabledHint,
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8.0),
-                child: Icon(Icons.fingerprint, color: Colors.blueAccent),
-              ),
+        // Verification failed warning (if applicable)
+        if (showVerificationWarning)
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.red.shade50,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: Colors.red.shade200),
             ),
-          ),
-        /*
-        if (_enablePdfSecurity)
-          GestureDetector(
-            onTap: () => showTooltip(pdfSecurityKey),
-            onDoubleTap: _showExpertOptions,
-            child: Tooltip(
-              key: pdfSecurityKey,
-              message: l10n.pdfSecurityTitle,
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8.0),
-                child:
-                    Icon(Icons.lock_person_outlined, color: Colors.deepOrange),
-              ),
-            ),
-          ),
-        */
-        if (_useSteganography && !_steganographyVerificationFailed)
-          GestureDetector(
-            onTap: () => showTooltip(steganoKey),
-            onDoubleTap: _showSteganographyOptions,
-            child: Tooltip(
-              key: steganoKey,
-              message: l10n.steganographyEnabledHint,
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8.0),
-                child: Icon(Icons.verified_user_outlined, color: Colors.green),
-              ),
-            ),
-          ),
-        if (_useRobustSteganography)
-          GestureDetector(
-            onTap: () => showTooltip(robustKey),
-            onDoubleTap: _showSteganographyOptions,
-            child: Tooltip(
-              key: robustKey,
-              message: l10n.robustSteganographyTitle,
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8.0),
-                child: Icon(Icons.shield_outlined, color: Colors.indigo),
-              ),
-            ),
-          ),
-        if (_targetSize != null)
-          GestureDetector(
-            onTap: () => showTooltip(resizeKey),
-            onDoubleTap: _showExpertOptions,
-            child: Tooltip(
-              key: resizeKey,
-              message: l10n.imageResizingLabel(l10n.pixelUnit(_targetSize!)),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8.0),
-                child:
-                    Icon(Icons.photo_size_select_large, color: Colors.orange),
-              ),
-            ),
-          ),
-        if (_steganographyVerificationFailed && !currentIsPdf)
-          GestureDetector(
-            onTap: () => showTooltip(warningKey),
-            onDoubleTap: _showSteganographyOptions,
-            child: Tooltip(
-              key: warningKey,
-              message: l10n.steganographyVerificationFailed,
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8.0),
-                child: Icon(Icons.warning_outlined, color: Colors.red),
-              ),
-            ),
-          ),
-        if (_qrVisible)
-          GestureDetector(
-            onTap: () => showTooltip(qrKey),
-            onDoubleTap: _showQrWatermarkOptions,
-            child: Tooltip(
-              key: qrKey,
-              message: l10n.qrWatermarkTitle +
-                  (_qrType != QrType.metadata
-                      ? ' (${_qrType.name.toUpperCase()})'
-                      : ''),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8.0),
-                child: Icon(Icons.qr_code_2, color: Colors.blue),
-              ),
-            ),
-          ),
-        if (_hideFileWithSteganography && _hiddenFileBytes != null)
-          GestureDetector(
-            onTap: () => showTooltip(hideKey),
-            onDoubleTap: _showSteganographyOptions,
-            child: Tooltip(
-              key: hideKey,
-              message: l10n.hideFileEnabledHint,
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8.0),
-                child: Icon(Icons.attachment, color: Colors.brown),
-              ),
-            ),
-          ),
-        if (_zipOutputs)
-          GestureDetector(
-            onTap: () => showTooltip(zipKey),
-            child: Tooltip(
-              key: zipKey,
-              message: l10n.zipEnabledHint,
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8.0),
-                child: Icon(Icons.folder_zip, color: Colors.amber),
-              ),
-            ),
-          ),
-        if (_antiAiLevel > 0)
-          GestureDetector(
-            onTap: () => showTooltip(antiAiKey),
-            onDoubleTap: _showExpertOptions,
-            child: Tooltip(
-              key: antiAiKey,
-              message: l10n.antiAiProtectionValue(_antiAiLevel.round()),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8.0),
-                child: Icon(Icons.auto_awesome, color: Colors.purple),
-              ),
-            ),
-          ),
-        if (_useAiCloaking)
-          GestureDetector(
-            onTap: () => showTooltip(cloakingKey),
-            onDoubleTap: _showExpertOptions,
-            child: Tooltip(
-              key: cloakingKey,
-              message: l10n.aiCloakingEnabledHint,
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8.0),
-                child: Icon(Icons.visibility_off_outlined, color: Colors.teal),
-              ),
-            ),
-          ),
-        if (_rasterizePdf)
-          GestureDetector(
-            onTap: () => showTooltip(rasterKey),
-            onDoubleTap: _showExpertOptions,
-            child: Tooltip(
-              key: rasterKey,
-              message: l10n.rasterizePdfEnabledHint,
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8.0),
-                child: Icon(Icons.picture_as_pdf, color: Colors.redAccent),
-              ),
-            ),
-          ),
-        if (_preserveMetadata)
-          GestureDetector(
-            onTap: () => showTooltip(preserveKey),
-            onDoubleTap: _showExpertOptions,
-            child: Tooltip(
-              key: preserveKey,
-              message: l10n.preserveMetadataEnabledHint,
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8.0),
-                child: Icon(Icons.info_outline, color: Colors.lightBlue),
-              ),
+            child: Row(
+              children: [
+                Icon(Icons.warning_outlined,
+                    color: Colors.red.shade700, size: 16),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    l10n.steganographyVerificationFailed,
+                    style: TextStyle(
+                      color: Colors.red.shade900,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
       ],
-    );
-  }
-
-  void _showActiveOptionsHelp(AppLocalizations l10n) {
-    final activeOptions = <(IconData, Color, String)>[];
-
-    if (_digitallySign) {
-      activeOptions
-          .add((Icons.fingerprint, Colors.blueAccent, l10n.digitallySignTitle));
-    }
-    if (_useSteganography && !_steganographyVerificationFailed) {
-      activeOptions.add((
-        Icons.verified_user_outlined,
-        Colors.green,
-        l10n.steganographyTitle
-      ));
-    }
-    if (_useRobustSteganography) {
-      activeOptions.add((
-        Icons.shield_outlined,
-        Colors.indigo,
-        l10n.robustSteganographyTitle
-      ));
-    }
-    if (_targetSize != null) {
-      activeOptions.add((
-        Icons.photo_size_select_large,
-        Colors.orange,
-        l10n.imageResizingLabel(l10n.pixelUnit(_targetSize!))
-      ));
-    }
-    if (_steganographyVerificationFailed) {
-      activeOptions.add((
-        Icons.warning_outlined,
-        Colors.red,
-        l10n.steganographyVerificationFailed
-      ));
-    }
-    if (_qrVisible) {
-      activeOptions.add((
-        Icons.qr_code_2,
-        Colors.blue,
-        l10n.qrWatermarkTitle +
-            (_qrType != QrType.metadata
-                ? ' (${_qrType.name.toUpperCase()})'
-                : '')
-      ));
-    }
-    if (_hideFileWithSteganography && _hiddenFileBytes != null) {
-      activeOptions
-          .add((Icons.attachment, Colors.brown, l10n.hideFileEnabledHint));
-    }
-    if (_zipOutputs) {
-      activeOptions.add((Icons.folder_zip, Colors.amber, l10n.zipEnabledHint));
-    }
-    if (_antiAiLevel > 0) {
-      activeOptions.add((
-        Icons.auto_awesome,
-        Colors.purple,
-        l10n.antiAiProtectionValue(_antiAiLevel.round())
-      ));
-    }
-    if (_useAiCloaking) {
-      activeOptions.add((
-        Icons.visibility_off_outlined,
-        Colors.teal,
-        l10n.aiCloakingEnabledHint
-      ));
-    }
-    if (_rasterizePdf) {
-      activeOptions.add(
-          (Icons.picture_as_pdf, Colors.redAccent, l10n.rasterizePdfTitle));
-    }
-    if (_preserveMetadata) {
-      activeOptions.add((
-        Icons.info_outline,
-        Colors.lightBlue,
-        l10n.preserveMetadataEnabledHint
-      ));
-    }
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.activeOptionsHelpTitle),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: activeOptions.map((opt) {
-              return ListTile(
-                leading: Icon(opt.$1, color: opt.$2),
-                title: Text(opt.$3, style: const TextStyle(fontSize: 13)),
-                dense: true,
-              );
-            }).toList(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(l10n.close),
-          ),
-        ],
-      ),
     );
   }
 

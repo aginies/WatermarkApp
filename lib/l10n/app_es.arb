@@ -74,7 +74,7 @@
   "watermarkTextHint": "Ingresa el texto para estampar",
   "randomColor": "Color aleatorio",
   "selectedColor": "Color seleccionado",
-  "transparencyValue": "Transparencia de marca de agua: {value}%",
+  "transparencyValue": "Transparencia: {value}%",
   "@transparencyValue": {
     "placeholders": {
       "value": {

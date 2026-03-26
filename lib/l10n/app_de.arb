@@ -74,7 +74,7 @@
   "watermarkTextHint": "Geben Sie den Text zum Stempeln ein",
   "randomColor": "Zufällige Farbe",
   "selectedColor": "Ausgewählte Farbe",
-  "transparencyValue": "Wasserzeichen-Transparenz: {value}%",
+  "transparencyValue": "Transparenz: {value}%",
   "@transparencyValue": {
     "placeholders": {
       "value": {

@@ -74,7 +74,7 @@
   "watermarkTextHint": "Inserisci il testo da timbrare",
   "randomColor": "Colore casuale",
   "selectedColor": "Colore selezionato",
-  "transparencyValue": "Trasparenza filigrana: {value}%",
+  "transparencyValue": "Trasparenza: {value}%",
   "@transparencyValue": {
     "placeholders": {
       "value": {

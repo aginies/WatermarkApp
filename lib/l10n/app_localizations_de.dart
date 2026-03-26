@@ -131,7 +131,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String transparencyValue(int value) {
-    return 'Wasserzeichen-Transparenz: $value%';
+    return 'Transparenz: $value%';
   }
 
   @override

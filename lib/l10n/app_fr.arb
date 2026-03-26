@@ -74,7 +74,7 @@
   "watermarkTextHint": "Saisissez le texte à tamponner",
   "randomColor": "Couleur aléatoire",
   "selectedColor": "Couleur choisie",
-  "transparencyValue": "Transparence du filigrane : {value}%",
+  "transparencyValue": "Transparence : {value}%",
   "@transparencyValue": {
     "placeholders": {
       "value": {

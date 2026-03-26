@@ -131,7 +131,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String transparencyValue(int value) {
-    return 'Transparence du filigrane : $value%';
+    return 'Transparence : $value%';
   }
 
   @override

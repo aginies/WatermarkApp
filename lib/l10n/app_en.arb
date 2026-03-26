@@ -74,7 +74,7 @@
   "watermarkTextHint": "Enter the text to stamp",
   "randomColor": "Random color",
   "selectedColor": "Selected color",
-  "transparencyValue": "Watermark Transparency: {value}%",
+  "transparencyValue": "Transparency: {value}%",
   "@transparencyValue": {
     "placeholders": {
       "value": {
