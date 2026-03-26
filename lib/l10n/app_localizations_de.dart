@@ -1188,4 +1188,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String configExportSuccess(Object path) {
     return 'Konfiguration erfolgreich exportiert nach: $path';
   }
+
+  @override
+  String get longPressToConfigure => 'Lange drücken zum Konfigurieren';
+
+  @override
+  String get longPressConfigure => 'Lange drücken: konfigurieren';
 }

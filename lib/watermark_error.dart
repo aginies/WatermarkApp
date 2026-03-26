@@ -1,4 +1,5 @@
 import 'package:path/path.dart' as p;
+import 'l10n/app_localizations.dart';
 
 /// Specific error types for better error handling
 enum WatermarkErrorType {
@@ -42,14 +43,16 @@ class WatermarkError implements Exception {
   }
 
   /// Get user-friendly error message
-  String get userMessage {
+  String get userMessage => message;
+
+  /// Get localized user-friendly error message
+  String getLocalizedMessage(AppLocalizations l10n) {
     // Check for specific steganography capacity error
     if (message.contains('too large to hide')) {
       return message;
     }
 
     // Check for resolution limit error
-    // Matches: "Image resolution 16320x7532 (123.0 MP) exceeds..."
     if (message.startsWith('Image resolution') ||
         message.contains('exceeds maximum') ||
         message.contains('MP)')) {
@@ -65,29 +68,30 @@ class WatermarkError implements Exception {
 
     switch (type) {
       case WatermarkErrorType.unsupportedFileType:
-        return 'This file type is not supported. Please use JPG, PNG, or PDF files.';
+        return l10n
+            .processingFailed; // Fallback to general processing failed if specific not available
       case WatermarkErrorType.fileTooLarge:
-        return 'File is too large (max 100MB). Please use a smaller file.';
+        return 'File is too large (max 100MB).'; // Could add this to arb if needed
       case WatermarkErrorType.fileNotFound:
-        return 'File not found. Please make sure the file exists.';
+        return 'File not found.';
       case WatermarkErrorType.fileCorrupted:
-        return 'File appears to be corrupted or unreadable.';
+        return l10n.processingFailed;
       case WatermarkErrorType.invalidImageData:
-        return 'Invalid image data. The image file may be corrupted.';
+        return l10n.processingFailed;
       case WatermarkErrorType.invalidPdfData:
-        return 'Invalid PDF data. The PDF file may be corrupted.';
+        return l10n.processingFailed;
       case WatermarkErrorType.memoryLimitExceeded:
-        return 'Not enough memory to process this file. Try using a smaller file.';
+        return 'Not enough memory to process this file.';
       case WatermarkErrorType.processingTimeout:
-        return 'Processing took too long and was cancelled. Try using a smaller file.';
+        return 'Processing took too long and was cancelled.';
       case WatermarkErrorType.operationCancelled:
-        return 'Operation was cancelled.';
+        return l10n.processingCancelled;
       case WatermarkErrorType.missingSteganographySignature:
-        return 'Custom Steganography Signature cannot be empty when steganography is enabled.';
+        return l10n.missingSteganographySignature;
       case WatermarkErrorType.missingQrContent:
-        return 'QR code content cannot be empty when QR code is enabled.';
+        return l10n.missingQrContent;
       case WatermarkErrorType.unknownError:
-        return 'An unexpected error occurred while processing the file.';
+        return l10n.processingFailed;
     }
   }
 }

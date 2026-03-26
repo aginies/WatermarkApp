@@ -724,5 +724,7 @@
   "exportConfigDesc": "This will create a password-protected ZIP with all your settings and digital identity keys.",
   "exportConfigButton": "Export",
   "importConfigButton": "Import",
-  "configExportSuccess": "Configuration exported successfully to: {path}"
+  "configExportSuccess": "Configuration exported successfully to: {path}",
+  "longPressToConfigure": "Long-press to configure",
+  "longPressConfigure": "Long-press: configure"
 }

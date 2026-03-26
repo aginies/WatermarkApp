@@ -86,8 +86,9 @@ class _ProfileChipState extends State<ProfileChip>
         child: Padding(
           padding: const EdgeInsets.only(right: 8.0, bottom: 4.0),
           child: GestureDetector(
+            onTap: () => _handleSelected(true),
             onLongPress: _handleLongPress,
-            child: ChoiceChip(
+            child: RawChip(
               label: Text(widget.label),
               avatar: Icon(
                 widget.icon,
@@ -97,7 +98,6 @@ class _ProfileChipState extends State<ProfileChip>
                     : theme.colorScheme.onSurfaceVariant,
               ),
               selected: widget.isSelected,
-              onSelected: _handleSelected,
             ),
           ),
         ),

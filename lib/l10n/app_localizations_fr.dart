@@ -1188,4 +1188,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String configExportSuccess(Object path) {
     return 'Configuration exportée avec succès vers : $path';
   }
+
+  @override
+  String get longPressToConfigure => 'Appui long pour configurer';
+
+  @override
+  String get longPressConfigure => 'Appui long : configurer';
 }

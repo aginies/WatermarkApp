@@ -6755,7 +6755,7 @@ class WatermarkPageState extends State<WatermarkPage>
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(e.userMessage),
+                content: Text(e.getLocalizedMessage(l10n)),
                 backgroundColor: theme.colorScheme.error,
               ),
             );
@@ -6786,11 +6786,11 @@ class WatermarkPageState extends State<WatermarkPage>
                   maxCapacity,
                 );
               } else {
-                errorMessage = e.userMessage;
+                errorMessage = e.getLocalizedMessage(l10n);
               }
             } else {
               errorMessage = e is WatermarkError
-                  ? e.userMessage
+                  ? e.getLocalizedMessage(l10n)
                   : l10n.errorPrefix(e.toString());
             }
 

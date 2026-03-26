@@ -167,14 +167,14 @@ class WatermarkProcessor {
         (steganographyText == null || steganographyText.isEmpty)) {
       throw const WatermarkError(
         type: WatermarkErrorType.missingSteganographySignature,
-        message: 'Custom Steganography Signature cannot be empty.',
+        message: 'missingSteganographySignature',
       );
     }
 
     if (qrConfig != null && !qrConfig.isValid) {
       throw const WatermarkError(
         type: WatermarkErrorType.missingQrContent,
-        message: 'QR code content cannot be empty.',
+        message: 'missingQrContent',
       );
     }
 

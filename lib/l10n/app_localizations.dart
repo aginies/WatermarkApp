@@ -2060,6 +2060,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Configuration exported successfully to: {path}'**
   String configExportSuccess(Object path);
+
+  /// No description provided for @longPressToConfigure.
+  ///
+  /// In en, this message translates to:
+  /// **'Long-press to configure'**
+  String get longPressToConfigure;
+
+  /// No description provided for @longPressConfigure.
+  ///
+  /// In en, this message translates to:
+  /// **'Long-press: configure'**
+  String get longPressConfigure;
 }
 
 class _AppLocalizationsDelegate

@@ -724,5 +724,7 @@
   "exportConfigButton": "Esporta",
   "importConfigButton": "Importa",
   "configExportSuccess": "Configurazione esportata con successo in: {path}",
-  "fontConfigTitle": "Configurazione Carattere"
+  "fontConfigTitle": "Configurazione Carattere",
+  "longPressToConfigure": "Pressione lunga per configurare",
+  "longPressConfigure": "Pressione lunga: configurare"
 }

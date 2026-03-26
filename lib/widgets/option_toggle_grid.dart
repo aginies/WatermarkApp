@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/watermark_option.dart';
 
 /// Grid of toggleable option icons with visual feedback
@@ -91,6 +92,7 @@ class _OptionTileState extends State<_OptionTile>
   }
 
   void _handleTap() {
+    final l10n = AppLocalizations.of(context)!;
     // Single tap: Show info
     final parts = <String>[widget.option.label];
 
@@ -107,7 +109,7 @@ class _OptionTileState extends State<_OptionTile>
         parts.add('Double-tap to toggle');
       }
       if (widget.option.onConfigure != null) {
-        parts.add('Long-press to configure');
+        parts.add(l10n.longPressToConfigure);
       }
     }
 
@@ -308,6 +310,7 @@ class _OptionTileState extends State<_OptionTile>
   }
 
   String _buildTooltipMessage() {
+    final l10n = AppLocalizations.of(context)!;
     final parts = [widget.option.label];
 
     if (!widget.option.isAvailable && widget.option.unavailableReason != null) {
@@ -323,7 +326,7 @@ class _OptionTileState extends State<_OptionTile>
         parts.add('Tap: info');
       }
       if (widget.option.onConfigure != null) {
-        parts.add('Long-press: configure');
+        parts.add(l10n.longPressConfigure);
       }
     }
 

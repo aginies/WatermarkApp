@@ -1182,4 +1182,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String configExportSuccess(Object path) {
     return 'Configurazione esportata con successo in: $path';
   }
+
+  @override
+  String get longPressToConfigure => 'Pressione lunga per configurare';
+
+  @override
+  String get longPressConfigure => 'Pressione lunga: configurare';
 }
