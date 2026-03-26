@@ -322,6 +322,7 @@
     }
   },
   "missingSteganographySignature": "Custom Steganography Signature cannot be empty when steganography is enabled.",
+  "missingQrContent": "QR code content cannot be empty when QR code is enabled.",
   "noSignatureFound": "❌ No SecureMark signature detected in this file.",
   "analysisError": "Error during analysis: {error}",
   "@analysisError": {

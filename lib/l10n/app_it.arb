@@ -321,6 +321,7 @@
     }
   },
   "missingSteganographySignature": "La firma di steganografia personalizzata non può essere vuota quando la steganografia è abilitata.",
+  "missingQrContent": "Il contenuto del codice QR non può essere vuoto quando il codice QR è abilitato.",
   "noSignatureFound": "❌ Nessuna firma SecureMark rilevata in questo file.",
   "analysisError": "Errore durante l'analisi: {error}",
   "@analysisError": {

@@ -321,6 +321,7 @@
     }
   },
   "missingSteganographySignature": "La signature de stéganographie personnalisée ne peut pas être vide lorsque la stéganographie est activée.",
+  "missingQrContent": "Le contenu du code QR ne peut pas être vide lorsque le code QR est activé.",
   "noSignatureFound": "❌ Aucune signature SecureMark détectée dans ce fichier.",
   "analysisError": "Erreur pendant l'analyse : {error}",
   "@analysisError": {

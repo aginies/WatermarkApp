@@ -467,6 +467,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'La signature de stéganographie personnalisée ne peut pas être vide lorsque la stéganographie est activée.';
 
   @override
+  String get missingQrContent =>
+      'Le contenu du code QR ne peut pas être vide lorsque le code QR est activé.';
+
+  @override
   String get noSignatureFound =>
       '❌ Aucune signature SecureMark détectée dans ce fichier.';
 

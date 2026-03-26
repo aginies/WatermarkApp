@@ -466,6 +466,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Die benutzerdefinierte Steganographie-Signatur darf nicht leer sein, wenn die Steganographie aktiviert ist.';
 
   @override
+  String get missingQrContent =>
+      'Der Inhalt des QR-Codes darf nicht leer sein, wenn der QR-Code aktiviert ist.';
+
+  @override
   String get noSignatureFound =>
       '❌ Keine SecureMark-Signatur in dieser Datei erkannt.';
 

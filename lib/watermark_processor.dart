@@ -171,6 +171,13 @@ class WatermarkProcessor {
       );
     }
 
+    if (qrConfig != null && !qrConfig.isValid) {
+      throw const WatermarkError(
+        type: WatermarkErrorType.missingQrContent,
+        message: 'QR code content cannot be empty.',
+      );
+    }
+
     onProgress?.call(0.0, 'progressValidating');
     String type;
     try {

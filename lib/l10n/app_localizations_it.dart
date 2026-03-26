@@ -467,6 +467,10 @@ class AppLocalizationsIt extends AppLocalizations {
       'La firma di steganografia personalizzata non può essere vuota quando la steganografia è abilitata.';
 
   @override
+  String get missingQrContent =>
+      'Il contenuto del codice QR non può essere vuoto quando il codice QR è abilitato.';
+
+  @override
   String get noSignatureFound =>
       '❌ Nessuna firma SecureMark rilevata in questo file.';
 

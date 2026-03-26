@@ -12,6 +12,7 @@ enum WatermarkErrorType {
   processingTimeout,
   operationCancelled,
   missingSteganographySignature,
+  missingQrContent,
   unknownError,
 }
 
@@ -83,6 +84,8 @@ class WatermarkError implements Exception {
         return 'Operation was cancelled.';
       case WatermarkErrorType.missingSteganographySignature:
         return 'Custom Steganography Signature cannot be empty when steganography is enabled.';
+      case WatermarkErrorType.missingQrContent:
+        return 'QR code content cannot be empty when QR code is enabled.';
       case WatermarkErrorType.unknownError:
         return 'An unexpected error occurred while processing the file.';
     }

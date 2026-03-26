@@ -6752,19 +6752,16 @@ class WatermarkPageState extends State<WatermarkPage>
           processedFiles.add(ProcessedFile(sourcePath: path, result: result));
           _addLog('Total files processed so far: ${processedFiles.length}');
         } on WatermarkError catch (e) {
-          if (e.type == WatermarkErrorType.missingSteganographySignature) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(e.userMessage),
-                  backgroundColor: theme.colorScheme.error,
-                ),
-              );
-            }
-            _cancelProcessing();
-            return;
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(e.userMessage),
+                backgroundColor: theme.colorScheme.error,
+              ),
+            );
           }
-          rethrow;
+          _cancelProcessing();
+          return;
         } catch (e) {
           _addLog('Failed to process $fileName (${i + 1}/${paths.length}): $e');
           failedFiles.add(path);

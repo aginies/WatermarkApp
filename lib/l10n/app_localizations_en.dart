@@ -461,6 +461,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Custom Steganography Signature cannot be empty when steganography is enabled.';
 
   @override
+  String get missingQrContent =>
+      'QR code content cannot be empty when QR code is enabled.';
+
+  @override
   String get noSignatureFound =>
       '❌ No SecureMark signature detected in this file.';
 

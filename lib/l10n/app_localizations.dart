@@ -830,6 +830,12 @@ abstract class AppLocalizations {
   /// **'Custom Steganography Signature cannot be empty when steganography is enabled.'**
   String get missingSteganographySignature;
 
+  /// No description provided for @missingQrContent.
+  ///
+  /// In en, this message translates to:
+  /// **'QR code content cannot be empty when QR code is enabled.'**
+  String get missingQrContent;
+
   /// No description provided for @noSignatureFound.
   ///
   /// In en, this message translates to:

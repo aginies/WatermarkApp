@@ -468,6 +468,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'La firma de esteganografía personalizada no puede estar vacía cuando la esteganografía está habilitada.';
 
   @override
+  String get missingQrContent =>
+      'El contenido del código QR no puede estar vacío cuando el código QR está habilitado.';
+
+  @override
   String get noSignatureFound =>
       '❌ No se ha detectado ninguna firma de SecureMark en este archivo.';
 

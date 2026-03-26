@@ -120,6 +120,20 @@ class QrWatermarkConfig {
     }
   }
 
+  bool get isValid {
+    switch (type) {
+      case QrType.url:
+        return url != null &&
+            url!.isNotEmpty &&
+            Uri.tryParse(url!)?.hasScheme == true;
+      case QrType.vcard:
+        return (vCardFirstName != null && vCardFirstName!.isNotEmpty) ||
+            (vCardLastName != null && vCardLastName!.isNotEmpty);
+      case QrType.metadata:
+        return true;
+    }
+  }
+
   /// Creates a copy with updated values
   QrWatermarkConfig copyWith({
     QrType? type,
