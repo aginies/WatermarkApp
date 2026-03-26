@@ -7000,7 +7000,7 @@ class WatermarkPageState extends State<WatermarkPage>
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // XY Pad for Transparency & Density
+                // XY Pad for Transparency & Density (Fixed Square)
                 Expanded(
                   flex: 3,
                   child: AspectRatio(
@@ -7009,7 +7009,7 @@ class WatermarkPageState extends State<WatermarkPage>
                   ),
                 ),
                 const SizedBox(width: 16),
-                // Combined Preview
+                // Combined Preview (Fixed Square)
                 Expanded(
                   flex: 4,
                   child: AspectRatio(
@@ -7052,6 +7052,38 @@ class WatermarkPageState extends State<WatermarkPage>
             _savePreference('transparency', _transparency);
             _savePreference('density', _density);
           },
+          onTapDown: (details) {
+            if (_processing) return;
+            final RenderBox box = context.findRenderObject() as RenderBox;
+            final offset = box.globalToLocal(details.globalPosition);
+
+            final newX = (offset.dx / box.size.width).clamp(0.0, 1.0);
+            final newY = (offset.dy / box.size.height).clamp(0.0, 1.0);
+
+            setState(() {
+              _transparency = newX * 100;
+              _density = 10 + ((1.0 - newY) * 80);
+            });
+            _savePreference('transparency', _transparency);
+            _savePreference('density', _density);
+            HapticFeedback.lightImpact();
+          },
+          onDoubleTapDown: (details) {
+            if (_processing) return;
+            final RenderBox box = context.findRenderObject() as RenderBox;
+            final offset = box.globalToLocal(details.globalPosition);
+
+            final newX = (offset.dx / box.size.width).clamp(0.0, 1.0);
+            final newY = (offset.dy / box.size.height).clamp(0.0, 1.0);
+
+            setState(() {
+              _transparency = newX * 100;
+              _density = 10 + ((1.0 - newY) * 80);
+            });
+            _savePreference('transparency', _transparency);
+            _savePreference('density', _density);
+            HapticFeedback.mediumImpact();
+          },
           child: Container(
             decoration: BoxDecoration(
               color: theme.colorScheme.surfaceContainerHighest
@@ -7089,11 +7121,11 @@ class WatermarkPageState extends State<WatermarkPage>
                 ),
                 // The draggable dot
                 Positioned(
-                  left: (x * size) - 10,
-                  top: (y * size) - 10,
+                  left: (x * size) - 14,
+                  top: (y * size) - 14,
                   child: Container(
-                    width: 20,
-                    height: 20,
+                    width: 28,
+                    height: 28,
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primary,
                       shape: BoxShape.circle,
@@ -7104,7 +7136,7 @@ class WatermarkPageState extends State<WatermarkPage>
                           spreadRadius: 1,
                         ),
                       ],
-                      border: Border.all(color: Colors.white, width: 2),
+                      border: Border.all(color: Colors.white, width: 3),
                     ),
                   ),
                 ),
@@ -7126,7 +7158,7 @@ class WatermarkPageState extends State<WatermarkPage>
         : (baseColor.computeLuminance() > 0.5 ? Colors.black : Colors.white);
 
     return Container(
-      // Remove hardcoded height to allow CrossAxisAlignment.stretch to work
+      // Fills available space from stretch
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(12),
