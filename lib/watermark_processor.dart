@@ -1990,9 +1990,6 @@ class WatermarkProcessor {
       if (integritySig != null && publicKey != null && originalHash != null) {
         IdentityManager.onLog
             ?.call('[VERIFY] Found integrity signature. Verifying...');
-        IdentityManager.onLog?.call('[VERIFY] Original keywords: "$kw"');
-        IdentityManager.onLog
-            ?.call('[VERIFY] Extracted Original Hash: $originalHash');
 
         // The integrity verification works as follows:
         // 1. The originalHash is a SHA-256 hash (hex string) of the document BEFORE integrity metadata was added
