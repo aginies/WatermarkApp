@@ -5,6 +5,8 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
 
+import 'certificate_manager.dart';
+
 /// Network interface information with IP classification
 class NetworkInterfaceInfo {
   final String ipAddress;
@@ -50,6 +52,8 @@ class LocalServerManager {
   static String? _fileName;
   static String? _token;
   static StreamController<void>? _cancelController; // For cancellation
+  static Completer<void>?
+      _transferCompleteCompleter; // Wait for client acknowledgment
 
   static bool get isRunning => _server != null;
   static const int chunkSize = 64 * 1024; // 64 KB chunks
@@ -108,6 +112,7 @@ class LocalServerManager {
     _fileName = name;
     _token = _generateRandomToken();
     _cancelController = StreamController<void>.broadcast();
+    _transferCompleteCompleter = Completer<void>();
 
     return _startHttpServer(
       onDone: onDone,
@@ -138,8 +143,67 @@ class LocalServerManager {
     _fileName = filePath.split('/').last;
     _token = _generateRandomToken();
     _cancelController = StreamController<void>.broadcast();
+    _transferCompleteCompleter = Completer<void>();
 
     return _startHttpServer(
+      onDone: onDone,
+      onProgress: onProgress,
+      bindAddress: bindAddress,
+    );
+  }
+
+  /// Start HTTPS server with in-memory bytes (for encrypted data)
+  static Future<int> startServerSecure(
+    Uint8List bytes,
+    String name, {
+    VoidCallback? onDone,
+    Function(int, int)? onProgress,
+    String? bindAddress,
+  }) async {
+    if (_server != null) {
+      await stopServer();
+    }
+
+    _fileBytes = bytes;
+    _filePath = null;
+    _fileSize = bytes.length;
+    _fileName = name;
+    _token = _generateRandomToken();
+    _cancelController = StreamController<void>.broadcast();
+    _transferCompleteCompleter = Completer<void>();
+
+    return _startHttpsServer(
+      onDone: onDone,
+      onProgress: onProgress,
+      bindAddress: bindAddress,
+    );
+  }
+
+  /// Start HTTPS server streaming from file path (memory-efficient for large files)
+  static Future<int> startServerFromFileSecure(
+    String filePath, {
+    VoidCallback? onDone,
+    Function(int, int)? onProgress,
+    String? bindAddress,
+  }) async {
+    if (_server != null) {
+      await stopServer();
+    }
+
+    final file = File(filePath);
+    if (!await file.exists()) {
+      throw FileSystemException('File not found', filePath);
+    }
+
+    _filePath = filePath;
+    _fileBytes = null;
+    _fileSize = await file.length();
+    _fileName = filePath.split('/').last;
+    _token = _generateRandomToken();
+    _cancelController = StreamController<void>.broadcast();
+    _transferCompleteCompleter = Completer<void>();
+
+    return _startHttpsServer(
       onDone: onDone,
       onProgress: onProgress,
       bindAddress: bindAddress,
@@ -174,7 +238,12 @@ class LocalServerManager {
             ContentType.parse('application/octet-stream');
         request.response.headers
             .add('Content-Disposition', 'attachment; filename="$_fileName"');
+        request.response.headers.set('Content-Encoding',
+            'identity'); // Disable compression for binary data
         request.response.contentLength = _fileSize!;
+
+        // ignore: avoid_print
+        print('[LocalServer] Starting transfer: $_fileName ($_fileSize bytes)');
 
         try {
           if (_fileBytes != null) {
@@ -193,9 +262,36 @@ class LocalServerManager {
             );
           }
 
+          // ignore: avoid_print
+          print('[LocalServer] Transfer complete, closing response stream');
           await request.response.close();
+          // ignore: avoid_print
+          print(
+              '[LocalServer] Response stream closed, waiting for client acknowledgment...');
+
+          // Wait for client to send acknowledgment (with timeout)
+          try {
+            await _transferCompleteCompleter!.future.timeout(
+              const Duration(seconds: 10),
+              onTimeout: () {
+                // ignore: avoid_print
+                print(
+                    '[LocalServer] ⚠️ Client acknowledgment timeout, shutting down anyway');
+              },
+            );
+            // ignore: avoid_print
+            print('[LocalServer] ✅ Client acknowledged receipt');
+
+            // Small delay to ensure ACK response is sent before server shutdown
+            await Future.delayed(const Duration(milliseconds: 50));
+          } catch (e) {
+            // ignore: avoid_print
+            print('[LocalServer] Error waiting for acknowledgment: $e');
+          }
 
           // One-shot: stop server after successful download
+          // ignore: avoid_print
+          print('[LocalServer] Stopping server');
           await stopServer();
           onDone?.call();
         } catch (e) {
@@ -204,6 +300,143 @@ class LocalServerManager {
           await request.response.close();
           await stopServer();
         }
+      } else if (path == '/$_token/ack') {
+        // Client acknowledgment that file was received successfully
+        // ignore: avoid_print
+        print('[LocalServer] Received acknowledgment from client');
+
+        if (_transferCompleteCompleter != null &&
+            !_transferCompleteCompleter!.isCompleted) {
+          _transferCompleteCompleter!.complete();
+        }
+
+        request.response
+          ..statusCode = HttpStatus.ok
+          ..write('ACK')
+          ..close();
+      } else {
+        request.response
+          ..statusCode = HttpStatus.notFound
+          ..write('Not Found')
+          ..close();
+      }
+    });
+
+    return _server!.port;
+  }
+
+  /// Internal method to start HTTPS server
+  static Future<int> _startHttpsServer({
+    VoidCallback? onDone,
+    Function(int, int)? onProgress,
+    String? bindAddress,
+  }) async {
+    // Load SecurityContext from certificate manager
+    final context = await CertificateManager.getSecurityContext();
+
+    // Bind to specific address or all IPv4 interfaces
+    final address = bindAddress != null
+        ? InternetAddress(bindAddress)
+        : InternetAddress.anyIPv4;
+
+    // ignore: avoid_print
+    print('[LocalServer HTTPS] Binding to: ${address.address}');
+    _server = await HttpServer.bindSecure(address, 0, context);
+
+    // Optimize TCP settings for HTTPS performance
+    _server!.serverHeader =
+        null; // Don't send server header (small optimization)
+
+    // ignore: avoid_print
+    print(
+        '[LocalServer HTTPS] Server started on ${address.address}:${_server!.port}');
+
+    _server!.listen((HttpRequest request) async {
+      final path = request.uri.path;
+      // ignore: avoid_print
+      print(
+          '[LocalServer HTTPS] Request from ${request.connectionInfo?.remoteAddress.address}: $path');
+      if (path == '/$_token/download') {
+        request.response.headers.contentType =
+            ContentType.parse('application/octet-stream');
+        request.response.headers
+            .add('Content-Disposition', 'attachment; filename="$_fileName"');
+        request.response.headers.set('Content-Encoding',
+            'identity'); // Disable compression for binary data
+        request.response.contentLength = _fileSize!;
+
+        // ignore: avoid_print
+        print('[LocalServer] Starting transfer: $_fileName ($_fileSize bytes)');
+
+        try {
+          if (_fileBytes != null) {
+            // In-memory: send in chunks to avoid blocking
+            await _streamBytesInChunks(
+              request.response,
+              _fileBytes!,
+              onProgress: onProgress,
+            );
+          } else if (_filePath != null) {
+            // Stream from file
+            await _streamFileInChunks(
+              request.response,
+              _filePath!,
+              onProgress: onProgress,
+            );
+          }
+
+          // ignore: avoid_print
+          print('[LocalServer] Transfer complete, closing response stream');
+          await request.response.close();
+          // ignore: avoid_print
+          print(
+              '[LocalServer] Response stream closed, waiting for client acknowledgment...');
+
+          // Wait for client to send acknowledgment (with timeout)
+          try {
+            await _transferCompleteCompleter!.future.timeout(
+              const Duration(seconds: 10),
+              onTimeout: () {
+                // ignore: avoid_print
+                print(
+                    '[LocalServer] ⚠️ Client acknowledgment timeout, shutting down anyway');
+              },
+            );
+            // ignore: avoid_print
+            print('[LocalServer] ✅ Client acknowledged receipt');
+
+            // Small delay to ensure ACK response is sent before server shutdown
+            await Future.delayed(const Duration(milliseconds: 50));
+          } catch (e) {
+            // ignore: avoid_print
+            print('[LocalServer] Error waiting for acknowledgment: $e');
+          }
+
+          // One-shot: stop server after successful download
+          // ignore: avoid_print
+          print('[LocalServer] Stopping server');
+          await stopServer();
+          onDone?.call();
+        } catch (e) {
+          // ignore: avoid_print
+          print('Error serving file: $e');
+          await request.response.close();
+          await stopServer();
+        }
+      } else if (path == '/$_token/ack') {
+        // Client acknowledgment that file was received successfully
+        // ignore: avoid_print
+        print('[LocalServer] Received acknowledgment from client');
+
+        if (_transferCompleteCompleter != null &&
+            !_transferCompleteCompleter!.isCompleted) {
+          _transferCompleteCompleter!.complete();
+        }
+
+        request.response
+          ..statusCode = HttpStatus.ok
+          ..write('ACK')
+          ..close();
       } else {
         request.response
           ..statusCode = HttpStatus.notFound
@@ -223,6 +456,10 @@ class LocalServerManager {
   }) async {
     int offset = 0;
     final total = data.length;
+    int chunkCount = 0;
+
+    // Use 1MB buffer to maximize throughput and minimize TLS record overhead
+    final bufferSize = 1024 * 1024;
 
     while (offset < total) {
       // Check for cancellation
@@ -230,15 +467,18 @@ class LocalServerManager {
         throw Exception('Transfer cancelled by user');
       }
 
-      final end = (offset + chunkSize < total) ? offset + chunkSize : total;
+      final end = (offset + bufferSize < total) ? offset + bufferSize : total;
       final chunk = data.sublist(offset, end);
       response.add(chunk);
 
       offset = end;
       onProgress?.call(offset, total);
 
-      // Yield to event loop to prevent blocking
-      await Future.delayed(Duration.zero);
+      // Yield to event loop every 8 buffers (every 8MB) for maximum throughput
+      chunkCount++;
+      if (chunkCount % 8 == 0) {
+        await Future.delayed(Duration.zero);
+      }
     }
   }
 
@@ -249,9 +489,15 @@ class LocalServerManager {
     Function(int, int)? onProgress,
   }) async {
     final file = File(filePath);
-    final stream = file.openRead();
+    // Read with larger buffer to reduce TLS overhead
+    final stream = file.openRead().cast<List<int>>();
     int bytesSent = 0;
     final total = _fileSize!;
+
+    // Buffer chunks to reduce TLS record overhead
+    final buffer = BytesBuilder(copy: false);
+    const targetBufferSize = 1024 * 1024; // 1MB buffer for maximum throughput
+    int writeCount = 0;
 
     await for (final chunk in stream) {
       // Check for cancellation
@@ -259,8 +505,27 @@ class LocalServerManager {
         throw Exception('Transfer cancelled by user');
       }
 
-      response.add(chunk);
-      bytesSent += chunk.length;
+      buffer.add(chunk);
+
+      // Send when buffer is large enough
+      if (buffer.length >= targetBufferSize) {
+        response.add(buffer.toBytes());
+        bytesSent += buffer.length;
+        buffer.clear();
+        onProgress?.call(bytesSent, total);
+
+        // Yield to event loop every 8 writes (every 8MB) for maximum throughput
+        writeCount++;
+        if (writeCount % 8 == 0) {
+          await Future.delayed(Duration.zero);
+        }
+      }
+    }
+
+    // Send remaining buffered data
+    if (buffer.isNotEmpty) {
+      response.add(buffer.toBytes());
+      bytesSent += buffer.length;
       onProgress?.call(bytesSent, total);
     }
   }

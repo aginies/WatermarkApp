@@ -4,6 +4,8 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:crypto/crypto.dart';
+
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -40,6 +42,8 @@ import '../models/processor_models.dart';
 import '../utils/color_utils.dart';
 import '../utils/identity_manager.dart';
 import '../utils/local_server_manager.dart';
+import '../utils/certificate_manager.dart';
+import '../utils/secure_http_client.dart';
 import '../steganography/encryption_utils.dart';
 import '../models/watermark_option.dart';
 import '../widgets/option_toggle_grid.dart';
@@ -169,6 +173,8 @@ class WatermarkPageState extends State<WatermarkPage>
   String? _localEncryptionKey;
   bool _useLocalEncryption = true;
   bool _pushToReceiver = false;
+  bool _useHttps = false;
+  String? _certificateFingerprint;
   bool _showReceiveQr = false;
   bool _hasPromptedForMobileDir = false;
 
@@ -2652,6 +2658,14 @@ class WatermarkPageState extends State<WatermarkPage>
 
     if (!mounted) return;
 
+    // Responsive sizing: larger on mobile but still as dialog (to preserve log visibility)
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isMobile = screenWidth < 600;
+
+    final dialogWidth = isMobile ? screenWidth * 0.95 : 700.0;
+    final dialogHeight = isMobile ? screenHeight * 0.80 : 600.0;
+
     showDialog(
       context: context,
       builder: (context) {
@@ -2664,12 +2678,12 @@ class WatermarkPageState extends State<WatermarkPage>
                   children: [
                     const Icon(Icons.sensors, color: Colors.blue),
                     const SizedBox(width: 12),
-                    Text(l10n.localShareTitle),
+                    Expanded(child: Text(l10n.localShareTitle)),
                   ],
                 ),
                 content: SizedBox(
-                  width: 700,
-                  height: 600,
+                  width: dialogWidth,
+                  height: dialogHeight,
                   child: Column(
                     children: [
                       TabBar(
@@ -2760,6 +2774,88 @@ class WatermarkPageState extends State<WatermarkPage>
               value: _useLocalEncryption,
               onChanged: (val) {
                 setDialogState(() => _useLocalEncryption = val);
+              },
+            ),
+            // HTTPS Toggle
+            SwitchListTile(
+              title: const Text("Use HTTPS (Encrypted Transport)",
+                  style: TextStyle(fontSize: 14)),
+              subtitle: Text(
+                _useHttps
+                    ? "Self-signed certificate with fingerprint verification"
+                    : "Using HTTP (no transport encryption)",
+                style: TextStyle(
+                  fontSize: 11,
+                  color: _useHttps ? Colors.green : Colors.grey,
+                ),
+              ),
+              secondary: Icon(
+                _useHttps ? Icons.https : Icons.http,
+                size: 20,
+                color: _useHttps
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurfaceVariant,
+              ),
+              value: _useHttps,
+              onChanged: (val) async {
+                if (val) {
+                  // Enable HTTPS: Always generate fresh certificate
+                  try {
+                    setDialogState(() {
+                      _addLog('Generating fresh self-signed certificate...');
+                    });
+
+                    // Delete old certificate if it exists
+                    await CertificateManager.deleteCertificate();
+
+                    // Generate new certificate
+                    await CertificateManager.generateCertificate();
+                    final fingerprint =
+                        await CertificateManager.getFingerprint();
+
+                    // Update both dialog state AND main widget state
+                    if (mounted) {
+                      setState(() {
+                        _certificateFingerprint = fingerprint;
+                        _useHttps = true;
+                      });
+                    }
+                    setDialogState(() {
+                      _certificateFingerprint = fingerprint;
+                      _useHttps = true;
+                      _addLog('✅ Certificate generated successfully');
+                      _addLog('📋 Fingerprint: ${fingerprint ?? "NULL"}');
+                    });
+                  } catch (e) {
+                    setDialogState(() {
+                      _addLog('❌ Failed to generate certificate: $e');
+                      _addLog('💡 Install OpenSSL or use HTTP mode');
+                      _useHttps = false;
+                    });
+                    if (mounted) {
+                      setState(() {
+                        _useHttps = false;
+                        _certificateFingerprint = null;
+                      });
+                    }
+                    return;
+                  }
+                } else {
+                  // Disable HTTPS - delete certificate and clear state
+                  await CertificateManager.deleteCertificate();
+
+                  if (mounted) {
+                    setState(() {
+                      _useHttps = false;
+                      _certificateFingerprint = null;
+                    });
+                  }
+                  setDialogState(() {
+                    _useHttps = false;
+                    _certificateFingerprint = null;
+                    _addLog('🗑️ HTTPS disabled, certificate deleted');
+                  });
+                }
               },
             ),
             // Push to Receiver Toggle
@@ -3064,13 +3160,51 @@ class WatermarkPageState extends State<WatermarkPage>
                 borderRadius: BorderRadius.circular(8),
               ),
               child: QrImageView(
-                data: _localEncryptionKey != null
-                    ? 'http://${_networkInterfaces[_selectedInterfaceIndex].ipAddress}:$_servingPort/${LocalServerManager.token}/download?key=$_localEncryptionKey'
-                    : 'http://${_networkInterfaces[_selectedInterfaceIndex].ipAddress}:$_servingPort/${LocalServerManager.token}/download',
+                data: () {
+                  final protocol = _useHttps ? 'https' : 'http';
+                  final ip =
+                      _networkInterfaces[_selectedInterfaceIndex].ipAddress;
+                  final baseUrl =
+                      '$protocol://$ip:$_servingPort/${LocalServerManager.token}/download';
+
+                  // Add encryption key if present
+                  final urlWithKey = _localEncryptionKey != null
+                      ? '$baseUrl?key=$_localEncryptionKey'
+                      : baseUrl;
+
+                  // Add fingerprint fragment for HTTPS
+                  final finalUrl = _useHttps && _certificateFingerprint != null
+                      ? '$urlWithKey#fp=$_certificateFingerprint'
+                      : urlWithKey;
+
+                  return finalUrl;
+                }(),
                 version: QrVersions.auto,
                 size: 200.0,
               ),
             ),
+            const SizedBox(height: 8),
+            // Certificate fingerprint display (HTTPS only)
+            if (_useHttps && _certificateFingerprint != null) ...[
+              const Text(
+                'Certificate Fingerprint (SHA-256):',
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              SelectableText(
+                _certificateFingerprint!,
+                style: const TextStyle(
+                  fontSize: 9,
+                  fontFamily: 'monospace',
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Verify this matches on receiver',
+                style: TextStyle(fontSize: 9, color: Colors.grey),
+              ),
+            ],
             const SizedBox(height: 16),
             // Progress display (only shown during active transfer)
             if (_transferTotal > 0) ...[
@@ -3679,30 +3813,81 @@ class WatermarkPageState extends State<WatermarkPage>
         progress = 0.7;
         addLog(l10n.payloadEncrypted);
 
+        // Load certificate fingerprint for HTTPS before starting server
+        if (_useHttps) {
+          addLog('Loading certificate fingerprint...');
+          _certificateFingerprint = await CertificateManager.getFingerprint();
+          addLog(
+              'Certificate fingerprint: ${_certificateFingerprint ?? "NULL"}');
+          if (_certificateFingerprint == null) {
+            throw Exception(
+                'HTTPS enabled but certificate fingerprint not available');
+          }
+        }
+
         addLog(l10n.startingServer);
-        final port = await LocalServerManager.startServer(
-          encryptedBytes,
-          fileName,
-          bindAddress: _networkInterfaces.isNotEmpty
-              ? _networkInterfaces[_selectedInterfaceIndex].ipAddress
-              : null,
-          onProgress: (sent, total) {
-            setDialogState(() {
-              _transferProgress = sent;
-              _transferTotal = total;
-            });
-          },
-          onDone: () {
-            if (mounted) {
-              setDialogState(() {
-                _servingPort = 0;
-                _sendingFileName = null;
-                _transferProgress = 0;
-                _transferTotal = 0;
-              });
-            }
-          },
-        );
+
+        // Throttle progress updates to avoid excessive UI rebuilds
+        var lastProgressUpdate = DateTime.now();
+        const progressUpdateInterval = Duration(milliseconds: 100);
+
+        final port = _useHttps
+            ? await LocalServerManager.startServerSecure(
+                encryptedBytes,
+                fileName,
+                bindAddress: _networkInterfaces.isNotEmpty
+                    ? _networkInterfaces[_selectedInterfaceIndex].ipAddress
+                    : null,
+                onProgress: (sent, total) {
+                  final now = DateTime.now();
+                  if (now.difference(lastProgressUpdate) >=
+                      progressUpdateInterval) {
+                    lastProgressUpdate = now;
+                    setDialogState(() {
+                      _transferProgress = sent;
+                      _transferTotal = total;
+                    });
+                  }
+                },
+                onDone: () {
+                  if (mounted) {
+                    setDialogState(() {
+                      _servingPort = 0;
+                      _sendingFileName = null;
+                      _transferProgress = 0;
+                      _transferTotal = 0;
+                    });
+                  }
+                },
+              )
+            : await LocalServerManager.startServer(
+                encryptedBytes,
+                fileName,
+                bindAddress: _networkInterfaces.isNotEmpty
+                    ? _networkInterfaces[_selectedInterfaceIndex].ipAddress
+                    : null,
+                onProgress: (sent, total) {
+                  final now = DateTime.now();
+                  if (now.difference(lastProgressUpdate) >=
+                      progressUpdateInterval) {
+                    lastProgressUpdate = now;
+                    setDialogState(() {
+                      _transferProgress = sent;
+                      _transferTotal = total;
+                    });
+                  }
+                },
+                onDone: () {
+                  if (mounted) {
+                    setDialogState(() {
+                      _servingPort = 0;
+                      _sendingFileName = null;
+                      _transferProgress = 0;
+                      _transferTotal = 0;
+                    });
+                  }
+                },
+              );
         await Future.delayed(const Duration(milliseconds: 500));
         progress = 1.0;
         addLog(l10n.serverStarted(port));
@@ -3711,9 +3896,23 @@ class WatermarkPageState extends State<WatermarkPage>
         final selectedIp = _networkInterfaces.isNotEmpty
             ? _networkInterfaces[_selectedInterfaceIndex].ipAddress
             : 'unknown';
-        _addLog('📡 Server listening on: $selectedIp:$port');
+        final protocol = _useHttps ? 'https' : 'http';
         _addLog(
-            '🔗 Access URL: http://$selectedIp:$port/${LocalServerManager.token}/download');
+            '📡 Server listening on: $selectedIp:$port (${_useHttps ? "HTTPS" : "HTTP"})');
+        final baseUrl =
+            '$protocol://$selectedIp:$port/${LocalServerManager.token}/download';
+        final urlWithKey = _localEncryptionKey != null
+            ? '$baseUrl?key=$_localEncryptionKey'
+            : baseUrl;
+        final finalUrl = _useHttps && _certificateFingerprint != null
+            ? '$urlWithKey#fp=$_certificateFingerprint'
+            : urlWithKey;
+        _addLog('🔗 Access URL: $finalUrl');
+        if (_useHttps && _certificateFingerprint != null) {
+          _addLog('🔒 Certificate fingerprint included in URL');
+        } else if (_useHttps && _certificateFingerprint == null) {
+          _addLog('⚠️ HTTPS enabled but fingerprint is NULL');
+        }
 
         await Future.delayed(const Duration(milliseconds: 500));
         if (mounted) Navigator.of(context, rootNavigator: true).pop();
@@ -3724,61 +3923,145 @@ class WatermarkPageState extends State<WatermarkPage>
         });
       } else {
         _localEncryptionKey = null;
+
+        // Load certificate fingerprint for HTTPS before starting server
+        if (_useHttps) {
+          addLog('Loading certificate fingerprint...');
+          _certificateFingerprint = await CertificateManager.getFingerprint();
+          addLog(
+              'Certificate fingerprint: ${_certificateFingerprint ?? "NULL"}');
+          if (_certificateFingerprint == null) {
+            throw Exception(
+                'HTTPS enabled but certificate fingerprint not available');
+          }
+        }
+
         addLog(l10n.startingServer);
+
+        // Throttle progress updates to avoid excessive UI rebuilds
+        var lastProgressUpdate = DateTime.now();
+        const progressUpdateInterval = Duration(milliseconds: 100);
 
         // Use streaming from file path if available (memory-efficient)
         final int port;
         if (filePath != null && await File(filePath).exists()) {
           addLog('Using streaming transfer (memory-efficient)');
-          port = await LocalServerManager.startServerFromFile(
-            filePath,
-            bindAddress: _networkInterfaces.isNotEmpty
-                ? _networkInterfaces[_selectedInterfaceIndex].ipAddress
-                : null,
-            onProgress: (sent, total) {
-              setDialogState(() {
-                _transferProgress = sent;
-                _transferTotal = total;
-              });
-            },
-            onDone: () {
-              if (mounted) {
-                setDialogState(() {
-                  _servingPort = 0;
-                  _sendingFileName = null;
-                  _transferProgress = 0;
-                  _transferTotal = 0;
-                });
-              }
-            },
-          );
+          port = _useHttps
+              ? await LocalServerManager.startServerFromFileSecure(
+                  filePath,
+                  bindAddress: _networkInterfaces.isNotEmpty
+                      ? _networkInterfaces[_selectedInterfaceIndex].ipAddress
+                      : null,
+                  onProgress: (sent, total) {
+                    final now = DateTime.now();
+                    if (now.difference(lastProgressUpdate) >=
+                        progressUpdateInterval) {
+                      lastProgressUpdate = now;
+                      setDialogState(() {
+                        _transferProgress = sent;
+                        _transferTotal = total;
+                      });
+                    }
+                  },
+                  onDone: () {
+                    if (mounted) {
+                      setDialogState(() {
+                        _servingPort = 0;
+                        _sendingFileName = null;
+                        _transferProgress = 0;
+                        _transferTotal = 0;
+                      });
+                    }
+                  },
+                )
+              : await LocalServerManager.startServerFromFile(
+                  filePath,
+                  bindAddress: _networkInterfaces.isNotEmpty
+                      ? _networkInterfaces[_selectedInterfaceIndex].ipAddress
+                      : null,
+                  onProgress: (sent, total) {
+                    final now = DateTime.now();
+                    if (now.difference(lastProgressUpdate) >=
+                        progressUpdateInterval) {
+                      lastProgressUpdate = now;
+                      setDialogState(() {
+                        _transferProgress = sent;
+                        _transferTotal = total;
+                      });
+                    }
+                  },
+                  onDone: () {
+                    if (mounted) {
+                      setDialogState(() {
+                        _servingPort = 0;
+                        _sendingFileName = null;
+                        _transferProgress = 0;
+                        _transferTotal = 0;
+                      });
+                    }
+                  },
+                );
         } else if (bytes != null) {
           // Fallback to in-memory transfer
           addLog(
               'Using in-memory transfer (${(bytes.length / (1024 * 1024)).toStringAsFixed(1)} MB)');
-          port = await LocalServerManager.startServer(
-            bytes,
-            fileName,
-            bindAddress: _networkInterfaces.isNotEmpty
-                ? _networkInterfaces[_selectedInterfaceIndex].ipAddress
-                : null,
-            onProgress: (sent, total) {
-              setDialogState(() {
-                _transferProgress = sent;
-                _transferTotal = total;
-              });
-            },
-            onDone: () {
-              if (mounted) {
-                setDialogState(() {
-                  _servingPort = 0;
-                  _sendingFileName = null;
-                  _transferProgress = 0;
-                  _transferTotal = 0;
-                });
-              }
-            },
-          );
+          port = _useHttps
+              ? await LocalServerManager.startServerSecure(
+                  bytes,
+                  fileName,
+                  bindAddress: _networkInterfaces.isNotEmpty
+                      ? _networkInterfaces[_selectedInterfaceIndex].ipAddress
+                      : null,
+                  onProgress: (sent, total) {
+                    final now = DateTime.now();
+                    if (now.difference(lastProgressUpdate) >=
+                        progressUpdateInterval) {
+                      lastProgressUpdate = now;
+                      setDialogState(() {
+                        _transferProgress = sent;
+                        _transferTotal = total;
+                      });
+                    }
+                  },
+                  onDone: () {
+                    if (mounted) {
+                      setDialogState(() {
+                        _servingPort = 0;
+                        _sendingFileName = null;
+                        _transferProgress = 0;
+                        _transferTotal = 0;
+                      });
+                    }
+                  },
+                )
+              : await LocalServerManager.startServer(
+                  bytes,
+                  fileName,
+                  bindAddress: _networkInterfaces.isNotEmpty
+                      ? _networkInterfaces[_selectedInterfaceIndex].ipAddress
+                      : null,
+                  onProgress: (sent, total) {
+                    final now = DateTime.now();
+                    if (now.difference(lastProgressUpdate) >=
+                        progressUpdateInterval) {
+                      lastProgressUpdate = now;
+                      setDialogState(() {
+                        _transferProgress = sent;
+                        _transferTotal = total;
+                      });
+                    }
+                  },
+                  onDone: () {
+                    if (mounted) {
+                      setDialogState(() {
+                        _servingPort = 0;
+                        _sendingFileName = null;
+                        _transferProgress = 0;
+                        _transferTotal = 0;
+                      });
+                    }
+                  },
+                );
         } else {
           throw ArgumentError(
               'Either bytes or filePath must be provided for unencrypted transfer');
@@ -3791,9 +4074,23 @@ class WatermarkPageState extends State<WatermarkPage>
         final selectedIp = _networkInterfaces.isNotEmpty
             ? _networkInterfaces[_selectedInterfaceIndex].ipAddress
             : 'unknown';
-        _addLog('📡 Server listening on: $selectedIp:$port');
+        final protocol = _useHttps ? 'https' : 'http';
         _addLog(
-            '🔗 Access URL: http://$selectedIp:$port/${LocalServerManager.token}/download');
+            '📡 Server listening on: $selectedIp:$port (${_useHttps ? "HTTPS" : "HTTP"})');
+        final baseUrl =
+            '$protocol://$selectedIp:$port/${LocalServerManager.token}/download';
+        final urlWithKey = _localEncryptionKey != null
+            ? '$baseUrl?key=$_localEncryptionKey'
+            : baseUrl;
+        final finalUrl = _useHttps && _certificateFingerprint != null
+            ? '$urlWithKey#fp=$_certificateFingerprint'
+            : urlWithKey;
+        _addLog('🔗 Access URL: $finalUrl');
+        if (_useHttps && _certificateFingerprint != null) {
+          _addLog('🔒 Certificate fingerprint included in URL');
+        } else if (_useHttps && _certificateFingerprint == null) {
+          _addLog('⚠️ HTTPS enabled but fingerprint is NULL');
+        }
 
         await Future.delayed(const Duration(milliseconds: 500));
         if (mounted) Navigator.of(context, rootNavigator: true).pop();
@@ -3826,6 +4123,43 @@ class WatermarkPageState extends State<WatermarkPage>
     return EncryptionUtils.decryptBytes(params['data'], params['key']);
   }
 
+  /// Send acknowledgment to server that file was received successfully
+  Future<void> _sendDownloadAcknowledgment(
+      Uri downloadUri, HttpClient? httpsClient) async {
+    try {
+      // Build ack URL from download URL
+      final ackUri = Uri(
+        scheme: downloadUri.scheme,
+        host: downloadUri.host,
+        port: downloadUri.port,
+        path: downloadUri.path.replaceAll('/download', '/ack'),
+      );
+
+      _addLog('Sending acknowledgment to server: ${ackUri.path}');
+
+      if (httpsClient != null) {
+        // Use same HTTPS client (with certificate callback)
+        final req = await httpsClient.getUrl(ackUri);
+        final resp = await req.close().timeout(const Duration(seconds: 5));
+        if (resp.statusCode == 200) {
+          _addLog('✅ Server acknowledged receipt confirmation');
+        }
+        // Drain response stream
+        await resp.drain();
+      } else {
+        // Use regular HTTP client
+        final response =
+            await http.get(ackUri).timeout(const Duration(seconds: 5));
+        if (response.statusCode == 200) {
+          _addLog('✅ Server acknowledged receipt confirmation');
+        }
+      }
+    } catch (e) {
+      // Don't fail the download if ack fails
+      _addLog('⚠️ Failed to send acknowledgment (server may timeout): $e');
+    }
+  }
+
   Future<void> _downloadFromLocalUrl(String url) async {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
@@ -3833,6 +4167,7 @@ class WatermarkPageState extends State<WatermarkPage>
     List<String> progressLogs = [];
     double progressValue = 0.0;
     String speedText = '';
+    HttpClient? httpClient; // Declare early so cancel button can access it
 
     void addLog(String msg) {
       progressLogs.add(msg);
@@ -3892,6 +4227,17 @@ class WatermarkPageState extends State<WatermarkPage>
                   ),
                 ],
               ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    _stopStopwatch();
+                    _progressListener = null;
+                    Navigator.of(context, rootNavigator: true).pop();
+                    _addLog('❌ Download cancelled by user');
+                  },
+                  child: Text(l10n.cancel),
+                ),
+              ],
             );
           },
         );
@@ -3901,14 +4247,301 @@ class WatermarkPageState extends State<WatermarkPage>
     try {
       final uri = Uri.parse(url);
       final key = uri.queryParameters['key'];
+      final isHttps = uri.scheme == 'https';
 
-      addLog('Connecting to: ${uri.host}:${uri.port}${uri.path}');
+      // Extract fingerprint from URL fragment (#fp=...)
+      String? expectedFingerprint;
+      addLog('URL scheme: ${uri.scheme}');
+      addLog('URL fragment: "${uri.fragment}"');
+      if (uri.fragment.isNotEmpty) {
+        final fragmentParts = uri.fragment.split('=');
+        addLog(
+            'Fragment parts: ${fragmentParts.length} - ${fragmentParts.join(" | ")}');
+        if (fragmentParts.length == 2 && fragmentParts[0] == 'fp') {
+          expectedFingerprint = fragmentParts[1];
+          final preview = expectedFingerprint.length > 30
+              ? '${expectedFingerprint.substring(0, 30)}...'
+              : expectedFingerprint;
+          addLog('✅ Extracted fingerprint: $preview');
+        } else {
+          addLog('❌ Fragment format invalid (expected fp=...)');
+        }
+      } else {
+        addLog('⚠️ No fragment in URL (no fingerprint)');
+      }
+
+      // HTTPS with fingerprint: Show verification dialog first
+      if (isHttps && expectedFingerprint != null) {
+        addLog('📋 HTTPS with fingerprint - showing verification dialog');
+        // Close progress dialog temporarily
+        if (mounted) Navigator.of(context, rootNavigator: true).pop();
+
+        final verified = await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: const Text('Verify Certificate'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'This server uses HTTPS with a self-signed certificate.',
+                  style: TextStyle(fontSize: 13),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Expected fingerprint (from QR code):',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                SelectableText(
+                  expectedFingerprint ?? '',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontFamily: 'monospace',
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'The actual certificate fingerprint will be verified automatically during download.',
+                  style: TextStyle(fontSize: 11, color: Colors.grey),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Does the fingerprint above match what is displayed on the sender?',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Trust & Download'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                ),
+              ),
+            ],
+          ),
+        );
+
+        if (verified != true) {
+          _stopStopwatch();
+          _addLog('❌ Certificate verification cancelled by user');
+          return;
+        }
+
+        // Re-show progress dialog after verification
+        _elapsedTime = '00:00';
+        _startStopwatch();
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          useRootNavigator: true,
+          builder: (BuildContext context) {
+            return StatefulBuilder(
+              builder: (context, setProgressState) {
+                _progressListener = () {
+                  if (mounted) setProgressState(() {});
+                };
+                return AlertDialog(
+                  title: Text(l10n.receivingFile),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(l10n.receivingFile,
+                              style: theme.textTheme.titleMedium),
+                          Text(_elapsedTime,
+                              style: theme.textTheme.titleSmall
+                                  ?.copyWith(fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: 24),
+                      LinearProgressIndicator(value: progressValue),
+                      const SizedBox(height: 8),
+                      if (speedText.isNotEmpty)
+                        Text(l10n.downloadSpeed(speedText),
+                            style: theme.textTheme.bodySmall),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        height: 100,
+                        width: double.maxFinite,
+                        child: ListView.builder(
+                          itemCount: progressLogs.length,
+                          reverse: true,
+                          itemBuilder: (context, i) => Text(
+                            progressLogs[progressLogs.length - 1 - i],
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        // Cancel download
+                        httpClient?.close(force: true);
+                        _stopStopwatch();
+                        _progressListener = null;
+                        Navigator.of(context, rootNavigator: true).pop();
+                        _addLog('❌ Download cancelled by user');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Download cancelled'),
+                            backgroundColor: theme.colorScheme.error,
+                          ),
+                        );
+                      },
+                      child: Text(l10n.cancel),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      }
+
+      addLog(
+          'Connecting to: ${uri.host}:${uri.port}${uri.path} (${isHttps ? "HTTPS" : "HTTP"})');
       addLog(l10n.connectingToServer);
 
-      final client = http.Client();
-      final request = http.Request('GET', uri);
-      final response =
-          await client.send(request).timeout(const Duration(seconds: 30));
+      // Use different client based on HTTPS with fingerprint verification
+      final http.StreamedResponse response;
+
+      if (isHttps && expectedFingerprint != null) {
+        // HTTPS with certificate fingerprint verification
+        addLog('Using HTTPS with certificate fingerprint verification');
+        httpClient = HttpClient();
+
+        // CRITICAL: This callback must accept self-signed certificates
+        // PERFORMANCE: Cache verification result and minimize logging to avoid slowdown
+        // Capture expectedFingerprint in local variable for closure
+        final expectedFp = expectedFingerprint;
+        bool? cachedVerificationResult;
+
+        httpClient.badCertificateCallback = (cert, host, port) {
+          try {
+            // Return cached result if already verified (callback may be invoked multiple times)
+            final cached = cachedVerificationResult;
+            if (cached != null) {
+              return cached;
+            }
+
+            // Calculate actual fingerprint (only once)
+            final der = cert.der;
+            final digest = sha256.convert(der);
+            final actualFingerprint = digest.bytes
+                .map((b) => b.toRadixString(16).padLeft(2, '0'))
+                .join(':')
+                .toUpperCase();
+
+            // Verify fingerprint matches
+            final matches = actualFingerprint == expectedFp;
+            cachedVerificationResult = matches;
+
+            // Log result asynchronously (only once, without blocking TLS handshake)
+            Future.microtask(() {
+              if (matches) {
+                _addLog('✅ Certificate verified (fingerprints match)');
+              } else {
+                _addLog('❌ Certificate REJECTED (fingerprint mismatch)');
+                _addLog('   Expected: $expectedFp');
+                _addLog('   Actual:   $actualFingerprint');
+              }
+            });
+
+            return matches;
+          } catch (e) {
+            // Log error asynchronously to avoid blocking
+            Future.microtask(
+                () => _addLog('❌ Certificate verification error: $e'));
+            return false;
+          }
+        };
+
+        addLog('Connecting to HTTPS server: ${uri.host}:${uri.port}');
+
+        final HttpClientRequest req;
+        final HttpClientResponse resp;
+
+        try {
+          req = await httpClient.getUrl(uri);
+          addLog('Request created successfully');
+          resp = await req.close().timeout(const Duration(seconds: 30));
+          addLog('Response received with status: ${resp.statusCode}');
+        } catch (e) {
+          addLog('❌ Error during HTTPS connection: $e');
+          _addLog('❌ HTTPS connection failed: $e');
+          _addLog(
+              '   This usually means badCertificateCallback was not called or returned false');
+          rethrow;
+        }
+
+        // Convert HttpClientResponse to StreamedResponse
+        final headers = <String, String>{};
+        resp.headers.forEach((name, values) {
+          headers[name] = values.join(', ');
+        });
+
+        response = http.StreamedResponse(
+          resp,
+          resp.statusCode,
+          contentLength: resp.contentLength,
+          headers: headers,
+        );
+      } else if (isHttps) {
+        // HTTPS without fingerprint - accept any certificate (less secure but encrypted)
+        addLog(
+            'Using HTTPS without fingerprint verification (accepting self-signed certificate)');
+        httpClient = HttpClient();
+        var certAcceptedLogged = false;
+        httpClient.badCertificateCallback = (cert, host, port) {
+          // Accept any certificate (no verification)
+          // Log only once to avoid performance overhead
+          if (!certAcceptedLogged) {
+            certAcceptedLogged = true;
+            Future.microtask(
+                () => addLog('⚠️ Accepting certificate without verification'));
+          }
+          return true;
+        };
+
+        final req = await httpClient.getUrl(uri);
+        final resp = await req.close().timeout(const Duration(seconds: 30));
+
+        // Convert HttpClientResponse to StreamedResponse
+        final headers = <String, String>{};
+        resp.headers.forEach((name, values) {
+          headers[name] = values.join(', ');
+        });
+
+        response = http.StreamedResponse(
+          resp,
+          resp.statusCode,
+          contentLength: resp.contentLength,
+          headers: headers,
+        );
+      } else {
+        // Regular HTTP
+        final client = http.Client();
+        final request = http.Request('GET', uri);
+        response =
+            await client.send(request).timeout(const Duration(seconds: 30));
+      }
 
       if (response.statusCode == 200) {
         final totalBytes = response.contentLength ?? 0;
@@ -3929,6 +4562,10 @@ class WatermarkPageState extends State<WatermarkPage>
 
         // Check if encrypted (needs in-memory processing)
         final isEncrypted = key != null;
+
+        // Throttle progress updates to avoid excessive UI rebuilds
+        var lastProgressUpdate = DateTime.now();
+        const progressUpdateInterval = Duration(milliseconds: 100);
 
         if (isEncrypted) {
           // Encrypted: Must load into memory for HMAC verification & decryption
@@ -3952,8 +4589,16 @@ class WatermarkPageState extends State<WatermarkPage>
               progressValue =
                   (receivedBytes / totalBytes * 0.7).clamp(0.0, 0.7);
             }
-            _progressListener?.call();
+
+            // Only update UI every 100ms to avoid excessive rebuilds
+            if (now.difference(lastProgressUpdate) >= progressUpdateInterval) {
+              lastProgressUpdate = now;
+              _progressListener?.call();
+            }
           }
+
+          // Final update to ensure 100% is shown
+          _progressListener?.call();
 
           final bytes = builder.toBytes();
           addLog(l10n.connectionEstablished);
@@ -3977,6 +4622,9 @@ class WatermarkPageState extends State<WatermarkPage>
           if (mounted) Navigator.of(context, rootNavigator: true).pop();
 
           await _saveDownloadedFile(decrypted, fileName, l10n: l10n);
+
+          // Send acknowledgment to server that file was received successfully
+          await _sendDownloadAcknowledgment(uri, httpClient);
         } else {
           // Unencrypted: Stream directly to file (memory-efficient!)
           addLog(
@@ -4004,8 +4652,17 @@ class WatermarkPageState extends State<WatermarkPage>
               if (totalBytes > 0) {
                 progressValue = (receivedBytes / totalBytes).clamp(0.0, 1.0);
               }
-              _progressListener?.call();
+
+              // Only update UI every 100ms to avoid excessive rebuilds
+              if (now.difference(lastProgressUpdate) >=
+                  progressUpdateInterval) {
+                lastProgressUpdate = now;
+                _progressListener?.call();
+              }
             }
+
+            // Final update to ensure 100% is shown
+            _progressListener?.call();
 
             await sink.flush();
             await sink.close();
@@ -4023,6 +4680,9 @@ class WatermarkPageState extends State<WatermarkPage>
               l10n: l10n,
               sourceFilePath: tempFile.path,
             );
+
+            // Send acknowledgment to server that file was received successfully
+            await _sendDownloadAcknowledgment(uri, httpClient);
 
             // Cleanup temp
             await tempDir.delete(recursive: true);
@@ -4054,6 +4714,9 @@ class WatermarkPageState extends State<WatermarkPage>
               backgroundColor: theme.colorScheme.error),
         );
       }
+    } finally {
+      // Clean up HTTPS client if used
+      httpClient?.close();
     }
   }
 

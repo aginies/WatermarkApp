@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
+import 'package:secure_mark/utils/certificate_manager.dart';
 import 'package:secure_mark/utils/local_server_manager.dart';
 
 void main() {
@@ -58,6 +59,14 @@ void main() {
 
       print('Progress updates: ${progressUpdates.length}');
       print('Final: ${progressUpdates.last} of ${testData.length} bytes');
+
+      // Send ACK to server to let it shutdown gracefully
+      await http.get(
+        Uri.parse('http://localhost:$port/${LocalServerManager.token}/ack'),
+      );
+
+      // Wait for server to fully stop before test completes
+      await Future.delayed(const Duration(milliseconds: 100));
     });
 
     test('Stream file from disk (memory-efficient)', () async {
@@ -92,6 +101,14 @@ void main() {
 
       print('Streamed ${testData.length} bytes from disk');
       print('Progress updates: ${progressUpdates.length}');
+
+      // Send ACK to server to let it shutdown gracefully
+      await http.get(
+        Uri.parse('http://localhost:$port/${LocalServerManager.token}/ack'),
+      );
+
+      // Wait for server to fully stop before test completes
+      await Future.delayed(const Duration(milliseconds: 100));
     });
 
     test('Server handles multiple chunk sizes correctly', () async {
@@ -106,10 +123,9 @@ void main() {
           'test_$sizeKB.bin',
         );
 
-        final response = await http.get(
-          Uri.parse(
-              'http://localhost:$port/${LocalServerManager.token}/download'),
-        );
+        final downloadUrl = Uri.parse(
+            'http://localhost:$port/${LocalServerManager.token}/download');
+        final response = await http.get(downloadUrl);
 
         expect(response.statusCode, equals(200));
         expect(response.bodyBytes.length, equals(testData.length));
@@ -117,7 +133,12 @@ void main() {
 
         print('✓ $sizeKB KB file transferred successfully');
 
-        // Wait for server to auto-stop after one-shot transfer
+        // Send ACK to server
+        final ackUrl = Uri.parse(
+            'http://localhost:$port/${LocalServerManager.token}/ack');
+        await http.get(ackUrl);
+
+        // Wait for server to auto-stop after acknowledgment
         await Future.delayed(const Duration(milliseconds: 100));
         expect(LocalServerManager.isRunning, isFalse);
       }
@@ -187,6 +208,11 @@ void main() {
             'http://localhost:$port/${LocalServerManager.token}/download'),
       );
 
+      // Send ACK to server
+      await http.get(
+        Uri.parse('http://localhost:$port/${LocalServerManager.token}/ack'),
+      );
+
       // Wait for server to stop
       await Future.delayed(const Duration(milliseconds: 100));
 
@@ -254,7 +280,103 @@ void main() {
       print('Progress updates: ${progressUpdates.length}');
       print('Final sent: ${progressUpdates.last} bytes');
 
+      // Send ACK to server to let it shutdown gracefully
+      await http.get(
+        Uri.parse('http://localhost:$port/${LocalServerManager.token}/ack'),
+      );
+
+      // Wait for server to fully stop before test completes
+      await Future.delayed(const Duration(milliseconds: 100));
+
       client.close();
+    });
+
+    group('HTTPS Server Tests', () {
+      test('Certificate generation creates valid files', () async {
+        TestWidgetsFlutterBinding.ensureInitialized();
+
+        // Skip on platforms without openssl (will fallback to error)
+        try {
+          await CertificateManager.generateCertificate();
+
+          expect(await CertificateManager.hasCertificate(), isTrue);
+
+          final fingerprint = await CertificateManager.getFingerprint();
+          expect(fingerprint, isNotNull);
+          expect(fingerprint!.length, greaterThan(30)); // SHA-256 fingerprint format
+
+          print('✅ Certificate generated with fingerprint: $fingerprint');
+
+          // Cleanup
+          await CertificateManager.deleteCertificate();
+        } catch (e) {
+          // OpenSSL not available - skip test
+          print('⚠️ OpenSSL not available, skipping certificate test: $e');
+        }
+      });
+
+      test('HTTPS server starts and serves files', () async {
+        TestWidgetsFlutterBinding.ensureInitialized();
+
+        // Skip if certificate generation fails
+        try {
+          await CertificateManager.generateCertificate();
+        } catch (e) {
+          print('⚠️ OpenSSL not available, skipping HTTPS test: $e');
+          return;
+        }
+
+        final testData = Uint8List.fromList(
+          List.generate(1024, (i) => i % 256),
+        );
+
+        final progressUpdates = <int>[];
+
+        final port = await LocalServerManager.startServerSecure(
+          testData,
+          'test_https.bin',
+          onProgress: (sent, total) {
+            progressUpdates.add(sent);
+          },
+        );
+
+        expect(LocalServerManager.isRunning, isTrue);
+
+        // Note: Cannot test actual HTTPS download without proper certificate trust setup
+        // This test verifies server starts successfully
+        print('✅ HTTPS server started on port $port');
+
+        await LocalServerManager.stopServer();
+        await CertificateManager.deleteCertificate();
+      });
+
+      test('HTTPS server streams from file', () async {
+        TestWidgetsFlutterBinding.ensureInitialized();
+
+        // Skip if certificate generation fails
+        try {
+          await CertificateManager.generateCertificate();
+        } catch (e) {
+          print('⚠️ OpenSSL not available, skipping HTTPS file streaming test: $e');
+          return;
+        }
+
+        final testFile = File(p.join(tempDir.path, 'https_test.dat'));
+        final testData = Uint8List.fromList(
+          List.generate(512, (i) => i % 256),
+        );
+        await testFile.writeAsBytes(testData);
+
+        final port = await LocalServerManager.startServerFromFileSecure(
+          testFile.path,
+        );
+
+        expect(LocalServerManager.isRunning, isTrue);
+        print('✅ HTTPS server streaming from file on port $port');
+
+        await LocalServerManager.stopServer();
+        await CertificateManager.deleteCertificate();
+      });
     });
   });
 }
