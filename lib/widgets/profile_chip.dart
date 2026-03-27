@@ -111,7 +111,8 @@ class _ProfileChipState extends State<ProfileChip>
                         ]
                       : [
                           theme.colorScheme.onSurfaceVariant,
-                          theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                          theme.colorScheme.onSurfaceVariant
+                              .withValues(alpha: 0.7),
                         ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,

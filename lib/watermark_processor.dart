@@ -1151,8 +1151,9 @@ class WatermarkProcessor {
         previewBytes: previewBytes,
         originalBytes: originalBytes,
         heatmapBytes: heatmapBytes,
-        steganographyVerified:
-            analysis.signature != null || analysis.file != null || analysis.integrityVerified,
+        steganographyVerified: analysis.signature != null ||
+            analysis.file != null ||
+            analysis.integrityVerified,
         robustVerified: robustVerified,
         isPdf: true,
         width: originalPreview.width.round(),

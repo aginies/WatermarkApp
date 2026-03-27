@@ -108,7 +108,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
         body: l10n.onboardingOptionsNote,
         image: 'images/guide/options_2.jpg',
       ),
-      ];
+    ];
 
     return Scaffold(
       body: Stack(
@@ -431,122 +431,5 @@ class _OnboardingStepSlide extends StatelessWidget {
       }
     }
     return children;
-  }
-}
-
-class _ExpertCardData {
-  final String title;
-  final String body;
-  final IconData icon;
-  final String? image;
-  final bool isHighlight;
-
-  _ExpertCardData({
-    required this.title,
-    required this.body,
-    required this.icon,
-    this.image,
-    this.isHighlight = false,
-  });
-}
-
-class _OnboardingExpertSlide extends StatelessWidget {
-  final String title;
-  final List<_ExpertCardData> cards;
-
-  const _OnboardingExpertSlide({
-    required this.title,
-    required this.cards,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 60, 24, 80),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            title,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          Expanded(
-            child: ListView.separated(
-              itemCount: cards.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 16),
-              itemBuilder: (context, index) {
-                final card = cards[index];
-                return _buildExpertCard(theme, card);
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildExpertCard(ThemeData theme, _ExpertCardData data) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: data.isHighlight
-            ? theme.colorScheme.primaryContainer.withValues(alpha: 0.4)
-            : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: data.isHighlight
-              ? theme.colorScheme.primary.withValues(alpha: 0.5)
-              : theme.colorScheme.outlineVariant,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(data.icon,
-                  size: 20,
-                  color: data.isHighlight
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.secondary),
-              const SizedBox(width: 12),
-              Text(
-                data.title,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: data.isHighlight ? theme.colorScheme.primary : null,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            data.body,
-            style: theme.textTheme.bodySmall,
-          ),
-          if (data.image != null) ...[
-            const SizedBox(height: 12),
-            Center(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 220),
-                  child: Image.asset(
-                    data.image!,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
   }
 }

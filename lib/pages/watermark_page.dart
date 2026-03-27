@@ -4884,177 +4884,22 @@ class WatermarkPageState extends State<WatermarkPage>
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                    Text(l10n.qrMode, style: theme.textTheme.titleSmall),
-                    CheckboxListTile(
-                      title: Text(l10n.qrVisibleMode),
-                      subtitle: Text(l10n.qrVisibleModeDesc),
-                      value: _qrVisible,
-                      contentPadding: EdgeInsets.zero,
-                      onChanged: (value) {
-                        setDialogState(() => _qrVisible = value ?? false);
-                        setState(() => _qrVisible = value ?? false);
-                        _savePreference('qrVisible', value ?? false);
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    Text(l10n.qrContentType, style: theme.textTheme.titleSmall),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: theme.dividerColor),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<QrType>(
-                          value: _qrType,
-                          isExpanded: true,
-                          onChanged: (value) {
-                            if (value != null) {
-                              setDialogState(() => _qrType = value);
-                              setState(() => _qrType = value);
-                              _savePreference('qrType', value.index);
-                            }
-                          },
-                          items: [
-                            DropdownMenuItem(
-                                value: QrType.metadata,
-                                child: Text(l10n.qrTypeMetadata)),
-                            DropdownMenuItem(
-                                value: QrType.url, child: Text(l10n.qrTypeUrl)),
-                            DropdownMenuItem(
-                                value: QrType.vcard,
-                                child: Text(l10n.qrTypeVCard)),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    if (_qrType == QrType.metadata) ...[
-                      TextField(
-                        decoration: InputDecoration(
-                          labelText: l10n.qrAuthorLabel,
-                          hintText: l10n.qrAuthorHint,
-                          border: const OutlineInputBorder(),
-                        ),
+                      Text(l10n.qrMode, style: theme.textTheme.titleSmall),
+                      CheckboxListTile(
+                        title: Text(l10n.qrVisibleMode),
+                        subtitle: Text(l10n.qrVisibleModeDesc),
+                        value: _qrVisible,
+                        contentPadding: EdgeInsets.zero,
                         onChanged: (value) {
-                          setState(() => _qrAuthor = value);
-                          _savePreference('qrAuthor', value);
+                          setDialogState(() => _qrVisible = value ?? false);
+                          setState(() => _qrVisible = value ?? false);
+                          _savePreference('qrVisible', value ?? false);
                         },
-                        controller: _qrAuthorController,
                       ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        decoration: InputDecoration(
-                          labelText: l10n.qrUrlLabel,
-                          hintText: l10n.qrUrlHint,
-                          border: const OutlineInputBorder(),
-                        ),
-                        onChanged: (value) {
-                          setState(() => _qrUrl = value);
-                          _savePreference('qrUrl', value);
-                        },
-                        controller: _qrUrlController,
-                      ),
-                    ] else if (_qrType == QrType.url) ...[
-                      TextField(
-                        decoration: InputDecoration(
-                          labelText: l10n.qrUrlLabel,
-                          hintText: l10n.qrUrlHint,
-                          border: const OutlineInputBorder(),
-                          errorText: _qrUrl.isNotEmpty &&
-                                  (Uri.tryParse(_qrUrl)?.hasScheme != true)
-                              ? l10n.invalidUrlError
-                              : null,
-                        ),
-                        keyboardType: TextInputType.url,
-                        onChanged: (value) {
-                          setDialogState(() => _qrUrl = value);
-                          setState(() => _qrUrl = value);
-                          _savePreference('qrUrl', value);
-                        },
-                        controller: _qrUrlController,
-                      ),
-                    ] else if (_qrType == QrType.vcard) ...[
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              decoration: InputDecoration(
-                                labelText: l10n.vCardFirstName,
-                                border: const OutlineInputBorder(),
-                              ),
-                              onChanged: (value) {
-                                setState(() => _vCardFirstName = value);
-                                _savePreference('vCardFirstName', value);
-                              },
-                              controller: _vCardFirstNameController,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: TextField(
-                              decoration: InputDecoration(
-                                labelText: l10n.vCardLastName,
-                                border: const OutlineInputBorder(),
-                              ),
-                              onChanged: (value) {
-                                setState(() => _vCardLastName = value);
-                                _savePreference('vCardLastName', value);
-                              },
-                              controller: _vCardLastNameController,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        decoration: InputDecoration(
-                          labelText: l10n.vCardPhone,
-                          border: const OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.phone,
-                        onChanged: (value) {
-                          setState(() => _vCardPhone = value);
-                          _savePreference('vCardPhone', value);
-                        },
-                        controller: _vCardPhoneController,
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        decoration: InputDecoration(
-                          labelText: l10n.vCardEmail,
-                          border: const OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.emailAddress,
-                        onChanged: (value) {
-                          setState(() => _vCardEmail = value);
-                          _savePreference('vCardEmail', value);
-                        },
-                        controller: _vCardEmailController,
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        decoration: InputDecoration(
-                          labelText: l10n.vCardOrg,
-                          border: const OutlineInputBorder(),
-                        ),
-                        onChanged: (value) {
-                          setState(() => _vCardOrg = value);
-                          _savePreference('vCardOrg', value);
-                        },
-                        controller: _vCardOrgController,
-                      ),
-                    ],
-                    if (_qrVisible) ...[
                       const SizedBox(height: 16),
-                      const Divider(),
-                      const SizedBox(height: 8),
-                      Text(l10n.qrVisibleOptions,
+                      Text(l10n.qrContentType,
                           style: theme.textTheme.titleSmall),
                       const SizedBox(height: 8),
-                      Text(l10n.qrPositionLabel),
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 4),
@@ -5063,69 +4908,226 @@ class WatermarkPageState extends State<WatermarkPage>
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: DropdownButtonHideUnderline(
-                          child: DropdownButton<QrPosition>(
-                            value: _qrPosition,
+                          child: DropdownButton<QrType>(
+                            value: _qrType,
                             isExpanded: true,
                             onChanged: (value) {
                               if (value != null) {
-                                setDialogState(() => _qrPosition = value);
-                                setState(() => _qrPosition = value);
-                                _savePreference('qrPosition', value.index);
+                                setDialogState(() => _qrType = value);
+                                setState(() => _qrType = value);
+                                _savePreference('qrType', value.index);
                               }
                             },
                             items: [
                               DropdownMenuItem(
-                                  value: QrPosition.topLeft,
-                                  child: Text(l10n.qrPosTopLeft)),
+                                  value: QrType.metadata,
+                                  child: Text(l10n.qrTypeMetadata)),
                               DropdownMenuItem(
-                                  value: QrPosition.topRight,
-                                  child: Text(l10n.qrPosTopRight)),
+                                  value: QrType.url,
+                                  child: Text(l10n.qrTypeUrl)),
                               DropdownMenuItem(
-                                  value: QrPosition.bottomLeft,
-                                  child: Text(l10n.qrPosBottomLeft)),
-                              DropdownMenuItem(
-                                  value: QrPosition.bottomRight,
-                                  child: Text(l10n.qrPosBottomRight)),
-                              DropdownMenuItem(
-                                  value: QrPosition.center,
-                                  child: Text(l10n.qrPosCenter)),
+                                  value: QrType.vcard,
+                                  child: Text(l10n.qrTypeVCard)),
                             ],
                           ),
                         ),
                       ),
                       const SizedBox(height: 16),
-                      Text(l10n.qrSizeValue(_qrSize.round()),
-                          style: theme.textTheme.titleSmall),
-                      Slider(
-                        value: _qrSize,
-                        min: 50,
-                        max: 200,
-                        divisions: 15,
-                        onChanged: (value) {
-                          setDialogState(() => _qrSize = value);
-                          setState(() => _qrSize = value);
-                          _savePreference('qrSize', value);
-                        },
-                      ),
-                      Text(l10n.qrOpacityValue((_qrOpacity * 100).round()),
-                          style: theme.textTheme.titleSmall),
-                      Slider(
-                        value: _qrOpacity,
-                        min: 0.1,
-                        max: 1.0,
-                        divisions: 9,
-                        onChanged: (value) {
-                          setDialogState(() => _qrOpacity = value);
-                          setState(() => _qrOpacity = value);
-                          _savePreference('qrOpacity', value);
-                        },
-                      ),
+                      if (_qrType == QrType.metadata) ...[
+                        TextField(
+                          decoration: InputDecoration(
+                            labelText: l10n.qrAuthorLabel,
+                            hintText: l10n.qrAuthorHint,
+                            border: const OutlineInputBorder(),
+                          ),
+                          onChanged: (value) {
+                            setState(() => _qrAuthor = value);
+                            _savePreference('qrAuthor', value);
+                          },
+                          controller: _qrAuthorController,
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          decoration: InputDecoration(
+                            labelText: l10n.qrUrlLabel,
+                            hintText: l10n.qrUrlHint,
+                            border: const OutlineInputBorder(),
+                          ),
+                          onChanged: (value) {
+                            setState(() => _qrUrl = value);
+                            _savePreference('qrUrl', value);
+                          },
+                          controller: _qrUrlController,
+                        ),
+                      ] else if (_qrType == QrType.url) ...[
+                        TextField(
+                          decoration: InputDecoration(
+                            labelText: l10n.qrUrlLabel,
+                            hintText: l10n.qrUrlHint,
+                            border: const OutlineInputBorder(),
+                            errorText: _qrUrl.isNotEmpty &&
+                                    (Uri.tryParse(_qrUrl)?.hasScheme != true)
+                                ? l10n.invalidUrlError
+                                : null,
+                          ),
+                          keyboardType: TextInputType.url,
+                          onChanged: (value) {
+                            setDialogState(() => _qrUrl = value);
+                            setState(() => _qrUrl = value);
+                            _savePreference('qrUrl', value);
+                          },
+                          controller: _qrUrlController,
+                        ),
+                      ] else if (_qrType == QrType.vcard) ...[
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                decoration: InputDecoration(
+                                  labelText: l10n.vCardFirstName,
+                                  border: const OutlineInputBorder(),
+                                ),
+                                onChanged: (value) {
+                                  setState(() => _vCardFirstName = value);
+                                  _savePreference('vCardFirstName', value);
+                                },
+                                controller: _vCardFirstNameController,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextField(
+                                decoration: InputDecoration(
+                                  labelText: l10n.vCardLastName,
+                                  border: const OutlineInputBorder(),
+                                ),
+                                onChanged: (value) {
+                                  setState(() => _vCardLastName = value);
+                                  _savePreference('vCardLastName', value);
+                                },
+                                controller: _vCardLastNameController,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          decoration: InputDecoration(
+                            labelText: l10n.vCardPhone,
+                            border: const OutlineInputBorder(),
+                          ),
+                          keyboardType: TextInputType.phone,
+                          onChanged: (value) {
+                            setState(() => _vCardPhone = value);
+                            _savePreference('vCardPhone', value);
+                          },
+                          controller: _vCardPhoneController,
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          decoration: InputDecoration(
+                            labelText: l10n.vCardEmail,
+                            border: const OutlineInputBorder(),
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                          onChanged: (value) {
+                            setState(() => _vCardEmail = value);
+                            _savePreference('vCardEmail', value);
+                          },
+                          controller: _vCardEmailController,
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          decoration: InputDecoration(
+                            labelText: l10n.vCardOrg,
+                            border: const OutlineInputBorder(),
+                          ),
+                          onChanged: (value) {
+                            setState(() => _vCardOrg = value);
+                            _savePreference('vCardOrg', value);
+                          },
+                          controller: _vCardOrgController,
+                        ),
+                      ],
+                      if (_qrVisible) ...[
+                        const SizedBox(height: 16),
+                        const Divider(),
+                        const SizedBox(height: 8),
+                        Text(l10n.qrVisibleOptions,
+                            style: theme.textTheme.titleSmall),
+                        const SizedBox(height: 8),
+                        Text(l10n.qrPositionLabel),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 4),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: theme.dividerColor),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<QrPosition>(
+                              value: _qrPosition,
+                              isExpanded: true,
+                              onChanged: (value) {
+                                if (value != null) {
+                                  setDialogState(() => _qrPosition = value);
+                                  setState(() => _qrPosition = value);
+                                  _savePreference('qrPosition', value.index);
+                                }
+                              },
+                              items: [
+                                DropdownMenuItem(
+                                    value: QrPosition.topLeft,
+                                    child: Text(l10n.qrPosTopLeft)),
+                                DropdownMenuItem(
+                                    value: QrPosition.topRight,
+                                    child: Text(l10n.qrPosTopRight)),
+                                DropdownMenuItem(
+                                    value: QrPosition.bottomLeft,
+                                    child: Text(l10n.qrPosBottomLeft)),
+                                DropdownMenuItem(
+                                    value: QrPosition.bottomRight,
+                                    child: Text(l10n.qrPosBottomRight)),
+                                DropdownMenuItem(
+                                    value: QrPosition.center,
+                                    child: Text(l10n.qrPosCenter)),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(l10n.qrSizeValue(_qrSize.round()),
+                            style: theme.textTheme.titleSmall),
+                        Slider(
+                          value: _qrSize,
+                          min: 50,
+                          max: 200,
+                          divisions: 15,
+                          onChanged: (value) {
+                            setDialogState(() => _qrSize = value);
+                            setState(() => _qrSize = value);
+                            _savePreference('qrSize', value);
+                          },
+                        ),
+                        Text(l10n.qrOpacityValue((_qrOpacity * 100).round()),
+                            style: theme.textTheme.titleSmall),
+                        Slider(
+                          value: _qrOpacity,
+                          min: 0.1,
+                          max: 1.0,
+                          divisions: 9,
+                          onChanged: (value) {
+                            setDialogState(() => _qrOpacity = value);
+                            setState(() => _qrOpacity = value);
+                            _savePreference('qrOpacity', value);
+                          },
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
-            actions: [
+              actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
                   child: Text(l10n.close),
@@ -5862,8 +5864,7 @@ class WatermarkPageState extends State<WatermarkPage>
                           isExpanded: true,
                           onChanged: (Color? newValue) {
                             if (newValue != null) {
-                              SecureMarkApp.of(context)
-                                  .setSeedColor(newValue);
+                              SecureMarkApp.of(context).setSeedColor(newValue);
                             }
                           },
                           items: _uiColorSchemes.entries
@@ -5879,8 +5880,8 @@ class WatermarkPageState extends State<WatermarkPage>
                                     decoration: BoxDecoration(
                                       color: entry.value,
                                       shape: BoxShape.circle,
-                                      border: Border.all(
-                                          color: theme.dividerColor),
+                                      border:
+                                          Border.all(color: theme.dividerColor),
                                     ),
                                   ),
                                   Text(entry.key),
@@ -6276,15 +6277,34 @@ class WatermarkPageState extends State<WatermarkPage>
                                     child: Center(
                                       child: _previewMode == PreviewMode.slider
                                           ? AspectRatio(
-                                              aspectRatio: (_processedFiles[index].result.width != null &&
-                                                      _processedFiles[index].result.height != null &&
-                                                      _processedFiles[index].result.width! > 0 &&
-                                                      _processedFiles[index].result.height! > 0)
-                                                  ? _processedFiles[index].result.width! /
-                                                      _processedFiles[index].result.height!
-                                                  : 1.0,
-                                              child: Builder(builder: (sliderContext) {
-                                                return LayoutBuilder(builder: (context, constraints) {
+                                              aspectRatio:
+                                                  (_processedFiles[index]
+                                                                  .result
+                                                                  .width !=
+                                                              null &&
+                                                          _processedFiles[index]
+                                                                  .result
+                                                                  .height !=
+                                                              null &&
+                                                          _processedFiles[index]
+                                                                  .result
+                                                                  .width! >
+                                                              0 &&
+                                                          _processedFiles[index]
+                                                                  .result
+                                                                  .height! >
+                                                              0)
+                                                      ? _processedFiles[index]
+                                                              .result
+                                                              .width! /
+                                                          _processedFiles[index]
+                                                              .result
+                                                              .height!
+                                                      : 1.0,
+                                              child: Builder(
+                                                  builder: (sliderContext) {
+                                                return LayoutBuilder(builder:
+                                                    (context, constraints) {
                                                   return Stack(
                                                     children: [
                                                       // B (Processed) - Bottom
@@ -6304,8 +6324,10 @@ class WatermarkPageState extends State<WatermarkPage>
                                                               .result
                                                               .originalBytes!,
                                                           fit: BoxFit.fill,
-                                                          width: double.infinity,
-                                                          height: double.infinity,
+                                                          width:
+                                                              double.infinity,
+                                                          height:
+                                                              double.infinity,
                                                         ),
                                                       ),
                                                       // Horizontal Line
@@ -6333,8 +6355,10 @@ class WatermarkPageState extends State<WatermarkPage>
                                                           behavior:
                                                               HitTestBehavior
                                                                   .translucent,
-                                                          onPanUpdate: (details) {
-                                                            final RenderBox? box =
+                                                          onPanUpdate:
+                                                              (details) {
+                                                            final RenderBox?
+                                                                box =
                                                                 sliderContext
                                                                         .findRenderObject()
                                                                     as RenderBox?;
@@ -6347,8 +6371,7 @@ class WatermarkPageState extends State<WatermarkPage>
                                                                           .globalPosition);
                                                               setState(() {
                                                                 _comparisonSliderValue =
-                                                                    (localOffset
-                                                                                .dy /
+                                                                    (localOffset.dy /
                                                                             box.size
                                                                                 .height)
                                                                         .clamp(
@@ -6363,8 +6386,8 @@ class WatermarkPageState extends State<WatermarkPage>
                                                               height: 40,
                                                               decoration:
                                                                   BoxDecoration(
-                                                                color:
-                                                                    Colors.white,
+                                                                color: Colors
+                                                                    .white,
                                                                 shape: BoxShape
                                                                     .circle,
                                                                 boxShadow: [
@@ -6374,10 +6397,12 @@ class WatermarkPageState extends State<WatermarkPage>
                                                                         .withValues(
                                                                             alpha:
                                                                                 0.3),
-                                                                    blurRadius: 8,
+                                                                    blurRadius:
+                                                                        8,
                                                                     offset:
                                                                         const Offset(
-                                                                            0, 2),
+                                                                            0,
+                                                                            2),
                                                                   ),
                                                                 ],
                                                               ),
@@ -6405,7 +6430,8 @@ class WatermarkPageState extends State<WatermarkPage>
                                                       .result
                                                       .originalBytes!
                                                   : (_previewMode ==
-                                                              PreviewMode.heatmap &&
+                                                              PreviewMode
+                                                                  .heatmap &&
                                                           _processedFiles[index]
                                                                   .result
                                                                   .heatmapBytes !=
@@ -6801,7 +6827,9 @@ class WatermarkPageState extends State<WatermarkPage>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      isDragging ? Icons.file_upload : Icons.file_upload_outlined,
+                      isDragging
+                          ? Icons.file_upload
+                          : Icons.file_upload_outlined,
                       size: 32,
                       color: theme.colorScheme.onPrimary,
                     ),
@@ -7040,9 +7068,8 @@ class WatermarkPageState extends State<WatermarkPage>
                         end: Alignment.centerRight,
                       )
                     : null,
-                color: canApply
-                    ? null
-                    : theme.colorScheme.surfaceContainerHighest,
+                color:
+                    canApply ? null : theme.colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: _PushDownWrapper(
@@ -7059,7 +7086,8 @@ class WatermarkPageState extends State<WatermarkPage>
                     ),
                   ),
                   style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.all(Colors.transparent),
+                    backgroundColor:
+                        WidgetStateProperty.all(Colors.transparent),
                     foregroundColor: WidgetStateProperty.resolveWith((states) {
                       if (states.contains(WidgetState.disabled)) {
                         return theme.colorScheme.onSurfaceVariant;
@@ -7109,8 +7137,9 @@ class WatermarkPageState extends State<WatermarkPage>
                     icon: const Icon(Icons.share_outlined),
                     label: Text(l10n.shareAll),
                     style: ButtonStyle(
-                      padding: WidgetStateProperty.all(const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 16)),
+                      padding: WidgetStateProperty.all(
+                          const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 16)),
                       shape: WidgetStateProperty.all(RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12))),
                     ),
@@ -7123,14 +7152,16 @@ class WatermarkPageState extends State<WatermarkPage>
                     icon: const Icon(Icons.refresh),
                     label: Text(l10n.reset),
                     style: ButtonStyle(
-                      backgroundColor: WidgetStateProperty.resolveWith((states) {
+                      backgroundColor:
+                          WidgetStateProperty.resolveWith((states) {
                         if (states.contains(WidgetState.disabled)) {
                           return theme.colorScheme.surfaceContainerHighest;
                         }
                         return theme.colorScheme.surface;
                       }),
-                      padding: WidgetStateProperty.all(const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 16)),
+                      padding: WidgetStateProperty.all(
+                          const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 16)),
                       shape: WidgetStateProperty.all(RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12))),
                       side: WidgetStateProperty.all(BorderSide(
@@ -7540,7 +7571,8 @@ class WatermarkPageState extends State<WatermarkPage>
                   title,
                   textAlign: TextAlign.center,
                   style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontWeight:
+                        isSelected ? FontWeight.bold : FontWeight.normal,
                     color: isSelected
                         ? colorScheme.primary
                         : colorScheme.onSurface,
@@ -8607,7 +8639,8 @@ class WatermarkPageState extends State<WatermarkPage>
       _previewIndex = 0;
       _previewMode = PreviewMode.processed;
       _comparisonSliderValue = 0.5;
-      _verificationResult = null;      _extractedSignature = null;
+      _verificationResult = null;
+      _extractedSignature = null;
       _statusMessage = '';
       _cancellationToken = null;
       _rawImage = null;
@@ -9521,42 +9554,42 @@ class WatermarkPageState extends State<WatermarkPage>
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                  TextField(
-                    controller: _deviceNameController,
-                    decoration: InputDecoration(
-                      labelText: l10n.deviceNameLabel,
-                      hintText: "e.g. My Secure Phone",
-                      border: const OutlineInputBorder(),
-                      prefixIcon: const Icon(Icons.badge_outlined),
+                    TextField(
+                      controller: _deviceNameController,
+                      decoration: InputDecoration(
+                        labelText: l10n.deviceNameLabel,
+                        hintText: "e.g. My Secure Phone",
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.badge_outlined),
+                      ),
+                      onChanged: (value) {
+                        _savePreference('deviceName', value);
+                      },
                     ),
-                    onChanged: (value) {
-                      _savePreference('deviceName', value);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  Text(l10n.myPublicKeyLabel,
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: TextEditingController(text: publicKey),
-                    readOnly: true,
-                    maxLines: 2,
-                    style:
-                        const TextStyle(fontFamily: 'monospace', fontSize: 11),
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.all(8),
-                      isDense: true,
+                    const SizedBox(height: 16),
+                    Text(l10n.myPublicKeyLabel,
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: TextEditingController(text: publicKey),
+                      readOnly: true,
+                      maxLines: 2,
+                      style: const TextStyle(
+                          fontFamily: 'monospace', fontSize: 11),
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.all(8),
+                        isDense: true,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text('Fingerprint: $fingerprint',
-                      style: Theme.of(context).textTheme.bodySmall),
-                ],
+                    const SizedBox(height: 8),
+                    Text('Fingerprint: $fingerprint',
+                        style: Theme.of(context).textTheme.bodySmall),
+                  ],
+                ),
               ),
             ),
-          ),
-          actions: [
+            actions: [
               Wrap(
                 alignment: WrapAlignment.end,
                 children: [
@@ -9782,7 +9815,8 @@ class _XYPadPainter extends CustomPainter {
 
 class _ComparisonClipper extends CustomClipper<Rect> {
   final double value;
-  final bool isVertical; // true for vertical line (left-right drag), false for horizontal line (up-down drag)
+  final bool
+      isVertical; // true for vertical line (left-right drag), false for horizontal line (up-down drag)
 
   _ComparisonClipper(this.value, {this.isVertical = true});
 
@@ -9825,15 +9859,12 @@ class _GradientButtonState extends State<_GradientButton> {
     final theme = Theme.of(context);
 
     return Listener(
-      onPointerDown: widget.enabled
-          ? (_) => setState(() => _isPressed = true)
-          : null,
-      onPointerUp: widget.enabled
-          ? (_) => setState(() => _isPressed = false)
-          : null,
-      onPointerCancel: widget.enabled
-          ? (_) => setState(() => _isPressed = false)
-          : null,
+      onPointerDown:
+          widget.enabled ? (_) => setState(() => _isPressed = true) : null,
+      onPointerUp:
+          widget.enabled ? (_) => setState(() => _isPressed = false) : null,
+      onPointerCancel:
+          widget.enabled ? (_) => setState(() => _isPressed = false) : null,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 100),
         curve: Curves.easeOut,
@@ -9847,9 +9878,8 @@ class _GradientButtonState extends State<_GradientButton> {
                   end: Alignment.bottomRight,
                 )
               : null,
-          color: widget.enabled
-              ? null
-              : theme.colorScheme.surfaceContainerHighest,
+          color:
+              widget.enabled ? null : theme.colorScheme.surfaceContainerHighest,
           boxShadow: (widget.enabled && !_isPressed)
               ? [
                   BoxShadow(
@@ -9890,9 +9920,12 @@ class _PushDownWrapperState extends State<_PushDownWrapper> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Listener(
-      onPointerDown: widget.enabled ? (_) => setState(() => _isPressed = true) : null,
-      onPointerUp: widget.enabled ? (_) => setState(() => _isPressed = false) : null,
-      onPointerCancel: widget.enabled ? (_) => setState(() => _isPressed = false) : null,
+      onPointerDown:
+          widget.enabled ? (_) => setState(() => _isPressed = true) : null,
+      onPointerUp:
+          widget.enabled ? (_) => setState(() => _isPressed = false) : null,
+      onPointerCancel:
+          widget.enabled ? (_) => setState(() => _isPressed = false) : null,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 100),
         curve: Curves.easeOut,
