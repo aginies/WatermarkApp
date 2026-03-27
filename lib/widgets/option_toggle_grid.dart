@@ -446,9 +446,9 @@ class _BurstParticle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double angle = (index * (360 / count)) * (math.pi / 180);
-    final double distance = 100 * progress;
+    final double distance = 120 * progress;
     final double opacity = 1.0 - progress;
-    final double scale = 0.4 + (0.5 * progress);
+    final double scale = 0.4 + (0.4 * progress);
 
     return Transform.translate(
       offset: Offset(
@@ -462,7 +462,7 @@ class _BurstParticle extends StatelessWidget {
           child: Icon(
             icon,
             color: color.withValues(alpha: 0.9),
-            size: baseSize * 0.7,
+            size: baseSize * 1.2,
           ),
         ),
       ),

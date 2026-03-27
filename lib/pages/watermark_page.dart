@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:desktop_drop/desktop_drop.dart';
@@ -34,7 +34,6 @@ import '../models/processed_file.dart';
 import '../models/settings_profile.dart';
 import '../models/identity_bookmark.dart';
 import '../widgets/watermark_shader_painter.dart';
-import '../widgets/profile_chip.dart';
 import '../main.dart';
 import '../watermark_error.dart';
 import '../models/processor_models.dart';
@@ -876,6 +875,31 @@ class WatermarkPageState extends State<WatermarkPage>
             _filePrefixController.text = _filePrefix;
           }
           break;
+
+        case SettingsProfile.p2:
+          if (!prefs.containsKey('${pKey}targetSize')) {
+            _targetSize = 1280;
+          }
+          if (!prefs.containsKey('${pKey}transparency')) {
+            _transparency = 75;
+          }
+          if (!prefs.containsKey('${pKey}density')) {
+            _density = 35;
+          }
+          if (!prefs.containsKey('${pKey}jpegQuality')) {
+            _jpegQuality = 75;
+          }
+          if (!prefs.containsKey('${pKey}antiAiLevel')) {
+            _antiAiLevel = 50;
+          }
+          if (!prefs.containsKey('${pKey}useAiCloaking')) {
+            _useAiCloaking = false;
+          }
+          if (!prefs.containsKey('${pKey}filePrefix')) {
+            _filePrefix = 'p2-';
+            _filePrefixController.text = _filePrefix;
+          }
+          break;
       }
     });
   }
@@ -1377,146 +1401,78 @@ class WatermarkPageState extends State<WatermarkPage>
   }
 
   Widget _buildProfileSelector(ThemeData theme, AppLocalizations l10n) {
-    final isMobile = !kIsWeb && (Platform.isIOS || Platform.isAndroid);
-
-    final chips = SettingsProfile.values.map((profile) {
-      final isSelected = _selectedProfile == profile;
-      String label;
-      IconData icon;
-
-      switch (profile) {
-        case SettingsProfile.none:
-          label = l10n.profileNone;
-          icon = Icons.not_interested;
-        case SettingsProfile.secureIdentity:
-          label = l10n.profileSecureIdentity;
-          icon = Icons.fingerprint;
-        case SettingsProfile.onlineImage:
-          label = l10n.profileOnlineImage;
-          icon = Icons.public;
-        case SettingsProfile.qrCode:
-          label = l10n.profileQrCode;
-          icon = Icons.qr_code;
-        case SettingsProfile.integrity:
-          label = l10n.profileIntegrity;
-          icon = Icons.verified_outlined;
-        case SettingsProfile.shareDocument:
-          label = l10n.profileShareDocument;
-          icon = Icons.description;
-        case SettingsProfile.p1:
-          label = "P1";
-          icon = Icons.person_outline;
-      }
-
-      return ProfileChip(
-        profile: profile,
-        label: label,
-        icon: icon,
-        isSelected: isSelected,
-        isDisabled: _processing,
-        onSelected: () => _applyProfile(profile),
-        onLongPress: () => _saveCurrentConfigToProfile(profile),
-      );
-    }).toList();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 4.0),
-        if (isMobile)
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              ShaderMask(
-                shaderCallback: (Rect rect) {
-                  return const LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [
-                      Colors.purple,
-                      Colors.transparent,
-                      Colors.transparent,
-                      Colors.purple
-                    ],
-                    stops: [0.0, 0.05, 0.95, 1.0], // 5% fade on both sides
-                  ).createShader(rect);
-                },
-                blendMode: BlendMode.dstOut,
-                child: SingleChildScrollView(
-                  controller: _profileScrollController,
-                  scrollDirection: Axis.horizontal,
-                  clipBehavior: Clip.none,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Row(children: chips),
-                  ),
-                ),
-              ),
-              // Left Indicator Arrow
-              Positioned(
-                left: 0,
-                child: IgnorePointer(
-                  child: AnimatedOpacity(
-                    duration: const Duration(milliseconds: 200),
-                    opacity: _profileScrollController.hasClients &&
-                            _profileScrollController.offset > 5
-                        ? 1.0
-                        : 0.0,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                          colors: [
-                            theme.colorScheme.surface,
-                            theme.colorScheme.surface.withValues(alpha: 0.0),
-                          ],
-                        ),
-                      ),
-                      child: Icon(Icons.chevron_left,
-                          size: 20, color: theme.colorScheme.primary),
-                    ),
-                  ),
-                ),
-              ),
-              // Right Indicator Arrow
-              Positioned(
-                right: 0,
-                child: IgnorePointer(
-                  child: AnimatedOpacity(
-                    duration: const Duration(milliseconds: 200),
-                    opacity: _profileScrollController.hasClients &&
-                            _profileScrollController.offset <
-                                _profileScrollController
-                                        .position.maxScrollExtent -
-                                    5
-                        ? 1.0
-                        : 0.0,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.centerRight,
-                          end: Alignment.centerLeft,
-                          colors: [
-                            theme.colorScheme.surface,
-                            theme.colorScheme.surface.withValues(alpha: 0.0),
-                          ],
-                        ),
-                      ),
-                      child: Icon(Icons.chevron_right,
-                          size: 20, color: theme.colorScheme.primary),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          )
-        else
-          Wrap(
-            children: chips,
-          ),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final int crossAxisCount = constraints.maxWidth > 600 ? 6 : 4;
+            return GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: crossAxisCount,
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
+              childAspectRatio: 1.45,
+              children: SettingsProfile.values.map((profile) {
+                return _ProfileTile(
+                  profile: profile,
+                  label: _getProfileLabel(profile, l10n),
+                  icon: _getProfileIcon(profile),
+                  isSelected: _selectedProfile == profile,
+                  theme: theme,
+                  onTap: () => _applyProfile(profile),
+                  onLongPress: () => _saveCurrentConfigToProfile(profile),
+                  processing: _processing,
+                );
+              }).toList(),
+            );
+          },
+        ),
       ],
     );
+  }
+
+  String _getProfileLabel(SettingsProfile profile, AppLocalizations l10n) {
+    switch (profile) {
+      case SettingsProfile.none:
+        return l10n.profileNone;
+      case SettingsProfile.secureIdentity:
+        return l10n.profileSecureIdentity;
+      case SettingsProfile.onlineImage:
+        return l10n.profileOnlineImage;
+      case SettingsProfile.qrCode:
+        return l10n.profileQrCode;
+      case SettingsProfile.integrity:
+        return l10n.profileIntegrity;
+      case SettingsProfile.shareDocument:
+        return l10n.profileShareDocument;
+      case SettingsProfile.p1:
+        return "P1";
+      case SettingsProfile.p2:
+        return "P2";
+    }
+  }
+
+  IconData _getProfileIcon(SettingsProfile profile) {
+    switch (profile) {
+      case SettingsProfile.none:
+        return Icons.not_interested;
+      case SettingsProfile.secureIdentity:
+        return Icons.fingerprint;
+      case SettingsProfile.onlineImage:
+        return Icons.public;
+      case SettingsProfile.qrCode:
+        return Icons.qr_code;
+      case SettingsProfile.integrity:
+        return Icons.verified_outlined;
+      case SettingsProfile.shareDocument:
+        return Icons.description;
+      case SettingsProfile.p1:
+        return Icons.person_outline;
+      case SettingsProfile.p2:
+        return Icons.person_outline;
+    }
   }
 
   Widget _buildControlsPanel(ThemeData theme) {
@@ -9348,6 +9304,9 @@ class WatermarkPageState extends State<WatermarkPage>
                 case SettingsProfile.p1:
                   label = "P1";
                   icon = Icons.person_outline;
+                case SettingsProfile.p2:
+                  label = "P2";
+                  icon = Icons.person_outline;
               }
 
               return Padding(
@@ -9847,8 +9806,8 @@ class _DensityPainter extends CustomPainter {
       Colors.teal,
       Colors.amber,
     ];
-    final Random random =
-        Random(42); // Seed for consistent randomness per frame
+    final math.Random random =
+        math.Random(42); // Seed for consistent randomness per frame
 
     final paint = Paint()
       ..color = color.withValues(alpha: 0.6)
@@ -9945,6 +9904,206 @@ class _XYPadPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _XYPadPainter oldDelegate) =>
       oldDelegate.x != x || oldDelegate.y != y || oldDelegate.color != color;
+}
+
+class _ProfileTile extends StatefulWidget {
+  final SettingsProfile profile;
+  final String label;
+  final IconData icon;
+  final bool isSelected;
+  final ThemeData theme;
+  final VoidCallback onTap;
+  final VoidCallback onLongPress;
+  final bool processing;
+
+  const _ProfileTile({
+    required this.profile,
+    required this.label,
+    required this.icon,
+    required this.isSelected,
+    required this.theme,
+    required this.onTap,
+    required this.onLongPress,
+    required this.processing,
+  });
+
+  @override
+  State<_ProfileTile> createState() => _ProfileTileState();
+}
+
+class _ProfileTileState extends State<_ProfileTile>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _burstController;
+
+  @override
+  void initState() {
+    super.initState();
+    _burstController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+  }
+
+  @override
+  void didUpdateWidget(_ProfileTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.isSelected && widget.isSelected) {
+      _burstController.forward(from: 0.0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _burstController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = widget.theme.colorScheme;
+
+    return _PushDownWrapper(
+      enabled: !widget.processing,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.processing ? null : widget.onTap,
+          onLongPress: widget.processing ? null : widget.onLongPress,
+          borderRadius: BorderRadius.circular(16),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            decoration: BoxDecoration(
+              color: widget.isSelected
+                  ? colorScheme.primaryContainer.withValues(alpha: 0.7)
+                  : colorScheme.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: widget.isSelected
+                    ? colorScheme.primary
+                    : colorScheme.outlineVariant,
+                width: widget.isSelected ? 2 : 1,
+              ),
+              boxShadow: widget.isSelected
+                  ? [
+                      BoxShadow(
+                        color: colorScheme.primary.withValues(alpha: 0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      )
+                    ]
+                  : [],
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ShaderMask(
+                      shaderCallback: (bounds) => LinearGradient(
+                        colors: widget.isSelected
+                            ? [colorScheme.primary, colorScheme.secondary]
+                            : [
+                                colorScheme.onSurfaceVariant,
+                                colorScheme.onSurfaceVariant
+                                    .withValues(alpha: 0.7)
+                              ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ).createShader(bounds),
+                      child: Icon(
+                        widget.icon,
+                        size: 22,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.label,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: widget.theme.textTheme.bodySmall?.copyWith(
+                        fontSize: 11,
+                        fontWeight: widget.isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                        color: widget.isSelected
+                            ? colorScheme.primary
+                            : colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+                IgnorePointer(
+                  child: _ProfileIconBurst(
+                    controller: _burstController,
+                    icon: widget.icon,
+                    color: colorScheme.primary,
+                    size: 22,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileIconBurst extends StatelessWidget {
+  final AnimationController controller;
+  final IconData icon;
+  final Color color;
+  final double size;
+
+  const _ProfileIconBurst({
+    required this.controller,
+    required this.icon,
+    required this.color,
+    required this.size,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, child) {
+        if (controller.value == 0.0 || controller.value == 1.0) {
+          return const SizedBox.shrink();
+        }
+
+        return Stack(
+          alignment: Alignment.center,
+          children: List.generate(8, (index) {
+            final double angle = (index * 45) * (3.14159 / 180);
+            final double distance = 200 * controller.value;
+            final double opacity = 1.0 - controller.value;
+            final double scale = 0.2 + (0.8 * controller.value);
+
+            return Transform.translate(
+              offset: Offset(
+                math.cos(angle) * distance,
+                math.sin(angle) * distance,
+              ),
+              child: Transform.scale(
+                scale: scale,
+                child: Opacity(
+                  opacity: opacity,
+                  child: Icon(
+                    icon,
+                    color: color.withValues(alpha: 0.8),
+                    size: size * 3.2,
+                  ),
+                ),
+              ),
+            );
+          }),
+        );
+      },
+    );
+  }
 }
 
 class _ComparisonClipper extends CustomClipper<Rect> {

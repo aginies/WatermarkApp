@@ -6,4 +6,5 @@ enum SettingsProfile {
   qrCode, // QR code enabled
   integrity, // Identity + Digital Signature + Steganography
   p1, // Custom user profile P1
+  p2, // Custom user profile P2
 }
