@@ -131,6 +131,7 @@ class WatermarkPageState extends State<WatermarkPage>
   Stopwatch? _stopwatch;
   Timer? _timer;
   PreviewMode _previewMode = PreviewMode.processed;
+  double _comparisonSliderValue = 0.5;
   bool _hideFileWithSteganography = false;
   Uint8List? _hiddenFileBytes;
   String? _hiddenFileName;
@@ -6224,23 +6225,145 @@ class WatermarkPageState extends State<WatermarkPage>
                                     scaleEnabled: true,
                                     constrained: true,
                                     child: Center(
-                                      child: Image.memory(
-                                        _previewMode == PreviewMode.original
-                                            ? _processedFiles[index]
-                                                .result
-                                                .originalBytes!
-                                            : (_previewMode ==
-                                                        PreviewMode.heatmap &&
-                                                    _processedFiles[index]
-                                                            .result
-                                                            .heatmapBytes !=
-                                                        null)
-                                                ? _processedFiles[index]
-                                                    .result
-                                                    .heatmapBytes!
-                                                : previewBytes,
-                                        fit: BoxFit.contain,
-                                      ),
+                                      child: _previewMode == PreviewMode.slider
+                                          ? AspectRatio(
+                                              aspectRatio: (_processedFiles[index].result.width != null &&
+                                                      _processedFiles[index].result.height != null)
+                                                  ? _processedFiles[index].result.width! /
+                                                      _processedFiles[index].result.height!
+                                                  : 1.0,
+                                              child: Builder(builder: (sliderContext) {
+                                                return LayoutBuilder(builder: (context, constraints) {
+                                                  return Stack(
+                                                    children: [
+                                                      // B (Processed) - Bottom
+                                                      Image.memory(
+                                                        previewBytes,
+                                                        fit: BoxFit.fill,
+                                                        width: double.infinity,
+                                                        height: double.infinity,
+                                                      ),
+                                                      // A (Original) - Top with Clip
+                                                      ClipRect(
+                                                        clipper: _ComparisonClipper(
+                                                            _comparisonSliderValue),
+                                                        child: Image.memory(
+                                                          _processedFiles[index]
+                                                              .result
+                                                              .originalBytes!,
+                                                          fit: BoxFit.fill,
+                                                          width: double.infinity,
+                                                          height: double.infinity,
+                                                        ),
+                                                      ),
+                                                      // Vertical Line
+                                                      Positioned(
+                                                        left: constraints
+                                                                    .maxWidth *
+                                                                _comparisonSliderValue -
+                                                            1,
+                                                        top: 0,
+                                                        bottom: 0,
+                                                        child: Container(
+                                                          width: 2,
+                                                          color: Colors.white,
+                                                        ),
+                                                      ),
+                                                      // Draggable Handle
+                                                      Positioned(
+                                                        left: constraints
+                                                                    .maxWidth *
+                                                                _comparisonSliderValue -
+                                                            20,
+                                                        top: 0,
+                                                        bottom: 0,
+                                                        child: GestureDetector(
+                                                          behavior:
+                                                              HitTestBehavior
+                                                                  .translucent,
+                                                          onPanUpdate: (details) {
+                                                            final RenderBox? box =
+                                                                sliderContext
+                                                                        .findRenderObject()
+                                                                    as RenderBox?;
+                                                            if (box != null &&
+                                                                mounted) {
+                                                              final Offset
+                                                                  localOffset =
+                                                                  box.globalToLocal(
+                                                                      details
+                                                                          .globalPosition);
+                                                              setState(() {
+                                                                _comparisonSliderValue =
+                                                                    (localOffset
+                                                                                .dx /
+                                                                            box.size
+                                                                                .width)
+                                                                        .clamp(
+                                                                            0.0,
+                                                                            1.0);
+                                                              });
+                                                            }
+                                                          },
+                                                          child: Center(
+                                                            child: Container(
+                                                              width: 40,
+                                                              height: 40,
+                                                              decoration:
+                                                                  BoxDecoration(
+                                                                color:
+                                                                    Colors.white,
+                                                                shape: BoxShape
+                                                                    .circle,
+                                                                boxShadow: [
+                                                                  BoxShadow(
+                                                                    color: Colors
+                                                                        .black
+                                                                        .withValues(
+                                                                            alpha:
+                                                                                0.3),
+                                                                    blurRadius: 8,
+                                                                    offset:
+                                                                        const Offset(
+                                                                            0, 2),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                              child: Icon(
+                                                                Icons
+                                                                    .swap_horiz_rounded,
+                                                                color: theme
+                                                                    .colorScheme
+                                                                    .primary,
+                                                                size: 24,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  );
+                                                });
+                                              }),
+                                            )
+                                          : Image.memory(
+                                              _previewMode ==
+                                                      PreviewMode.original
+                                                  ? _processedFiles[index]
+                                                      .result
+                                                      .originalBytes!
+                                                  : (_previewMode ==
+                                                              PreviewMode.heatmap &&
+                                                          _processedFiles[index]
+                                                                  .result
+                                                                  .heatmapBytes !=
+                                                              null)
+                                                      ? _processedFiles[index]
+                                                          .result
+                                                          .heatmapBytes!
+                                                      : previewBytes,
+                                              fit: BoxFit.contain,
+                                            ),
                                     ),
                                   ),
                                 ),
@@ -6289,6 +6412,16 @@ class WatermarkPageState extends State<WatermarkPage>
                                                     PreviewMode.processed),
                                             theme: theme,
                                             tooltip: l10n.previewModeProcessed,
+                                          ),
+                                          _buildPreviewToggleItem(
+                                            label: 'D',
+                                            isSelected: _previewMode ==
+                                                PreviewMode.slider,
+                                            onTap: () => setState(() =>
+                                                _previewMode =
+                                                    PreviewMode.slider),
+                                            theme: theme,
+                                            tooltip: "Slider Comparison",
                                           ),
                                           if (_processedFiles[index]
                                                   .result
@@ -8394,8 +8527,8 @@ class WatermarkPageState extends State<WatermarkPage>
       _processedFiles = <ProcessedFile>[];
       _previewIndex = 0;
       _previewMode = PreviewMode.processed;
-      _verificationResult = null;
-      _extractedSignature = null;
+      _comparisonSliderValue = 0.5;
+      _verificationResult = null;      _extractedSignature = null;
       _statusMessage = '';
       _cancellationToken = null;
       _rawImage = null;
@@ -9566,6 +9699,20 @@ class _XYPadPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _XYPadPainter oldDelegate) =>
       oldDelegate.x != x || oldDelegate.y != y || oldDelegate.color != color;
+}
+
+class _ComparisonClipper extends CustomClipper<Rect> {
+  final double value;
+
+  _ComparisonClipper(this.value);
+
+  @override
+  Rect getClip(Size size) {
+    return Rect.fromLTRB(0, 0, size.width * value, size.height);
+  }
+
+  @override
+  bool shouldReclip(_ComparisonClipper oldClipper) => oldClipper.value != value;
 }
 
 class _GradientButton extends StatefulWidget {

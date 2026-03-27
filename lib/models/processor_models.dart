@@ -10,6 +10,8 @@ class ProcessResult {
     this.steganographyVerified = false,
     this.robustVerified = false,
     this.isPdf = false,
+    this.width,
+    this.height,
   });
 
   final String outputPath;
@@ -20,6 +22,8 @@ class ProcessResult {
   final bool steganographyVerified;
   final bool robustVerified;
   final bool isPdf;
+  final int? width;
+  final int? height;
 }
 
 class ExtractedFileResult {

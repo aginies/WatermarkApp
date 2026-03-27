@@ -402,7 +402,7 @@ class WatermarkProcessor {
     try {
       // Create ReceivePort to get progress updates from isolate
       final receivePort = ReceivePort();
-      final completer = Completer<Map<String, Uint8List>>();
+      final completer = Completer<Map<String, dynamic>>();
 
       // Listen to messages from isolate
       receivePort.listen((message) {
@@ -419,8 +419,12 @@ class WatermarkProcessor {
             // Final result - unwrap TransferableTypedData
             final transferableResult =
                 message['result'] as Map<String, dynamic>;
-            final result = transferableResult.map((key, value) => MapEntry(key,
-                (value as TransferableTypedData).materialize().asUint8List()));
+            final result = transferableResult.map((key, value) {
+              if (value is TransferableTypedData) {
+                return MapEntry(key, value.materialize().asUint8List());
+              }
+              return MapEntry(key, value);
+            });
             completer.complete(result);
             receivePort.close();
           } else if (message.containsKey('error')) {
@@ -481,7 +485,13 @@ class WatermarkProcessor {
         },
       );
 
-      final res = await completer.future;
+      final rawRes = await completer.future;
+      final Map<String, dynamic> res = (rawRes as Map).map((key, value) {
+        if (value is TransferableTypedData) {
+          return MapEntry(key as String, value.materialize().asUint8List());
+        }
+        return MapEntry(key as String, value);
+      });
 
       final bool forcePng = digitallySign;
       String outExt =
@@ -536,7 +546,9 @@ class WatermarkProcessor {
           originalBytes: inputBytes,
           heatmapBytes: res['heatmap'],
           steganographyVerified: verified,
-          robustVerified: robustVerified);
+          robustVerified: robustVerified,
+          width: res['width'] as int?,
+          height: res['height'] as int?);
     } catch (e) {
       if (e is WatermarkError) {
         rethrow;
@@ -616,16 +628,20 @@ class WatermarkProcessor {
         progressPort: sendPort,
       );
 
-      // Wrap output in TransferableTypedData for faster transfer back
-      final transferableResult = result.map((key, value) =>
-          MapEntry(key, TransferableTypedData.fromList([value])));
+      // Wrap Uint8List in TransferableTypedData for faster transfer back
+      final transferableResult = result.map((key, value) {
+        if (value is Uint8List) {
+          return MapEntry(key, TransferableTypedData.fromList([value]));
+        }
+        return MapEntry(key, value);
+      });
       sendPort.send({'result': transferableResult});
     } catch (e) {
       sendPort.send({'error': e});
     }
   }
 
-  static Future<Map<String, Uint8List>> _renderWatermarkedImageBytes({
+  static Future<Map<String, dynamic>> _renderWatermarkedImageBytes({
     required Uint8List inputBytes,
     required double transparency,
     required double density,
@@ -883,7 +899,11 @@ class WatermarkProcessor {
     progressPort?.send({'progress': 0.90, 'message': 'progressEncodingImage'});
     final outBytes = WatermarkUtils.encodeImageInOriginalFormat(
         output, originalExtension, jpegQuality, digitallySign);
-    final result = {'output': outBytes};
+    final result = {
+      'output': outBytes,
+      'width': output.width,
+      'height': output.height,
+    };
     if (useSteganography || useAiCloaking || antiAiLevel > 0) {
       if (baseline != null) {
         final heatmap = WatermarkUtils.generateHeatmapImage(baseline, output);
@@ -975,7 +995,7 @@ class WatermarkProcessor {
 
     // Create ReceivePort to get progress updates from isolate
     final receivePort = ReceivePort();
-    final completer = Completer<Uint8List>();
+    final completer = Completer<dynamic>();
 
     // Listen to messages from isolate
     receivePort.listen((message) {
@@ -990,7 +1010,7 @@ class WatermarkProcessor {
               message['progress'] as double, message['message'] as String);
         } else if (message.containsKey('result')) {
           // Final result
-          completer.complete(message['result'] as Uint8List);
+          completer.complete(message['result']);
           receivePort.close();
         } else if (message.containsKey('error')) {
           // Error occurred
@@ -1225,6 +1245,8 @@ class WatermarkProcessor {
       var pageCount = 0;
       var processed = 0;
       Uint8List? firstPageOriginal;
+      int? firstPageWidth;
+      int? firstPageHeight;
 
       // Rasterize each PDF page and apply watermarks
       await for (final page in Printing.raster(inputBytes, dpi: 150)) {
@@ -1239,6 +1261,8 @@ class WatermarkProcessor {
         pageCount++;
         final png = await page.toPng();
         firstPageOriginal ??= png;
+        firstPageWidth ??= page.width.round();
+        firstPageHeight ??= page.height.round();
 
         final decoded = img.decodeImage(png);
         if (decoded == null) {
@@ -1428,6 +1452,8 @@ class WatermarkProcessor {
         steganographyVerified: verified,
         robustVerified: robustVerified,
         isPdf: true,
+        width: firstPageWidth,
+        height: firstPageHeight,
       );
     } catch (e) {
       if (e is WatermarkError) rethrow;

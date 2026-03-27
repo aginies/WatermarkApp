@@ -11,6 +11,7 @@ enum PreviewMode {
   original,
   processed,
   heatmap,
+  slider,
 }
 
 /// Type of content to encode in the QR code
