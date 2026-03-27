@@ -6491,7 +6491,11 @@ class WatermarkPageState extends State<WatermarkPage>
                                             theme: theme,
                                             tooltip: l10n.previewModeProcessed,
                                           ),
-                                          if (!isMobile)
+                                          if (!isMobile &&
+                                              !(_processedFiles[index]
+                                                      .result
+                                                      .isPdf &&
+                                                  Platform.isMacOS))
                                             _buildPreviewToggleItem(
                                               icon: Icons.compare,
                                               isSelected: _previewMode ==
