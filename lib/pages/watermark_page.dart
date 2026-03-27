@@ -2630,7 +2630,7 @@ class WatermarkPageState extends State<WatermarkPage>
                   ],
                 ),
                 content: SizedBox(
-                  width: 500,
+                  width: 700,
                   height: 600,
                   child: Column(
                     children: [
@@ -4827,11 +4827,13 @@ class WatermarkPageState extends State<WatermarkPage>
                   Text(l10n.qrWatermarkTitle),
                 ],
               ),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+              content: SizedBox(
+                width: 600,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                     Text(l10n.qrMode, style: theme.textTheme.titleSmall),
                     CheckboxListTile(
                       title: Text(l10n.qrVisibleMode),
@@ -5072,7 +5074,8 @@ class WatermarkPageState extends State<WatermarkPage>
                   ],
                 ),
               ),
-              actions: [
+            ),
+            actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
                   child: Text(l10n.close),
@@ -9081,11 +9084,13 @@ class WatermarkPageState extends State<WatermarkPage>
                 Text(l10n.myIdentityTitle),
               ],
             ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+            content: SizedBox(
+              width: 600,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                   TextField(
                     controller: _deviceNameController,
                     decoration: InputDecoration(
@@ -9120,7 +9125,8 @@ class WatermarkPageState extends State<WatermarkPage>
                 ],
               ),
             ),
-            actions: [
+          ),
+          actions: [
               Wrap(
                 alignment: WrapAlignment.end,
                 children: [
