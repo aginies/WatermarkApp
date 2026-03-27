@@ -888,16 +888,19 @@ class AppLocalizationsFr extends AppLocalizations {
       'Préréglages rapides pour les cas d\'usage courants';
 
   @override
-  String get profileNone => 'Custom';
+  String get profileNone => 'Perso';
 
   @override
   String get profileSecureIdentity => 'Identité';
 
   @override
+  String get profileIntegrity => 'Intégrité';
+
+  @override
   String get profileOnlineImage => 'Image';
 
   @override
-  String get profileQrCode => 'QR Code';
+  String get profileQrCode => 'Code QR';
 
   @override
   String get profileShareDocument => 'Doc';
@@ -1251,7 +1254,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get sendTab => 'Envoyer';
 
   @override
-  String get receiveTab => 'Recevoir/Pousser';
+  String get receiveTab => 'Recevoir';
+
+  @override
+  String get pushViaQr => 'Pousser via QR Code';
 
   @override
   String sendingFile(Object name) {

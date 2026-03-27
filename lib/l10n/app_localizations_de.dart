@@ -887,10 +887,13 @@ class AppLocalizationsDe extends AppLocalizations {
       'Schnelle Voreinstellungen für häufige Anwendungsfälle';
 
   @override
-  String get profileNone => 'Custom';
+  String get profileNone => 'Benutzerdefiniert';
 
   @override
   String get profileSecureIdentity => 'Identität';
+
+  @override
+  String get profileIntegrity => 'Integrität';
 
   @override
   String get profileOnlineImage => 'Bild';
@@ -1251,7 +1254,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get sendTab => 'Senden';
 
   @override
-  String get receiveTab => 'Empfangen/Senden';
+  String get receiveTab => 'Empfangen';
+
+  @override
+  String get pushViaQr => 'Per QR-Code übertragen';
 
   @override
   String sendingFile(Object name) {

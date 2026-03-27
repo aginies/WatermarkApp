@@ -1521,6 +1521,12 @@ abstract class AppLocalizations {
   /// **'Identity'**
   String get profileSecureIdentity;
 
+  /// No description provided for @profileIntegrity.
+  ///
+  /// In en, this message translates to:
+  /// **'Integrity'**
+  String get profileIntegrity;
+
   /// No description provided for @profileOnlineImage.
   ///
   /// In en, this message translates to:
@@ -2178,8 +2184,14 @@ abstract class AppLocalizations {
   /// No description provided for @receiveTab.
   ///
   /// In en, this message translates to:
-  /// **'Receive/Send'**
+  /// **'Receive'**
   String get receiveTab;
+
+  /// No description provided for @pushViaQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Push via QR Code'**
+  String get pushViaQr;
 
   /// No description provided for @sendingFile.
   ///

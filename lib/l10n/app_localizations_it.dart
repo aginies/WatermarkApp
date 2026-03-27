@@ -883,16 +883,19 @@ class AppLocalizationsIt extends AppLocalizations {
   String get profileDescription => 'Preselezioni rapide per casi d\'uso comuni';
 
   @override
-  String get profileNone => 'Custom';
+  String get profileNone => 'Perso';
 
   @override
   String get profileSecureIdentity => 'Identità';
 
   @override
+  String get profileIntegrity => 'Integrità';
+
+  @override
   String get profileOnlineImage => 'Immagine';
 
   @override
-  String get profileQrCode => 'QR Code';
+  String get profileQrCode => 'Codice QR';
 
   @override
   String get profileShareDocument => 'Doc';
@@ -1244,7 +1247,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get sendTab => 'Invia';
 
   @override
-  String get receiveTab => 'Ricevi/Invia';
+  String get receiveTab => 'Ricevi';
+
+  @override
+  String get pushViaQr => 'Invia via codice QR';
 
   @override
   String sendingFile(Object name) {

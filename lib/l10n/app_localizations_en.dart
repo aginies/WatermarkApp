@@ -880,6 +880,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileSecureIdentity => 'Identity';
 
   @override
+  String get profileIntegrity => 'Integrity';
+
+  @override
   String get profileOnlineImage => 'Image';
 
   @override
@@ -1229,7 +1232,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sendTab => 'Send';
 
   @override
-  String get receiveTab => 'Receive/Send';
+  String get receiveTab => 'Receive';
+
+  @override
+  String get pushViaQr => 'Push via QR Code';
 
   @override
   String sendingFile(Object name) {

@@ -166,6 +166,7 @@ class WatermarkPageState extends State<WatermarkPage>
   int _selectedLocalIpIndex = 0;
   String? _localEncryptionKey;
   bool _useLocalEncryption = true;
+  bool _pushToReceiver = false;
   bool _showReceiveQr = false;
   bool _hasPromptedForMobileDir = false;
 
@@ -723,12 +724,21 @@ class WatermarkPageState extends State<WatermarkPage>
 
         case SettingsProfile.secureIdentity:
           if (!prefs.containsKey('${pKey}targetSize')) _targetSize = 1280;
-          if (!prefs.containsKey('${pKey}transparency')) _transparency = 65;
-          if (!prefs.containsKey('${pKey}density')) _density = 35;
+          if (!prefs.containsKey('${pKey}transparency')) _transparency = 50;
+          if (!prefs.containsKey('${pKey}density')) _density = 50;
           if (!prefs.containsKey('${pKey}jpegQuality')) _jpegQuality = 75;
           if (!prefs.containsKey('${pKey}antiAiLevel')) _antiAiLevel = 100;
           if (!prefs.containsKey('${pKey}useAiCloaking')) _useAiCloaking = true;
-          if (!prefs.containsKey('${pKey}digitallySign')) _digitallySign = true;
+          if (!prefs.containsKey('${pKey}digitallySign')) _digitallySign = false;
+          if (!prefs.containsKey('${pKey}useSteganography')) {
+            _useSteganography = true;
+          }
+          if (!prefs.containsKey('${pKey}useRobustSteganography')) {
+            _useRobustSteganography = true;
+          }
+          if (!prefs.containsKey('${pKey}useRandomColor')) {
+            _useRandomColor = true;
+          }
           if (!prefs.containsKey('${pKey}watermarkType')) {
             _watermarkType = WatermarkType.text;
           }
@@ -752,7 +762,7 @@ class WatermarkPageState extends State<WatermarkPage>
             _transparency = 80;
           }
           if (!prefs.containsKey('${pKey}targetSize')) {
-            _targetSize = 1280;
+            _targetSize = 1600;
           }
           if (!prefs.containsKey('${pKey}jpegQuality')) {
             _jpegQuality = 75;
@@ -797,6 +807,32 @@ class WatermarkPageState extends State<WatermarkPage>
           }
           break;
 
+        case SettingsProfile.integrity:
+          if (!prefs.containsKey('${pKey}targetSize')) _targetSize = 1280;
+          if (!prefs.containsKey('${pKey}transparency')) _transparency = 50;
+          if (!prefs.containsKey('${pKey}density')) _density = 50;
+          if (!prefs.containsKey('${pKey}jpegQuality')) _jpegQuality = 75;
+          if (!prefs.containsKey('${pKey}antiAiLevel')) _antiAiLevel = 100;
+          if (!prefs.containsKey('${pKey}useAiCloaking')) _useAiCloaking = true;
+          if (!prefs.containsKey('${pKey}digitallySign')) _digitallySign = true;
+          if (!prefs.containsKey('${pKey}useSteganography')) {
+            _useSteganography = true;
+          }
+          if (!prefs.containsKey('${pKey}useRobustSteganography')) {
+            _useRobustSteganography = true;
+          }
+          if (!prefs.containsKey('${pKey}useRandomColor')) {
+            _useRandomColor = true;
+          }
+          if (!prefs.containsKey('${pKey}watermarkType')) {
+            _watermarkType = WatermarkType.text;
+          }
+          if (!prefs.containsKey('${pKey}filePrefix')) {
+            _filePrefix = 'verified-';
+            _filePrefixController.text = _filePrefix;
+          }
+          break;
+
         case SettingsProfile.shareDocument:
           if (!prefs.containsKey('${pKey}targetSize')) _targetSize = 1280;
           if (!prefs.containsKey('${pKey}transparency')) _transparency = 50;
@@ -804,6 +840,12 @@ class WatermarkPageState extends State<WatermarkPage>
           if (!prefs.containsKey('${pKey}jpegQuality')) _jpegQuality = 80;
           if (!prefs.containsKey('${pKey}antiAiLevel')) _antiAiLevel = 75;
           if (!prefs.containsKey('${pKey}useAiCloaking')) _useAiCloaking = true;
+          if (!prefs.containsKey('${pKey}useSteganography')) {
+            _useSteganography = true;
+          }
+          if (!prefs.containsKey('${pKey}useRobustSteganography')) {
+            _useRobustSteganography = true;
+          }
           if (!prefs.containsKey('${pKey}filePrefix')) {
             _filePrefix = 'doc-';
             _filePrefixController.text = _filePrefix;
@@ -1355,6 +1397,9 @@ class WatermarkPageState extends State<WatermarkPage>
         case SettingsProfile.qrCode:
           label = l10n.profileQrCode;
           icon = Icons.qr_code;
+        case SettingsProfile.integrity:
+          label = l10n.profileIntegrity;
+          icon = Icons.verified_outlined;
         case SettingsProfile.shareDocument:
           label = l10n.profileShareDocument;
           icon = Icons.description;
@@ -2725,9 +2770,26 @@ class WatermarkPageState extends State<WatermarkPage>
                       style: TextStyle(
                           color: theme.colorScheme.error, fontSize: 11))
                   : null,
+              secondary: Icon(Icons.enhanced_encryption_outlined,
+                  size: 20,
+                  color: _useLocalEncryption
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurfaceVariant),
               value: _useLocalEncryption,
               onChanged: (val) {
                 setDialogState(() => _useLocalEncryption = val);
+              },
+            ),
+            // Push to Receiver Toggle
+            SwitchListTile(
+              title: const Text("Push to Receiver",
+                  style: TextStyle(fontSize: 14)),
+              subtitle: const Text("Scan a receiver's QR code after selecting a file",
+                  style: TextStyle(fontSize: 11)),
+              secondary: const Icon(Icons.qr_code_scanner, size: 20),
+              value: _pushToReceiver,
+              onChanged: (val) {
+                setDialogState(() => _pushToReceiver = val);
               },
             ),
             const Divider(),
@@ -2743,7 +2805,11 @@ class WatermarkPageState extends State<WatermarkPage>
                   final file = File(result.files.single.path!);
                   final bytes = await file.readAsBytes();
                   final fileName = result.files.single.name;
-                  await _startServingEncrypted(bytes, fileName, setDialogState);
+                  if (_pushToReceiver) {
+                    _showPushQrScanner(bytes: bytes, fileName: fileName);
+                  } else {
+                    await _startServingEncrypted(bytes, fileName, setDialogState);
+                  }
                 }
               },
             ),
@@ -2774,8 +2840,12 @@ class WatermarkPageState extends State<WatermarkPage>
                   onTap: () async {
                     final bytes = await _createProcessedZipBytes();
                     final fileName = 'securemark_batch.zip';
-                    await _startServingEncrypted(
-                        bytes, fileName, setDialogState);
+                    if (_pushToReceiver) {
+                      _showPushQrScanner(bytes: bytes, fileName: fileName);
+                    } else {
+                      await _startServingEncrypted(
+                          bytes, fileName, setDialogState);
+                    }
                   },
                 ),
                 const Divider(),
@@ -2793,8 +2863,12 @@ class WatermarkPageState extends State<WatermarkPage>
                     leading: const Icon(Icons.description_outlined),
                     onTap: () async {
                       final bytes = file.result.outputBytes;
-                      await _startServingEncrypted(
-                          bytes, fileName, setDialogState);
+                      if (_pushToReceiver) {
+                        _showPushQrScanner(bytes: bytes, fileName: fileName);
+                      } else {
+                        await _startServingEncrypted(
+                            bytes, fileName, setDialogState);
+                      }
                     },
                   );
                 },
@@ -2960,15 +3034,11 @@ class WatermarkPageState extends State<WatermarkPage>
                       final List<Barcode> barcodes = capture.barcodes;
                       if (barcodes.isNotEmpty) {
                         final String? code = barcodes.first.rawValue;
-                        if (code != null) {
-                          if (code.startsWith('http') &&
-                              code.contains('/download')) {
-                            Navigator.pop(context);
-                            _downloadFromLocalUrl(code);
-                          } else if (code.startsWith('securemark://receive')) {
-                            Navigator.pop(context);
-                            _handleReversePush(code);
-                          }
+                        if (code != null &&
+                            code.startsWith('http') &&
+                            code.contains('/download')) {
+                          Navigator.pop(context);
+                          _downloadFromLocalUrl(code);
                         }
                       }
                     },
@@ -3060,7 +3130,8 @@ class WatermarkPageState extends State<WatermarkPage>
     );
   }
 
-  Future<void> _handleReversePush(String qrData) async {
+  Future<void> _handleReversePush(String qrData,
+      {Uint8List? pushBytes, String? pushFileName}) async {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
@@ -3081,19 +3152,21 @@ class WatermarkPageState extends State<WatermarkPage>
       return;
     }
 
-    // 1. Pick file to send
-    Uint8List? fileBytes;
-    String? fileName;
+    // 1. Pick file to send (if not already provided)
+    Uint8List? fileBytes = pushBytes;
+    String? fileName = pushFileName;
 
-    if (_processedFiles.length == 1) {
-      fileBytes = _processedFiles.first.result.outputBytes;
-      fileName = p.basename(_processedFiles.first.result.outputPath);
-    } else {
-      // Multiple or zero processed, ask user to pick
-      final result = await FilePicker.platform.pickFiles();
-      if (result != null && result.files.single.path != null) {
-        fileBytes = await File(result.files.single.path!).readAsBytes();
-        fileName = result.files.single.name;
+    if (fileBytes == null || fileName == null) {
+      if (_processedFiles.length == 1) {
+        fileBytes = _processedFiles.first.result.outputBytes;
+        fileName = p.basename(_processedFiles.first.result.outputPath);
+      } else {
+        // Multiple or zero processed, ask user to pick
+        final result = await FilePicker.platform.pickFiles();
+        if (result != null && result.files.single.path != null) {
+          fileBytes = await File(result.files.single.path!).readAsBytes();
+          fileName = result.files.single.name;
+        }
       }
     }
 
@@ -3503,6 +3576,60 @@ class WatermarkPageState extends State<WatermarkPage>
         }
       }
     }
+  }
+
+  void _showPushQrScanner({Uint8List? bytes, String? fileName}) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final isDesktopNoScanner =
+        !kIsWeb && (Platform.isLinux || Platform.isWindows);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.pushViaQr),
+        content: SizedBox(
+          width: 300,
+          height: 300,
+          child: isDesktopNoScanner
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.qr_code_scanner,
+                          size: 48, color: theme.colorScheme.primary),
+                      const SizedBox(height: 16),
+                      Text(
+                        "QR Scanning not yet supported on ${Platform.isLinux ? 'Linux' : 'Windows'}.",
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                    ],
+                  ),
+                )
+              : MobileScanner(
+                  onDetect: (capture) {
+                    final List<Barcode> barcodes = capture.barcodes;
+                    if (barcodes.isNotEmpty) {
+                      final String? code = barcodes.first.rawValue;
+                      if (code != null &&
+                          code.startsWith('securemark://receive')) {
+                        Navigator.pop(context);
+                        _handleReversePush(code,
+                            pushBytes: bytes, pushFileName: fileName);
+                      }
+                    }
+                  },
+                ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.cancel),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showIdentityQrScanner(StateSetter setParentDialogState) {
@@ -7044,7 +7171,6 @@ class WatermarkPageState extends State<WatermarkPage>
 
   Widget _buildActionButtons() {
     final l10n = AppLocalizations.of(context)!;
-    final isMobile = !kIsWeb && (Platform.isIOS || Platform.isAndroid);
     final theme = Theme.of(context);
 
     final bool canApply = !(_processing ||
@@ -7116,24 +7242,23 @@ class WatermarkPageState extends State<WatermarkPage>
               runSpacing: 12,
               alignment: WrapAlignment.center,
               children: [
-                if (!isMobile)
-                  _PushDownWrapper(
-                    enabled: !_processing && _processedFiles.isNotEmpty,
-                    child: FilledButton.tonalIcon(
-                      onPressed: _processing || _processedFiles.isEmpty
-                          ? null
-                          : _saveCurrent,
-                      icon: const Icon(Icons.save_alt),
-                      label: Text(l10n.saveAll),
-                      style: ButtonStyle(
-                        padding: WidgetStateProperty.all(
-                            const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 16)),
-                        shape: WidgetStateProperty.all(RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12))),
-                      ),
+                _PushDownWrapper(
+                  enabled: !_processing && _processedFiles.isNotEmpty,
+                  child: FilledButton.tonalIcon(
+                    onPressed: _processing || _processedFiles.isEmpty
+                        ? null
+                        : _saveCurrent,
+                    icon: const Icon(Icons.save_alt),
+                    label: Text(l10n.saveAll),
+                    style: ButtonStyle(
+                      padding: WidgetStateProperty.all(
+                          const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 16)),
+                      shape: WidgetStateProperty.all(RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12))),
                     ),
                   ),
+                ),
                 _PushDownWrapper(
                   enabled: !_processing && _processedFiles.isNotEmpty,
                   child: FilledButton.tonalIcon(
@@ -9214,6 +9339,9 @@ class WatermarkPageState extends State<WatermarkPage>
                 case SettingsProfile.qrCode:
                   label = l10n.profileQrCode;
                   icon = Icons.qr_code;
+                case SettingsProfile.integrity:
+                  label = l10n.profileIntegrity;
+                  icon = Icons.verified_outlined;
                 case SettingsProfile.shareDocument:
                   label = l10n.profileShareDocument;
                   icon = Icons.description;
