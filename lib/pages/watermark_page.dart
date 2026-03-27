@@ -106,6 +106,7 @@ class WatermarkPageState extends State<WatermarkPage>
   bool _steganographyVerificationFailed = false;
   bool _useRandomColor = true;
   Color _selectedColor = Colors.red;
+
   SettingsProfile _selectedProfile = SettingsProfile.none;
   bool _dragging = false;
   bool _logoDragging = false;
@@ -5378,6 +5379,16 @@ class WatermarkPageState extends State<WatermarkPage>
     );
   }
 
+  static const Map<String, Color> _uiColorSchemes = {
+    'Deep Purple (Default)': Colors.deepPurple,
+    'Professional Blue': Colors.blue,
+    'Security Red': Colors.red,
+    'Nature Green': Colors.green,
+    'Stealth Black': Colors.black,
+    'High-Visibility Orange': Colors.orange,
+    'Corporate Gray': Colors.blueGrey,
+  };
+
   void _showExpertOptions() {
     final l10n = AppLocalizations.of(context)!;
     showDialog(
@@ -5777,6 +5788,61 @@ class WatermarkPageState extends State<WatermarkPage>
                     const SizedBox(height: 16),
                     const Divider(),
                     const SizedBox(height: 8),
+                    Text("UI Theme Color", style: theme.textTheme.titleSmall),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: theme.dividerColor),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<Color>(
+                          value: _uiColorSchemes.values.any((c) =>
+                                  c.toARGB32() ==
+                                  SecureMarkApp.of(context)
+                                      .seedColor
+                                      .toARGB32())
+                              ? _uiColorSchemes.values.firstWhere((c) =>
+                                  c.toARGB32() ==
+                                  SecureMarkApp.of(context)
+                                      .seedColor
+                                      .toARGB32())
+                              : Colors.deepPurple,
+                          isExpanded: true,
+                          onChanged: (Color? newValue) {
+                            if (newValue != null) {
+                              SecureMarkApp.of(context)
+                                  .setSeedColor(newValue);
+                            }
+                          },
+                          items: _uiColorSchemes.entries
+                              .map<DropdownMenuItem<Color>>((entry) {
+                            return DropdownMenuItem<Color>(
+                              value: entry.value,
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 16,
+                                    height: 16,
+                                    margin: const EdgeInsets.only(right: 12),
+                                    decoration: BoxDecoration(
+                                      color: entry.value,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                          color: theme.dividerColor),
+                                    ),
+                                  ),
+                                  Text(entry.key),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     Text(
                       l10n.themeLabel,
                       style: theme.textTheme.titleSmall,
@@ -6533,36 +6599,33 @@ class WatermarkPageState extends State<WatermarkPage>
         if (!widget.hasCamera) {
           return SizedBox(
             width: double.infinity,
-            child: FilledButton(
-              onPressed: _processing ? null : _pickFile,
-              style: FilledButton.styleFrom(
+            child: _GradientButton(
+              onTap: _pickFile,
+              enabled: !_processing,
+              gradientColors: [
+                theme.colorScheme.primary,
+                theme.colorScheme.primary.withValues(alpha: 0.7),
+              ],
+              child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                backgroundColor: isDragging
-                    ? theme.colorScheme.primary.withValues(alpha: 0.8)
-                    : null,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: isDragging
-                      ? BorderSide(color: theme.colorScheme.onPrimary, width: 2)
-                      : BorderSide.none,
-                ),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    isDragging ? Icons.file_upload : Icons.file_upload_outlined,
-                    size: 32,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    l10n.pickFiles,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.titleMedium?.copyWith(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      isDragging ? Icons.file_upload : Icons.file_upload_outlined,
+                      size: 32,
                       color: theme.colorScheme.onPrimary,
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.pickFiles,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: theme.colorScheme.onPrimary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -6573,69 +6636,67 @@ class WatermarkPageState extends State<WatermarkPage>
             Row(
               children: [
                 Expanded(
-                  child: FilledButton(
-                    onPressed: _processing ? null : _pickFile,
-                    style: FilledButton.styleFrom(
+                  child: _GradientButton(
+                    onTap: _pickFile,
+                    enabled: !_processing,
+                    gradientColors: [
+                      theme.colorScheme.primary,
+                      theme.colorScheme.primary.withValues(alpha: 0.7),
+                    ],
+                    child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      backgroundColor: isDragging
-                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
-                          : null,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        side: isDragging
-                            ? BorderSide(
-                                color: theme.colorScheme.onPrimary, width: 2)
-                            : BorderSide.none,
-                      ),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          isDragging
-                              ? Icons.file_upload
-                              : Icons.file_upload_outlined,
-                          size: 28,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          l10n.pickFiles,
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.titleSmall?.copyWith(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            isDragging
+                                ? Icons.file_upload
+                                : Icons.file_upload_outlined,
+                            size: 28,
                             color: theme.colorScheme.onPrimary,
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 4),
+                          Text(
+                            l10n.pickFiles,
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              color: theme.colorScheme.onPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: FilledButton(
-                    onPressed: _processing ? null : _takePhoto,
-                    style: FilledButton.styleFrom(
+                  child: _GradientButton(
+                    onTap: _takePhoto,
+                    enabled: !_processing,
+                    gradientColors: [
+                      theme.colorScheme.secondary,
+                      theme.colorScheme.secondary.withValues(alpha: 0.7),
+                    ],
+                    child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      backgroundColor: theme.colorScheme.secondary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.camera_alt_outlined,
-                          size: 28,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          l10n.takePhoto,
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            color: theme.colorScheme.onSecondary,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.camera_alt_outlined,
+                            size: 28,
+                            color: Colors.white,
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 4),
+                          Text(
+                            l10n.takePhoto,
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -6644,20 +6705,28 @@ class WatermarkPageState extends State<WatermarkPage>
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: _processing ? null : _scanDocument,
-                style: FilledButton.styleFrom(
+              child: _GradientButton(
+                onTap: _scanDocument,
+                enabled: !_processing,
+                gradientColors: [
+                  theme.colorScheme.tertiary,
+                  theme.colorScheme.tertiary.withValues(alpha: 0.7),
+                ],
+                child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  backgroundColor: theme.colorScheme.tertiary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                icon: const Icon(Icons.document_scanner_outlined),
-                label: Text(
-                  l10n.scanDocument,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.onTertiary,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.document_scanner_outlined,
+                          color: theme.colorScheme.onTertiary),
+                      const SizedBox(width: 8),
+                      Text(
+                        l10n.scanDocument,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.onTertiary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -6666,36 +6735,33 @@ class WatermarkPageState extends State<WatermarkPage>
         );
       }
 
-      return FilledButton(
-        onPressed: _processing ? null : _pickFile,
-        style: FilledButton.styleFrom(
+      return _GradientButton(
+        onTap: _pickFile,
+        enabled: !_processing,
+        gradientColors: [
+          theme.colorScheme.primary,
+          theme.colorScheme.primary.withValues(alpha: 0.7),
+        ],
+        child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 16),
-          backgroundColor: isDragging
-              ? theme.colorScheme.primary.withValues(alpha: 0.8)
-              : null,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: isDragging
-                ? BorderSide(color: theme.colorScheme.onPrimary, width: 2)
-                : BorderSide.none,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              isDragging ? Icons.file_upload : Icons.file_upload_outlined,
-              size: 32,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.pickFiles,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.titleMedium?.copyWith(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isDragging ? Icons.file_upload : Icons.file_upload_outlined,
+                size: 32,
                 color: theme.colorScheme.onPrimary,
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                l10n.pickFiles,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: theme.colorScheme.onPrimary,
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -6756,62 +6822,131 @@ class WatermarkPageState extends State<WatermarkPage>
   Widget _buildActionButtons() {
     final l10n = AppLocalizations.of(context)!;
     final isMobile = !kIsWeb && (Platform.isIOS || Platform.isAndroid);
+    final theme = Theme.of(context);
+
+    final bool canApply = !(_processing ||
+        _selectedPaths.isEmpty ||
+        (_watermarkType == WatermarkType.image &&
+            _watermarkImageBytes == null));
 
     return Card(
+      elevation: 6,
+      shadowColor: theme.colorScheme.shadow.withValues(alpha: 0.3),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            FilledButton.icon(
-              onPressed: _processing ||
-                      _selectedPaths.isEmpty ||
-                      (_watermarkType == WatermarkType.image &&
-                          _watermarkImageBytes == null)
-                  ? null
-                  : _applyWatermark,
-              icon: const Icon(Icons.auto_fix_high),
-              label: Text(l10n.applyWatermark),
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+            // Primary "Apply SecureMark" Button
+            Container(
+              decoration: BoxDecoration(
+                gradient: canApply
+                    ? LinearGradient(
+                        colors: [
+                          theme.colorScheme.primary,
+                          theme.colorScheme.secondary,
+                        ],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      )
+                    : null,
+                color: canApply
+                    ? null
+                    : theme.colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: _PushDownWrapper(
+                enabled: canApply,
+                child: FilledButton.icon(
+                  onPressed: canApply ? _applyWatermark : null,
+                  icon: const Icon(Icons.auto_fix_high, size: 24),
+                  label: Text(
+                    l10n.applyWatermark,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.1,
+                    ),
+                  ),
+                  style: ButtonStyle(
+                    backgroundColor: WidgetStateProperty.all(Colors.transparent),
+                    foregroundColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.disabled)) {
+                        return theme.colorScheme.onSurfaceVariant;
+                      }
+                      return Colors.white;
+                    }),
+                    padding: WidgetStateProperty.all(
+                        const EdgeInsets.symmetric(vertical: 20)),
+                    shape: WidgetStateProperty.all(RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16))),
+                    elevation: WidgetStateProperty.all(0),
+                  ),
+                ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 20),
+            // Secondary buttons row/wrap
             Wrap(
               spacing: 12,
               runSpacing: 12,
               alignment: WrapAlignment.center,
               children: [
                 if (!isMobile)
-                  FilledButton.icon(
-                    onPressed: _processing || _processedFiles.isEmpty
-                        ? null
-                        : _saveCurrent,
-                    icon: const Icon(Icons.save_alt),
-                    label: Text(l10n.saveAll),
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 18, vertical: 12),
+                  _PushDownWrapper(
+                    enabled: !_processing && _processedFiles.isNotEmpty,
+                    child: FilledButton.tonalIcon(
+                      onPressed: _processing || _processedFiles.isEmpty
+                          ? null
+                          : _saveCurrent,
+                      icon: const Icon(Icons.save_alt),
+                      label: Text(l10n.saveAll),
+                      style: ButtonStyle(
+                        padding: WidgetStateProperty.all(
+                            const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 16)),
+                        shape: WidgetStateProperty.all(RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12))),
+                      ),
                     ),
                   ),
-                FilledButton.icon(
-                  onPressed: _processing || _processedFiles.isEmpty
-                      ? null
-                      : _shareCurrent,
-                  icon: const Icon(Icons.share_outlined),
-                  label: Text(l10n.shareAll),
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 18, vertical: 12),
+                _PushDownWrapper(
+                  enabled: !_processing && _processedFiles.isNotEmpty,
+                  child: FilledButton.tonalIcon(
+                    onPressed: _processing || _processedFiles.isEmpty
+                        ? null
+                        : _shareCurrent,
+                    icon: const Icon(Icons.share_outlined),
+                    label: Text(l10n.shareAll),
+                    style: ButtonStyle(
+                      padding: WidgetStateProperty.all(const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 16)),
+                      shape: WidgetStateProperty.all(RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12))),
+                    ),
                   ),
                 ),
-                OutlinedButton.icon(
-                  onPressed: _processing ? null : _reset,
-                  icon: const Icon(Icons.refresh),
-                  label: Text(l10n.reset),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 18, vertical: 12),
+                _PushDownWrapper(
+                  enabled: !_processing,
+                  child: OutlinedButton.icon(
+                    onPressed: _processing ? null : _reset,
+                    icon: const Icon(Icons.refresh),
+                    label: Text(l10n.reset),
+                    style: ButtonStyle(
+                      backgroundColor: WidgetStateProperty.resolveWith((states) {
+                        if (states.contains(WidgetState.disabled)) {
+                          return theme.colorScheme.surfaceContainerHighest;
+                        }
+                        return theme.colorScheme.surface;
+                      }),
+                      padding: WidgetStateProperty.all(const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 16)),
+                      shape: WidgetStateProperty.all(RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12))),
+                      side: WidgetStateProperty.all(BorderSide(
+                          color: theme.colorScheme.outline, width: 1.5)),
+                    ),
                   ),
                 ),
               ],
@@ -7162,9 +7297,17 @@ class WatermarkPageState extends State<WatermarkPage>
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeInOut,
       decoration: BoxDecoration(
-        color: isSelected
-            ? colorScheme.primaryContainer.withValues(alpha: 0.7)
-            : colorScheme.surface,
+        color: isSelected ? null : colorScheme.surface,
+        gradient: isSelected
+            ? LinearGradient(
+                colors: [
+                  colorScheme.primaryContainer,
+                  colorScheme.primaryContainer.withValues(alpha: 0.4),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : null,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isSelected ? colorScheme.primary : colorScheme.outlineVariant,
@@ -7173,9 +7316,9 @@ class WatermarkPageState extends State<WatermarkPage>
         boxShadow: isSelected
             ? [
                 BoxShadow(
-                  color: colorScheme.primary.withValues(alpha: 0.15),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+                  color: colorScheme.primary.withValues(alpha: 0.25),
+                  blurRadius: 14,
+                  offset: const Offset(0, 6),
                 )
               ]
             : [],
@@ -9423,4 +9566,119 @@ class _XYPadPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _XYPadPainter oldDelegate) =>
       oldDelegate.x != x || oldDelegate.y != y || oldDelegate.color != color;
+}
+
+class _GradientButton extends StatefulWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+  final List<Color> gradientColors;
+  final bool enabled;
+
+  const _GradientButton({
+    required this.child,
+    this.onTap,
+    required this.gradientColors,
+    this.enabled = true,
+  });
+
+  @override
+  State<_GradientButton> createState() => _GradientButtonState();
+}
+
+class _GradientButtonState extends State<_GradientButton> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Listener(
+      onPointerDown: widget.enabled
+          ? (_) => setState(() => _isPressed = true)
+          : null,
+      onPointerUp: widget.enabled
+          ? (_) => setState(() => _isPressed = false)
+          : null,
+      onPointerCancel: widget.enabled
+          ? (_) => setState(() => _isPressed = false)
+          : null,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeOut,
+        transform: Matrix4.translationValues(0, _isPressed ? 4.0 : 0.0, 0),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: widget.enabled
+              ? LinearGradient(
+                  colors: widget.gradientColors,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: widget.enabled
+              ? null
+              : theme.colorScheme.surfaceContainerHighest,
+          boxShadow: (widget.enabled && !_isPressed)
+              ? [
+                  BoxShadow(
+                    color: widget.gradientColors.first.withValues(alpha: 0.4),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  )
+                ]
+              : [],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: widget.enabled ? widget.onTap : null,
+            borderRadius: BorderRadius.circular(16),
+            child: widget.child,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PushDownWrapper extends StatefulWidget {
+  final Widget child;
+  final bool enabled;
+
+  const _PushDownWrapper({required this.child, this.enabled = true});
+
+  @override
+  State<_PushDownWrapper> createState() => _PushDownWrapperState();
+}
+
+class _PushDownWrapperState extends State<_PushDownWrapper> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Listener(
+      onPointerDown: widget.enabled ? (_) => setState(() => _isPressed = true) : null,
+      onPointerUp: widget.enabled ? (_) => setState(() => _isPressed = false) : null,
+      onPointerCancel: widget.enabled ? (_) => setState(() => _isPressed = false) : null,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeOut,
+        transform: Matrix4.translationValues(0, _isPressed ? 4.0 : 0.0, 0),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: (widget.enabled && !_isPressed)
+              ? [
+                  BoxShadow(
+                    color: theme.colorScheme.shadow.withValues(alpha: 0.25),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  )
+                ]
+              : [],
+        ),
+        child: widget.child,
+      ),
+    );
+  }
 }

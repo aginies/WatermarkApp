@@ -27,12 +27,14 @@ class SecureMarkApp extends StatefulWidget {
 
 class SecureMarkAppState extends State<SecureMarkApp> {
   AppTheme _appTheme = AppTheme.system;
+  Color _seedColor = Colors.deepPurple;
   bool _isFirstLaunch = false;
   bool _isLoading = true;
   bool _hasCamera = true;
   static const _platform = MethodChannel('secure_mark/sharing');
 
   AppTheme get appTheme => _appTheme;
+  Color get seedColor => _seedColor;
 
   @override
   void initState() {
@@ -43,10 +45,14 @@ class SecureMarkAppState extends State<SecureMarkApp> {
   Future<void> _initApp() async {
     final prefs = await SharedPreferences.getInstance();
     final themeIndex = prefs.getInt('appTheme');
+    final seedColorValue = prefs.getInt('appSeedColor');
     final isFirstLaunch = prefs.getBool('isFirstLaunch') ?? true;
 
     if (themeIndex != null) {
       _appTheme = AppTheme.values[themeIndex];
+    }
+    if (seedColorValue != null) {
+      _seedColor = Color(seedColorValue);
     }
 
     await _checkCameraHardware();
@@ -94,6 +100,14 @@ class SecureMarkAppState extends State<SecureMarkApp> {
     });
   }
 
+  Future<void> setSeedColor(Color color) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('appSeedColor', color.toARGB32());
+    setState(() {
+      _seedColor = color;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -105,7 +119,7 @@ class SecureMarkAppState extends State<SecureMarkApp> {
     }
     ThemeData amoledTheme = ThemeData(
       colorScheme: ColorScheme.fromSeed(
-        seedColor: Colors.deepPurple,
+        seedColor: _seedColor,
         brightness: Brightness.dark,
         surface: Colors.black,
         surfaceContainer: Colors.black,
@@ -131,7 +145,7 @@ class SecureMarkAppState extends State<SecureMarkApp> {
       supportedLocales: AppLocalizations.supportedLocales,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
+          seedColor: _seedColor,
           brightness: Brightness.light,
         ),
         useMaterial3: true,
@@ -140,7 +154,7 @@ class SecureMarkAppState extends State<SecureMarkApp> {
           ? amoledTheme
           : ThemeData(
               colorScheme: ColorScheme.fromSeed(
-                seedColor: Colors.deepPurple,
+                seedColor: _seedColor,
                 brightness: Brightness.dark,
               ),
               useMaterial3: true,
