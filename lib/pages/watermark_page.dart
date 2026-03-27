@@ -6068,6 +6068,7 @@ class WatermarkPageState extends State<WatermarkPage>
 
   Widget _buildPreviewPanel(ThemeData theme) {
     final l10n = AppLocalizations.of(context)!;
+    final isMobile = !kIsWeb && (Platform.isIOS || Platform.isAndroid);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -6264,7 +6265,8 @@ class WatermarkPageState extends State<WatermarkPage>
                                                       // A (Original) - Top with Clip
                                                       ClipRect(
                                                         clipper: _ComparisonClipper(
-                                                            _comparisonSliderValue),
+                                                            _comparisonSliderValue,
+                                                            isVertical: false),
                                                         child: Image.memory(
                                                           _processedFiles[index]
                                                               .result
@@ -6274,27 +6276,27 @@ class WatermarkPageState extends State<WatermarkPage>
                                                           height: double.infinity,
                                                         ),
                                                       ),
-                                                      // Vertical Line
+                                                      // Horizontal Line
                                                       Positioned(
-                                                        left: constraints
-                                                                    .maxWidth *
+                                                        top: constraints
+                                                                    .maxHeight *
                                                                 _comparisonSliderValue -
                                                             1,
-                                                        top: 0,
-                                                        bottom: 0,
+                                                        left: 0,
+                                                        right: 0,
                                                         child: Container(
-                                                          width: 2,
+                                                          height: 2,
                                                           color: Colors.white,
                                                         ),
                                                       ),
                                                       // Draggable Handle
                                                       Positioned(
-                                                        left: constraints
-                                                                    .maxWidth *
+                                                        top: constraints
+                                                                    .maxHeight *
                                                                 _comparisonSliderValue -
                                                             20,
-                                                        top: 0,
-                                                        bottom: 0,
+                                                        left: 0,
+                                                        right: 0,
                                                         child: GestureDetector(
                                                           behavior:
                                                               HitTestBehavior
@@ -6314,9 +6316,9 @@ class WatermarkPageState extends State<WatermarkPage>
                                                               setState(() {
                                                                 _comparisonSliderValue =
                                                                     (localOffset
-                                                                                .dx /
+                                                                                .dy /
                                                                             box.size
-                                                                                .width)
+                                                                                .height)
                                                                         .clamp(
                                                                             0.0,
                                                                             1.0);
@@ -6349,7 +6351,7 @@ class WatermarkPageState extends State<WatermarkPage>
                                                               ),
                                                               child: Icon(
                                                                 Icons
-                                                                    .swap_horiz_rounded,
+                                                                    .swap_vert_rounded,
                                                                 color: theme
                                                                     .colorScheme
                                                                     .primary,
@@ -6412,7 +6414,7 @@ class WatermarkPageState extends State<WatermarkPage>
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           _buildPreviewToggleItem(
-                                            label: 'A',
+                                            icon: Icons.image_outlined,
                                             isSelected: _previewMode ==
                                                 PreviewMode.original,
                                             onTap: () => setState(() =>
@@ -6422,7 +6424,7 @@ class WatermarkPageState extends State<WatermarkPage>
                                             tooltip: l10n.previewModeOriginal,
                                           ),
                                           _buildPreviewToggleItem(
-                                            label: 'B',
+                                            icon: Icons.auto_fix_high,
                                             isSelected: _previewMode ==
                                                 PreviewMode.processed,
                                             onTap: () => setState(() =>
@@ -6431,22 +6433,23 @@ class WatermarkPageState extends State<WatermarkPage>
                                             theme: theme,
                                             tooltip: l10n.previewModeProcessed,
                                           ),
-                                          _buildPreviewToggleItem(
-                                            label: 'D',
-                                            isSelected: _previewMode ==
-                                                PreviewMode.slider,
-                                            onTap: () => setState(() =>
-                                                _previewMode =
-                                                    PreviewMode.slider),
-                                            theme: theme,
-                                            tooltip: "Slider Comparison",
-                                          ),
+                                          if (!isMobile)
+                                            _buildPreviewToggleItem(
+                                              icon: Icons.compare,
+                                              isSelected: _previewMode ==
+                                                  PreviewMode.slider,
+                                              onTap: () => setState(() =>
+                                                  _previewMode =
+                                                      PreviewMode.slider),
+                                              theme: theme,
+                                              tooltip: "Slider Comparison",
+                                            ),
                                           if (_processedFiles[index]
                                                   .result
                                                   .heatmapBytes !=
                                               null)
                                             _buildPreviewToggleItem(
-                                              label: 'C',
+                                              icon: Icons.contrast,
                                               isSelected: _previewMode ==
                                                   PreviewMode.heatmap,
                                               onTap: () => setState(() =>
@@ -6642,7 +6645,7 @@ class WatermarkPageState extends State<WatermarkPage>
   }
 
   Widget _buildPreviewToggleItem({
-    required String label,
+    required IconData icon,
     required bool isSelected,
     required VoidCallback onTap,
     required ThemeData theme,
@@ -6653,23 +6656,26 @@ class WatermarkPageState extends State<WatermarkPage>
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          width: 32,
-          height: 32,
-          margin: const EdgeInsets.symmetric(horizontal: 2),
+          width: 36,
+          height: 36,
+          margin: const EdgeInsets.symmetric(horizontal: 4),
           decoration: BoxDecoration(
             color: isSelected ? theme.colorScheme.primary : Colors.transparent,
             shape: BoxShape.circle,
+            border: Border.all(
+              color: isSelected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.outlineVariant,
+              width: 1,
+            ),
           ),
           child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: isSelected
-                    ? theme.colorScheme.onPrimary
-                    : theme.colorScheme.onSurface,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                fontSize: 14,
-              ),
+            child: Icon(
+              icon,
+              size: 20,
+              color: isSelected
+                  ? theme.colorScheme.onPrimary
+                  : theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ),
@@ -9744,16 +9750,22 @@ class _XYPadPainter extends CustomPainter {
 
 class _ComparisonClipper extends CustomClipper<Rect> {
   final double value;
+  final bool isVertical; // true for vertical line (left-right drag), false for horizontal line (up-down drag)
 
-  _ComparisonClipper(this.value);
+  _ComparisonClipper(this.value, {this.isVertical = true});
 
   @override
   Rect getClip(Size size) {
-    return Rect.fromLTRB(0, 0, size.width * value, size.height);
+    if (isVertical) {
+      return Rect.fromLTRB(0, 0, size.width * value, size.height);
+    } else {
+      return Rect.fromLTRB(0, 0, size.width, size.height * value);
+    }
   }
 
   @override
-  bool shouldReclip(_ComparisonClipper oldClipper) => oldClipper.value != value;
+  bool shouldReclip(_ComparisonClipper oldClipper) =>
+      oldClipper.value != value || oldClipper.isVertical != isVertical;
 }
 
 class _GradientButton extends StatefulWidget {
