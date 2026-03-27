@@ -28,5 +28,9 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSCameraUsageDescription</key>
+	<string>SecureMark needs access to the camera to take photos and apply watermarks directly.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>SecureMark needs access to your photo library to select images for watermarking.</string>
 </dict>
 </plist>
