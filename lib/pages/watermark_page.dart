@@ -7342,9 +7342,12 @@ class WatermarkPageState extends State<WatermarkPage>
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     // Random Color Rectangle
-                    InkWell(
-                      onTap: _processing ? null : () => _updateColorMode(true),
-                      borderRadius: BorderRadius.circular(4),
+                    _ColorTile(
+                      isSelected: _useRandomColor,
+                      processing: _processing,
+                      burstColor: theme.colorScheme.primary,
+                      isCircle: false,
+                      onTap: () => _updateColorMode(true),
                       child: AnimatedOpacity(
                         duration: const Duration(milliseconds: 200),
                         opacity: _useRandomColor ? 1.0 : 0.4,
@@ -7396,14 +7399,14 @@ class WatermarkPageState extends State<WatermarkPage>
                     ...palette.map((color) {
                       final isSelected = !_useRandomColor &&
                           color.toARGB32() == _selectedColor.toARGB32();
-                      return InkWell(
-                        onTap: _processing
-                            ? null
-                            : () {
-                                _updateColorMode(false);
-                                _selectColor(color);
-                              },
-                        borderRadius: BorderRadius.circular(999),
+                      return _ColorTile(
+                        isSelected: isSelected,
+                        processing: _processing,
+                        burstColor: color,
+                        onTap: () {
+                          _updateColorMode(false);
+                          _selectColor(color);
+                        },
                         child: AnimatedOpacity(
                           duration: const Duration(milliseconds: 200),
                           opacity: isSelected ? 1.0 : 0.4,
@@ -9906,6 +9909,134 @@ class _XYPadPainter extends CustomPainter {
       oldDelegate.x != x || oldDelegate.y != y || oldDelegate.color != color;
 }
 
+class _ColorTile extends StatefulWidget {
+  final Widget child;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final bool processing;
+  final Color burstColor;
+  final bool isCircle;
+
+  const _ColorTile({
+    required this.child,
+    required this.isSelected,
+    required this.onTap,
+    required this.processing,
+    required this.burstColor,
+    this.isCircle = true,
+  });
+
+  @override
+  State<_ColorTile> createState() => _ColorTileState();
+}
+
+class _ColorTileState extends State<_ColorTile>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _burstController;
+
+  @override
+  void initState() {
+    super.initState();
+    _burstController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+  }
+
+  @override
+  void didUpdateWidget(_ColorTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.isSelected && widget.isSelected) {
+      _burstController.forward(from: 0.0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _burstController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _PushDownWrapper(
+      enabled: !widget.processing,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.processing ? null : widget.onTap,
+          borderRadius: BorderRadius.circular(widget.isCircle ? 999 : 4),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              widget.child,
+              IgnorePointer(
+                child: _ColorBurst(
+                  controller: _burstController,
+                  color: widget.burstColor,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ColorBurst extends StatelessWidget {
+  final AnimationController controller;
+  final Color color;
+
+  const _ColorBurst({
+    required this.controller,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, child) {
+        if (controller.value == 0.0 || controller.value == 1.0) {
+          return const SizedBox.shrink();
+        }
+
+        return Stack(
+          alignment: Alignment.center,
+          children: List.generate(8, (index) {
+            final double angle = (index * 45) * (math.pi / 180);
+            final double distance = 60 * controller.value;
+            final double opacity = 1.0 - controller.value;
+            final double scale = 0.2 + (0.5 * controller.value);
+
+            return Transform.translate(
+              offset: Offset(
+                math.cos(angle) * distance,
+                math.sin(angle) * distance,
+              ),
+              child: Transform.scale(
+                scale: scale,
+                child: Opacity(
+                  opacity: opacity,
+                  child: Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.8),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+        );
+      },
+    );
+  }
+}
+
 class _ProfileTile extends StatefulWidget {
   final SettingsProfile profile;
   final String label;
@@ -10224,6 +10355,7 @@ class _PushDownWrapperState extends State<_PushDownWrapper> {
         curve: Curves.easeOut,
         transform: Matrix4.translationValues(0, _isPressed ? 4.0 : 0.0, 0),
         decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: (widget.enabled && !_isPressed)
               ? [
