@@ -230,17 +230,22 @@ class _OptionTileState extends State<_OptionTile>
     if (!isAvailable) {
       // Locked/unavailable
       iconColor = Colors.grey.shade400;
-      backgroundColor = Colors.grey.shade200;
+      backgroundColor = Color.alphaBlend(
+          Colors.grey.shade200.withValues(alpha: 0.1), theme.colorScheme.surface);
       opacity = 0.5;
     } else if (isEnabled) {
       // Enabled
       iconColor = widget.option.enabledColor;
-      backgroundColor = widget.option.enabledColor.withValues(alpha: 0.15);
+      backgroundColor = Color.alphaBlend(
+          widget.option.enabledColor.withValues(alpha: 0.12),
+          theme.colorScheme.surface);
       opacity = 1.0;
     } else {
-      // Available but disabled - subtle hint of natural color
+      // Available but disabled - very subtle hint
       iconColor = widget.option.enabledColor.withValues(alpha: 0.2);
-      backgroundColor = widget.option.enabledColor.withValues(alpha: 0.02);
+      backgroundColor = Color.alphaBlend(
+          widget.option.enabledColor.withValues(alpha: 0.02),
+          theme.colorScheme.surface);
       opacity = 1.0;
     }
 

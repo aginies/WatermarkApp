@@ -8944,7 +8944,7 @@ class WatermarkPageState extends State<WatermarkPage>
                         },
                         child: AnimatedOpacity(
                           duration: const Duration(milliseconds: 200),
-                          opacity: isSelected ? 1.0 : 0.4,
+                          opacity: 1.0,
                           child: Container(
                             width: 34,
                             height: 34,
