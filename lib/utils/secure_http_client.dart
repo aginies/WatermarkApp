@@ -31,17 +31,8 @@ class SecureHttpClient {
         // Calculate actual fingerprint from certificate
         final actualFingerprint = _calculateCertFingerprint(cert);
 
-        print('[SecureHttpClient] Certificate fingerprint: $actualFingerprint');
-        print('[SecureHttpClient] Expected fingerprint: $expectedFingerprint');
-
         // TOFU verification: Accept only if fingerprint matches
         final match = actualFingerprint == expectedFingerprint;
-
-        if (!match) {
-          print('[SecureHttpClient] ❌ Certificate fingerprint mismatch!');
-        } else {
-          print('[SecureHttpClient] ✅ Certificate fingerprint verified');
-        }
 
         return match;
       };
@@ -77,8 +68,6 @@ class SecureHttpClient {
 
       await sink.flush();
       await sink.close();
-
-      print('[SecureHttpClient] Download complete: $receivedBytes bytes');
     } catch (e) {
       // Clean up partial file on error
       final file = File(outputPath);
@@ -144,8 +133,6 @@ class SecureHttpClient {
 
       await sink.flush();
       await sink.close();
-
-      print('[SecureHttpClient] Download complete: $receivedBytes bytes');
     } catch (e) {
       final file = File(outputPath);
       if (await file.exists()) {

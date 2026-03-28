@@ -60,32 +60,14 @@ class CertificateManager {
     final certPath = await _getCertificatePath();
     final certPemString = await File(certPath).readAsString();
 
-    // ignore: avoid_print
-    print(
-        '[CertificateManager] Certificate PEM file length: ${certPemString.length} chars');
-    // ignore: avoid_print
-    print(
-        '[CertificateManager] First 100 chars: ${certPemString.substring(0, certPemString.length < 100 ? certPemString.length : 100)}');
-
     // Extract DER bytes from PEM format
     final certBytes = _extractDerFromPem(certPemString);
-    // ignore: avoid_print
-    print(
-        '[CertificateManager] DER bytes extracted: ${certBytes.length} bytes');
-    // ignore: avoid_print
-    print(
-        '[CertificateManager] First 20 DER bytes: ${certBytes.sublist(0, certBytes.length < 20 ? certBytes.length : 20).map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
 
     final fingerprint = calculateFingerprint(certBytes);
-    // ignore: avoid_print
-    print('[CertificateManager] Calculated fingerprint: $fingerprint');
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_fingerprintKey, fingerprint);
     await prefs.setInt(_generatedAtKey, DateTime.now().millisecondsSinceEpoch);
-
-    print(
-        '[CertificateManager] Certificate generated with fingerprint: $fingerprint');
   }
 
   /// Generate certificate using openssl command (desktop platforms)
@@ -261,14 +243,8 @@ class CertificateManager {
         .substring(beginIndex + beginMarker.length, endIndex)
         .replaceAll(RegExp(r'\s'), ''); // Remove all whitespace
 
-    // ignore: avoid_print
-    print(
-        '[CertificateManager] Base64 content length: ${base64Content.length} chars');
-
     // Decode base64 to get DER bytes
     final derBytes = base64.decode(base64Content);
-    // ignore: avoid_print
-    print('[CertificateManager] Decoded DER length: ${derBytes.length} bytes');
 
     return derBytes;
   }
@@ -352,10 +328,8 @@ class CertificateManager {
       await prefs.remove(_keyFilenameKey);
       await prefs.remove(_fingerprintKey);
       await prefs.remove(_generatedAtKey);
-
-      print('[CertificateManager] Certificate deleted');
     } catch (e) {
-      print('[CertificateManager] Error deleting certificate: $e');
+      // Silently handle deletion errors
     }
   }
 
