@@ -322,7 +322,17 @@ class AppLocalizationsEn extends AppLocalizations {
       'This will reset all expert settings and file prefix to defaults.';
 
   @override
-  String get fontConfigTitle => 'Font Configuration';
+  String get fontConfigTitle => 'Font/Image Configuration';
+
+  @override
+  String get forcePngTitle => 'Force PNG Format';
+
+  @override
+  String get forcePngSubtitle =>
+      'Generate output images in PNG format instead of original format (best for quality, larger size)';
+
+  @override
+  String get forcePngEnabledHint => 'Output will be forced to PNG';
 
   @override
   String get fontStyleLabel => 'Font Style';
@@ -481,7 +491,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get steganographyVerificationFailed =>
-      'Steganography verification failed';
+      'Steganography verification failed. Increase your JPG Quality (min 85%)';
 
   @override
   String get steganographyEnabledHint =>
@@ -1338,4 +1348,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String fileReceived(Object address) {
     return 'File received from $address';
   }
+
+  @override
+  String get secureZipPasswordRequired =>
+      'ZIP password must be set in Expert Options to enable Secure ZIP.';
 }

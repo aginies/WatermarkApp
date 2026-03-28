@@ -605,8 +605,26 @@ abstract class AppLocalizations {
   /// No description provided for @fontConfigTitle.
   ///
   /// In en, this message translates to:
-  /// **'Font Configuration'**
+  /// **'Font/Image Configuration'**
   String get fontConfigTitle;
+
+  /// No description provided for @forcePngTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Force PNG Format'**
+  String get forcePngTitle;
+
+  /// No description provided for @forcePngSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate output images in PNG format instead of original format (best for quality, larger size)'**
+  String get forcePngSubtitle;
+
+  /// No description provided for @forcePngEnabledHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Output will be forced to PNG'**
+  String get forcePngEnabledHint;
 
   /// No description provided for @fontStyleLabel.
   ///
@@ -863,7 +881,7 @@ abstract class AppLocalizations {
   /// No description provided for @steganographyVerificationFailed.
   ///
   /// In en, this message translates to:
-  /// **'Steganography verification failed'**
+  /// **'Steganography verification failed. Increase your JPG Quality (min 85%)'**
   String get steganographyVerificationFailed;
 
   /// No description provided for @steganographyEnabledHint.
@@ -2366,6 +2384,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'File received from {address}'**
   String fileReceived(Object address);
+
+  /// No description provided for @secureZipPasswordRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'ZIP password must be set in Expert Options to enable Secure ZIP.'**
+  String get secureZipPasswordRequired;
 }
 
 class _AppLocalizationsDelegate

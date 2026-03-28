@@ -333,7 +333,7 @@
   },
   "analysisResult": "Resultado:",
   "steganographyVerified": "Esteganografía verificada",
-  "steganographyVerificationFailed": "Verificación de esteganografía fallida",
+  "steganographyVerificationFailed": "Fallo en la verificación de la esteganografía. Aumente la calidad JPG (mín. 85 %)",
   "steganographyEnabledHint": "La esteganografía está habilitada y será aplicada",
   "hideFileWithSteganographyTitle": "Ocultar un archivo (experimental)",
   "hideFileWithSteganographySubtitle": "Incluye un archivo entero dentro de la imagen (podría aumentar el tamaño de salida)",
@@ -727,7 +727,10 @@
   "exportConfigButton": "Exportar",
   "importConfigButton": "Importar",
   "configExportSuccess": "Configuración exportada con éxito a: {path}",
-  "fontConfigTitle": "Configuración de Fuente",
+  "fontConfigTitle": "Configuración de fuente/imagen",
+  "forcePngTitle": "Forzar formato PNG",
+  "forcePngSubtitle": "Generar imágenes de salida en formato PNG en lugar del formato original (mejor calidad, mayor tamaño)",
+  "forcePngEnabledHint": "La salida será forzada a PNG",
   "longPressToConfigure": "Pulsación larga para configurar",
   "longPressConfigure": "Pulsación larga: configurar",
   "noBookmarksYet": "No hay marcadores todavía.",
@@ -775,5 +778,6 @@
   "pushingFile": "Enviando archivo a {device}...",
   "manualUrlLabel": "O ingresa esta URL en un navegador:",
   "waitingForFile": "Esperando archivo entrante...",
-  "fileReceived": "Archivo recibido de {address}"
+  "fileReceived": "Archivo recibido de {address}",
+  "secureZipPasswordRequired": "La contraseña del ZIP debe establecerse en las Opciones de experto para habilitar el ZIP seguro."
 }

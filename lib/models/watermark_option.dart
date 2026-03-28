@@ -11,6 +11,9 @@ class WatermarkOption {
   /// Icon to display
   final IconData icon;
 
+  /// Optional custom widget to use as an icon
+  final Widget? customIcon;
+
   /// Color when enabled
   final Color enabledColor;
 
@@ -36,6 +39,7 @@ class WatermarkOption {
     required this.id,
     required this.label,
     required this.icon,
+    this.customIcon,
     required this.enabledColor,
     required this.isEnabled,
     this.isAvailable = true,
@@ -50,11 +54,13 @@ class WatermarkOption {
     bool? isAvailable,
     String? unavailableReason,
     String? subtitle,
+    Widget? customIcon,
   }) {
     return WatermarkOption(
       id: id,
       label: label,
       icon: icon,
+      customIcon: customIcon ?? this.customIcon,
       enabledColor: enabledColor,
       isEnabled: isEnabled ?? this.isEnabled,
       isAvailable: isAvailable ?? this.isAvailable,

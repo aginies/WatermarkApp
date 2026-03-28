@@ -328,7 +328,17 @@ class AppLocalizationsFr extends AppLocalizations {
       'Cela réinitialisera tous les réglages experts et le préfixe de fichier aux valeurs par défaut.';
 
   @override
-  String get fontConfigTitle => 'Configuration de Police';
+  String get fontConfigTitle => 'Configuration Police/Image';
+
+  @override
+  String get forcePngTitle => 'Forcer le format PNG';
+
+  @override
+  String get forcePngSubtitle =>
+      'Générer les images de sortie au format PNG au lieu du format d\'origine (meilleure qualité, plus grande taille)';
+
+  @override
+  String get forcePngEnabledHint => 'La sortie sera forcée en PNG';
 
   @override
   String get fontStyleLabel => 'Style de police';
@@ -487,7 +497,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get steganographyVerificationFailed =>
-      'Échec de la vérification de la stéganographie';
+      'Échec de la vérification de la stéganographie. Augmentez la qualité JPG (min 85 %)';
 
   @override
   String get steganographyEnabledHint =>
@@ -1360,4 +1370,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String fileReceived(Object address) {
     return 'Fichier reçu de $address';
   }
+
+  @override
+  String get secureZipPasswordRequired =>
+      'Le mot de passe ZIP doit être défini dans les Options Expert pour activer le ZIP sécurisé.';
 }

@@ -56,6 +56,7 @@ class WatermarkProcessor {
     required String fontFamily,
     required int jpegQuality,
     int? targetSize,
+    required bool forcePng,
     required bool includeTimestamp,
     required bool preserveMetadata,
     required bool rasterizePdf,
@@ -131,6 +132,7 @@ class WatermarkProcessor {
     WatermarkFont font = WatermarkFont.arial,
     int jpegQuality = 75,
     int? targetSize,
+    bool forcePng = false,
     bool includeTimestamp = false,
     bool preserveMetadata = false,
     bool rasterizePdf = false,
@@ -223,6 +225,7 @@ class WatermarkProcessor {
       fontFamily: font.fontFamily,
       jpegQuality: jpegQuality,
       targetSize: targetSize,
+      forcePng: forcePng,
       includeTimestamp: includeTimestamp,
       preserveMetadata: preserveMetadata,
       rasterizePdf: rasterizePdf,
@@ -271,6 +274,7 @@ class WatermarkProcessor {
           fontSize: fontSize,
           font: font,
           jpegQuality: jpegQuality,
+          forcePng: forcePng,
           includeTimestamp: includeTimestamp,
           preserveMetadata: preserveMetadata,
           rasterizePdf: rasterizePdf,
@@ -309,6 +313,7 @@ class WatermarkProcessor {
           font: font,
           jpegQuality: jpegQuality,
           targetSize: targetSize,
+          forcePng: forcePng,
           includeTimestamp: includeTimestamp,
           preserveMetadata: preserveMetadata,
           filePrefix: filePrefix,
@@ -351,6 +356,7 @@ class WatermarkProcessor {
     required WatermarkFont font,
     required int jpegQuality,
     int? targetSize,
+    bool forcePng = false,
     bool includeTimestamp = false,
     bool preserveMetadata = false,
     String filePrefix = 'securemark-',
@@ -451,6 +457,7 @@ class WatermarkProcessor {
           'font': font,
           'jpegQuality': jpegQuality,
           'targetSize': targetSize,
+          'forcePng': forcePng,
           'filePath': file.path,
           'originalExtension': extension,
           'preserveMetadata': preserveMetadata,
@@ -493,10 +500,10 @@ class WatermarkProcessor {
         return MapEntry(key as String, value);
       });
 
-      final bool forcePng = digitallySign;
+      final bool shouldForcePng = forcePng || digitallySign;
       String outExt =
           (extension == '.heic' || extension == '.heif') ? '.jpg' : extension;
-      if (forcePng) outExt = '.png';
+      if (shouldForcePng) outExt = '.png';
 
       final outPath = WatermarkUtils.outputPath(
           file.path, outExt, includeTimestamp, filePrefix);
@@ -546,7 +553,7 @@ class WatermarkProcessor {
       if (useAiCloaking) applied.add('aiCloakingTitle');
       if (antiAiLevel > 0) applied.add('antiAiProtectionTitle');
       if (qrConfig != null) applied.add('qrWatermarkTitle');
-
+      if (forcePng) applied.add('forcePngTitle');
       return ProcessResult(
           outputPath: outPath,
           outputBytes: res['output']!,
@@ -618,6 +625,7 @@ class WatermarkProcessor {
         font: params['font'] as WatermarkFont,
         jpegQuality: params['jpegQuality'] as int,
         targetSize: params['targetSize'] as int?,
+        forcePng: params['forcePng'] as bool? ?? false,
         filePath: params['filePath'] as String,
         originalExtension: params['originalExtension'] as String,
         preserveMetadata: params['preserveMetadata'] as bool,
@@ -661,6 +669,7 @@ class WatermarkProcessor {
     required WatermarkFont font,
     required int jpegQuality,
     int? targetSize,
+    bool forcePng = false,
     required String filePath,
     required String originalExtension,
     bool preserveMetadata = false,
@@ -907,7 +916,7 @@ class WatermarkProcessor {
 
     progressPort?.send({'progress': 0.90, 'message': 'progressEncodingImage'});
     final outBytes = WatermarkUtils.encodeImageInOriginalFormat(
-        output, originalExtension, jpegQuality, digitallySign);
+        output, originalExtension, jpegQuality, forcePng || digitallySign);
     final result = {
       'output': outBytes,
       'width': output.width,
@@ -935,6 +944,7 @@ class WatermarkProcessor {
     required double fontSize,
     required WatermarkFont font,
     required int jpegQuality,
+    bool forcePng = false,
     bool includeTimestamp = false,
     bool preserveMetadata = false,
     bool rasterizePdf = false,
@@ -978,6 +988,7 @@ class WatermarkProcessor {
           fontSize: fontSize,
           font: font,
           jpegQuality: jpegQuality,
+          forcePng: forcePng,
           includeTimestamp: includeTimestamp,
           filePrefix: filePrefix,
           antiAiLevel: antiAiLevel,
@@ -1044,6 +1055,8 @@ class WatermarkProcessor {
           'useRandomColor': useRandomColor,
           'selectedColorValue': selectedColorValue,
           'fontSize': fontSize,
+          'jpegQuality': jpegQuality,
+          'forcePng': forcePng,
           'preserveMetadata': preserveMetadata,
           'antiAiLevel': antiAiLevel,
           'watermarkType': watermarkType,
@@ -1089,6 +1102,7 @@ class WatermarkProcessor {
           fontSize: fontSize,
           font: font,
           jpegQuality: jpegQuality,
+          forcePng: forcePng,
           includeTimestamp: includeTimestamp,
           filePrefix: filePrefix,
           antiAiLevel: antiAiLevel,
@@ -1242,6 +1256,7 @@ class WatermarkProcessor {
     required double fontSize,
     required WatermarkFont font,
     required int jpegQuality,
+    bool forcePng = false,
     bool includeTimestamp = false,
     String filePrefix = 'securemark-',
     double antiAiLevel = 0.0,

@@ -329,7 +329,17 @@ class AppLocalizationsEs extends AppLocalizations {
       'Esto reiniciará todas las opciones de experto y el prefijo de archivo a valores predeterminados.';
 
   @override
-  String get fontConfigTitle => 'Configuración de Fuente';
+  String get fontConfigTitle => 'Configuración de fuente/imagen';
+
+  @override
+  String get forcePngTitle => 'Forzar formato PNG';
+
+  @override
+  String get forcePngSubtitle =>
+      'Generar imágenes de salida en formato PNG en lugar del formato original (mejor calidad, mayor tamaño)';
+
+  @override
+  String get forcePngEnabledHint => 'La salida será forzada a PNG';
 
   @override
   String get fontStyleLabel => 'Estilo de fuente';
@@ -488,7 +498,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get steganographyVerificationFailed =>
-      'Verificación de esteganografía fallida';
+      'Fallo en la verificación de la esteganografía. Aumente la calidad JPG (mín. 85 %)';
 
   @override
   String get steganographyEnabledHint =>
@@ -1355,4 +1365,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String fileReceived(Object address) {
     return 'Archivo recibido de $address';
   }
+
+  @override
+  String get secureZipPasswordRequired =>
+      'La contraseña del ZIP debe establecerse en las Opciones de experto para habilitar el ZIP seguro.';
 }

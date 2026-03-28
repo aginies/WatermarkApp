@@ -204,8 +204,6 @@ class _OptionTileState extends State<_OptionTile>
     _scaleController.forward().then((_) => _scaleController.reverse());
 
     widget.option.onToggle!.call();
-
-    // Removed confirmation snackbar as per user request
   }
 
   void _handleLongPress() {
@@ -220,6 +218,7 @@ class _OptionTileState extends State<_OptionTile>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final isEnabled = widget.option.isEnabled;
     final isAvailable = widget.option.isAvailable;
 
@@ -271,8 +270,7 @@ class _OptionTileState extends State<_OptionTile>
               boxShadow: isEnabled
                   ? [
                       BoxShadow(
-                        color: ColorUtils.getAdaptiveShadowColor(
-                            Theme.of(context),
+                        color: ColorUtils.getAdaptiveShadowColor(theme,
                             color: widget.option.enabledColor),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
@@ -285,17 +283,24 @@ class _OptionTileState extends State<_OptionTile>
               children: [
                 Opacity(
                   opacity: opacity,
-                  child: Icon(
-                    widget.option.icon,
-                    color: iconColor,
-                    size: widget.iconSize * 0.9,
-                  ),
+                  child: widget.option.customIcon != null
+                      ? SizedBox(
+                          width: widget.iconSize * 0.9,
+                          height: widget.iconSize * 0.9,
+                          child: widget.option.customIcon,
+                        )
+                      : Icon(
+                          widget.option.icon,
+                          color: iconColor,
+                          size: widget.iconSize * 0.9,
+                        ),
                 ),
                 // Burst effect
                 IgnorePointer(
                   child: _IconBurst(
                     controller: _burstController,
                     icon: widget.option.icon,
+                    customIcon: widget.option.customIcon,
                     color: widget.option.enabledColor,
                     size: widget.iconSize * 0.9,
                   ),
@@ -320,7 +325,9 @@ class _OptionTileState extends State<_OptionTile>
                     ),
                   ),
                 // Checkmark for enabled (only if toggleable)
-                if (isEnabled && isAvailable && widget.option.onToggle != null)
+                if (isEnabled &&
+                    isAvailable &&
+                    widget.option.onToggle != null)
                   Positioned(
                     top: 4,
                     right: 4,
@@ -338,7 +345,9 @@ class _OptionTileState extends State<_OptionTile>
                     ),
                   ),
                 // Info badge for info-only options
-                if (isEnabled && isAvailable && widget.option.onToggle == null)
+                if (isEnabled &&
+                    isAvailable &&
+                    widget.option.onToggle == null)
                   Positioned(
                     top: 4,
                     right: 4,
@@ -391,12 +400,14 @@ class _OptionTileState extends State<_OptionTile>
 class _IconBurst extends StatelessWidget {
   final AnimationController controller;
   final IconData icon;
+  final Widget? customIcon;
   final Color color;
   final double size;
 
   const _IconBurst({
     required this.controller,
     required this.icon,
+    this.customIcon,
     required this.color,
     required this.size,
   });
@@ -418,6 +429,7 @@ class _IconBurst extends StatelessWidget {
               index: index,
               count: 12,
               icon: icon,
+              customIcon: customIcon,
               color: color,
               baseSize: size,
             );
@@ -433,6 +445,7 @@ class _BurstParticle extends StatelessWidget {
   final int index;
   final int count;
   final IconData icon;
+  final Widget? customIcon;
   final Color color;
   final double baseSize;
 
@@ -441,6 +454,7 @@ class _BurstParticle extends StatelessWidget {
     required this.index,
     required this.count,
     required this.icon,
+    this.customIcon,
     required this.color,
     required this.baseSize,
   });
@@ -461,11 +475,17 @@ class _BurstParticle extends StatelessWidget {
         scale: scale,
         child: Opacity(
           opacity: opacity,
-          child: Icon(
-            icon,
-            color: color.withValues(alpha: 0.9),
-            size: baseSize * 1.2,
-          ),
+          child: customIcon != null
+              ? SizedBox(
+                  width: baseSize * 1.2,
+                  height: baseSize * 1.2,
+                  child: customIcon,
+                )
+              : Icon(
+                  icon,
+                  color: color.withValues(alpha: 0.9),
+                  size: baseSize * 1.2,
+                ),
         ),
       ),
     );

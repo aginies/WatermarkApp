@@ -26,15 +26,21 @@ class SecureHttpClient {
     final client = HttpClient();
 
     try {
+      bool? cachedVerificationResult;
+
       // Configure client to verify certificate fingerprint
       client.badCertificateCallback = (cert, host, port) {
+        if (cachedVerificationResult != null) {
+          return cachedVerificationResult!;
+        }
+
         // Calculate actual fingerprint from certificate
         final actualFingerprint = _calculateCertFingerprint(cert);
 
         // TOFU verification: Accept only if fingerprint matches
-        final match = actualFingerprint == expectedFingerprint;
+        cachedVerificationResult = actualFingerprint == expectedFingerprint;
 
-        return match;
+        return cachedVerificationResult!;
       };
 
       // Download file
@@ -55,14 +61,20 @@ class SecureHttpClient {
       final sink = outputFile.openWrite();
 
       int receivedBytes = 0;
+      final stopwatch = Stopwatch()..start();
+      const progressUpdateInterval = Duration(milliseconds: 100);
 
       await for (final chunk in response) {
         sink.add(chunk);
         receivedBytes += chunk.length;
 
-        // Report progress
+        // Report progress with throttling (every 100ms or on completion)
         if (onProgress != null && contentLength > 0) {
-          onProgress(receivedBytes, contentLength);
+          if (receivedBytes == contentLength ||
+              stopwatch.elapsed >= progressUpdateInterval) {
+            onProgress(receivedBytes, contentLength);
+            stopwatch.reset();
+          }
         }
       }
 
@@ -121,13 +133,20 @@ class SecureHttpClient {
       final sink = outputFile.openWrite();
 
       int receivedBytes = 0;
+      final stopwatch = Stopwatch()..start();
+      const progressUpdateInterval = Duration(milliseconds: 100);
 
       await for (final chunk in response) {
         sink.add(chunk);
         receivedBytes += chunk.length;
 
+        // Report progress with throttling (every 100ms or on completion)
         if (onProgress != null && contentLength > 0) {
-          onProgress(receivedBytes, contentLength);
+          if (receivedBytes == contentLength ||
+              stopwatch.elapsed >= progressUpdateInterval) {
+            onProgress(receivedBytes, contentLength);
+            stopwatch.reset();
+          }
         }
       }
 

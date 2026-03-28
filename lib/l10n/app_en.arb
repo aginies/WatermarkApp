@@ -218,7 +218,10 @@
   "filePrefixLabel": "File Prefix",
   "filePrefixHint": "e.g., watermark-",
   "resetExpertHint": "This will reset all expert settings and file prefix to defaults.",
-  "fontConfigTitle": "Font Configuration",
+  "fontConfigTitle": "Font/Image Configuration",
+  "forcePngTitle": "Force PNG Format",
+  "forcePngSubtitle": "Generate output images in PNG format instead of original format (best for quality, larger size)",
+  "forcePngEnabledHint": "Output will be forced to PNG",
   "fontStyleLabel": "Font Style",
   "fontSelectionNote": "Note: Using optimized bitmap fonts for fast cross-platform rendering.",
   "fontSelectionNoteGoogle": "Note: Using Google Fonts for enhanced typography. Requires internet for first use.",
@@ -334,7 +337,7 @@
   },
   "analysisResult": "Result:",
   "steganographyVerified": "Steganography Verified",
-  "steganographyVerificationFailed": "Steganography verification failed",
+  "steganographyVerificationFailed": "Steganography verification failed. Increase your JPG Quality (min 85%)",
   "steganographyEnabledHint": "Steganography is enabled and will be applied",
   "hideFileWithSteganographyTitle": "Hide a file (experimental)",
   "hideFileWithSteganographySubtitle": "Embed an entire file within the image (might increase output size)",
@@ -775,5 +778,6 @@
   "pushingFile": "Pushing file to {device}...",
   "manualUrlLabel": "Or enter this URL in a browser:",
   "waitingForFile": "Waiting for incoming file...",
-  "fileReceived": "File received from {address}"
+  "fileReceived": "File received from {address}",
+  "secureZipPasswordRequired": "ZIP password must be set in Expert Options to enable Secure ZIP."
 }

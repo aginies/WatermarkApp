@@ -94,6 +94,7 @@ class WatermarkPageState extends State<WatermarkPage>
   WatermarkFont _selectedFont = FontManager.getDefaultFont();
   int _jpegQuality = 75;
   int? _targetSize = 1280;
+  bool _forcePng = false;
   bool _includeTimestamp = true;
   bool _preserveMetadata = false;
   bool _rasterizePdf = false;
@@ -316,6 +317,7 @@ class WatermarkPageState extends State<WatermarkPage>
           _density = prefs.getDouble('density') ?? 35.0;
           _fontSize = prefs.getDouble('fontSize') ?? 24.0;
           _jpegQuality = prefs.getInt('jpegQuality') ?? 75;
+          _forcePng = prefs.getBool('forcePng') ?? false;
           // Default to 1280 if not set, unless explicitly set to null
           if (prefs.containsKey('targetSizeIsNull') &&
               prefs.getBool('targetSizeIsNull') == true) {
@@ -343,6 +345,13 @@ class WatermarkPageState extends State<WatermarkPage>
           _useSteganography = prefs.getBool('useSteganography') ?? false;
           _useRobustSteganography =
               prefs.getBool('useRobustSteganography') ?? false;
+
+          // Enforce 85% minimum JPEG quality for steganography
+          if (_useSteganography || _useRobustSteganography) {
+            if (_jpegQuality < 85) {
+              _jpegQuality = 85;
+            }
+          }
           _hideFileWithSteganography =
               prefs.getBool('hideFileWithSteganography') ?? false;
           _zipOutputs = prefs.getBool('zipOutputs') ?? false;
@@ -507,6 +516,7 @@ class WatermarkPageState extends State<WatermarkPage>
         _logoSize = 100;
         _jpegQuality = 75;
         _targetSize = 1280;
+        _forcePng = false;
         _includeTimestamp = true;
         _preserveMetadata = false;
         _rasterizePdf = false;
@@ -583,6 +593,9 @@ class WatermarkPageState extends State<WatermarkPage>
       if (prefs.containsKey('${pKey}jpegQuality')) {
         _jpegQuality = prefs.getInt('${pKey}jpegQuality')!;
       }
+      if (prefs.containsKey('${pKey}forcePng')) {
+        _forcePng = prefs.getBool('${pKey}forcePng')!;
+      }
       if (prefs.containsKey('${pKey}targetSize')) {
         _targetSize = prefs.getInt('${pKey}targetSize');
       }
@@ -603,6 +616,13 @@ class WatermarkPageState extends State<WatermarkPage>
       if (prefs.containsKey('${pKey}useRobustSteganography')) {
         _useRobustSteganography =
             prefs.getBool('${pKey}useRobustSteganography')!;
+      }
+
+      // Enforce 85% minimum JPEG quality for steganography after loading states
+      if (_useSteganography || _useRobustSteganography) {
+        if (_jpegQuality < 85) {
+          _jpegQuality = 85;
+        }
       }
       if (prefs.containsKey('${pKey}hideFileWithSteganography')) {
         _hideFileWithSteganography =
@@ -932,6 +952,7 @@ class WatermarkPageState extends State<WatermarkPage>
     _savePreference('density', _density);
     _savePreference('fontSize', _fontSize);
     _savePreference('jpegQuality', _jpegQuality);
+    _savePreference('forcePng', _forcePng);
     _savePreference('targetSize', _targetSize);
     _savePreference('includeTimestamp', _includeTimestamp);
     _savePreference('preserveMetadata', _preserveMetadata);
@@ -1338,7 +1359,7 @@ class WatermarkPageState extends State<WatermarkPage>
               tooltip: l10n.qrWatermarkTitle,
             ),
             IconButton(
-              icon: const Icon(Icons.font_download_outlined),
+              icon: const Icon(Icons.image_outlined),
               onPressed: _showFontOptions,
               tooltip: l10n.fontConfigTitle,
             ),
@@ -5996,9 +6017,16 @@ class WatermarkPageState extends State<WatermarkPage>
                         final bool enabled = value ?? false;
                         setDialogState(() {
                           _useSteganography = enabled;
+                          if (enabled && _jpegQuality < 85) {
+                            _jpegQuality = 85;
+                            _savePreference('jpegQuality', 85);
+                          }
                         });
                         setState(() {
                           _useSteganography = enabled;
+                          if (enabled && _jpegQuality < 85) {
+                            _jpegQuality = 85;
+                          }
                         });
                         _savePreference('useSteganography', enabled);
                       },
@@ -6013,9 +6041,16 @@ class WatermarkPageState extends State<WatermarkPage>
                         final bool enabled = value ?? false;
                         setDialogState(() {
                           _useRobustSteganography = enabled;
+                          if (enabled && _jpegQuality < 85) {
+                            _jpegQuality = 85;
+                            _savePreference('jpegQuality', 85);
+                          }
                         });
                         setState(() {
                           _useRobustSteganography = enabled;
+                          if (enabled && _jpegQuality < 85) {
+                            _jpegQuality = 85;
+                          }
                         });
                         _savePreference('useRobustSteganography', enabled);
                       },
@@ -6691,7 +6726,7 @@ class WatermarkPageState extends State<WatermarkPage>
             return AlertDialog(
               title: Row(
                 children: [
-                  const Icon(Icons.font_download_outlined),
+                  const Icon(Icons.image_outlined),
                   const SizedBox(width: 12),
                   Text(l10n.fontConfigTitle),
                 ],
@@ -6754,6 +6789,90 @@ class WatermarkPageState extends State<WatermarkPage>
                       _getFontSourceDescription(context),
                       style: theme.textTheme.bodySmall
                           ?.copyWith(fontStyle: FontStyle.italic),
+                    ),
+                    const Divider(height: 32),
+                    Text(
+                      l10n.imageResizingLabel('').replaceAll(': ', ''),
+                      style: theme.textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: theme.dividerColor),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<int?>(
+                          value: _targetSize,
+                          isExpanded: true,
+                          items: [
+                            DropdownMenuItem<int?>(
+                                value: null, child: Text(l10n.resizeNone)),
+                            DropdownMenuItem<int?>(
+                                value: 2048, child: Text(l10n.pixelUnit(2048))),
+                            DropdownMenuItem<int?>(
+                                value: 1600, child: Text(l10n.pixelUnit(1600))),
+                            DropdownMenuItem<int?>(
+                                value: 1280, child: Text(l10n.pixelUnit(1280))),
+                            DropdownMenuItem<int?>(
+                                value: 1024, child: Text(l10n.pixelUnit(1024))),
+                            DropdownMenuItem<int?>(
+                                value: 800, child: Text(l10n.pixelUnit(800))),
+                          ],
+                          onChanged: (value) {
+                            setDialogState(() {
+                              _targetSize = value;
+                            });
+                            setState(() {
+                              _targetSize = value;
+                            });
+                            _savePreference('targetSize', value);
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(l10n.jpegQualityValue(_jpegQuality),
+                        style: theme.textTheme.titleSmall),
+                    Slider(
+                      value: _jpegQuality
+                          .toDouble()
+                          .clamp((_useSteganography || _useRobustSteganography) ? 85.0 : 10.0, 100.0),
+                      min: (_useSteganography || _useRobustSteganography)
+                          ? 85
+                          : 10,
+                      max: 100,
+                      divisions: (_useSteganography || _useRobustSteganography)
+                          ? 15
+                          : 18,
+                      onChanged: (value) {
+                        setDialogState(() {
+                          _jpegQuality = value.round();
+                        });
+                        setState(() {
+                          _jpegQuality = value.round();
+                        });
+                        _savePreference('jpegQuality', value.round());
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    CheckboxListTile(
+                      title: Text(l10n.forcePngTitle),
+                      subtitle: Text(l10n.forcePngSubtitle),
+                      value: _forcePng,
+                      contentPadding: EdgeInsets.zero,
+                      onChanged: (value) {
+                        final bool enabled = value ?? false;
+                        setDialogState(() {
+                          _forcePng = enabled;
+                        });
+                        setState(() {
+                          _forcePng = enabled;
+                        });
+                        _savePreference('forcePng', enabled);
+                      },
                     ),
                   ],
                 ),
@@ -6906,6 +7025,16 @@ class WatermarkPageState extends State<WatermarkPage>
                       contentPadding: EdgeInsets.zero,
                       onChanged: (value) {
                         final bool enabled = value ?? false;
+                        if (enabled &&
+                            _secureZipPasswordController.text.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(l10n.secureZipPasswordRequired),
+                              backgroundColor: theme.colorScheme.error,
+                            ),
+                          );
+                          return;
+                        }
                         setDialogState(() {
                           _useSecureZip = enabled;
                         });
@@ -6915,7 +7044,8 @@ class WatermarkPageState extends State<WatermarkPage>
                         _savePreference('useSecureZip', enabled);
                       },
                     ),
-                    if (_useSecureZip) ...[
+                    if (_useSecureZip ||
+                        _secureZipPasswordController.text.isNotEmpty) ...[
                       const SizedBox(height: 8),
                       TextField(
                         obscureText: _obscureSecureZipPassword,
@@ -6942,7 +7072,18 @@ class WatermarkPageState extends State<WatermarkPage>
                           ),
                         ),
                         onChanged: (value) {
+                          if (value.isEmpty && _useSecureZip) {
+                            setDialogState(() {
+                              _useSecureZip = false;
+                            });
+                            setState(() {
+                              _useSecureZip = false;
+                            });
+                            _savePreference('useSecureZip', false);
+                          }
                           _savePreference('secureZipPassword', value);
+                          // Trigger UI update for the grid icon availability
+                          setState(() {});
                         },
                         controller: _secureZipPasswordController,
                       ),
@@ -7068,6 +7209,7 @@ class WatermarkPageState extends State<WatermarkPage>
                       ),
                     ],
                     */
+                    /*
                     const Divider(),
                     const SizedBox(height: 8),
                     Text(
@@ -7117,9 +7259,9 @@ class WatermarkPageState extends State<WatermarkPage>
                         style: theme.textTheme.titleSmall),
                     Slider(
                       value: _jpegQuality.toDouble(),
-                      min: 10,
+                      min: (_useSteganography || _useRobustSteganography) ? 85 : 10,
                       max: 100,
-                      divisions: 18,
+                      divisions: (_useSteganography || _useRobustSteganography) ? 15 : 18,
                       onChanged: (value) {
                         setDialogState(() {
                           _jpegQuality = value.round();
@@ -7130,6 +7272,7 @@ class WatermarkPageState extends State<WatermarkPage>
                         _savePreference('jpegQuality', value.round());
                       },
                     ),
+                    */
                     const Divider(),
                     const SizedBox(height: 8),
                     Text(l10n.antiAiProtectionValue(_antiAiLevel.round()),
@@ -7443,7 +7586,9 @@ class WatermarkPageState extends State<WatermarkPage>
   IconData _getFeatureIcon(String key) {
     switch (key) {
       case 'steganographyTitle':
-        return Icons.verified_user_outlined;
+        return _steganographyVerificationFailed
+            ? Icons.gpp_bad
+            : Icons.verified_user_outlined;
       case 'robustSteganographyTitle':
         return Icons.shield_outlined;
       case 'digitallySignTitle':
@@ -7460,6 +7605,8 @@ class WatermarkPageState extends State<WatermarkPage>
         return Icons.info_outline;
       case 'pdfSecurityTitle':
         return Icons.lock_outline;
+      case 'forcePngTitle':
+        return Icons.image_search_outlined;
       default:
         return Icons.check_circle_outline;
     }
@@ -7468,7 +7615,7 @@ class WatermarkPageState extends State<WatermarkPage>
   Color _getFeatureColor(String key) {
     switch (key) {
       case 'steganographyTitle':
-        return Colors.green;
+        return _steganographyVerificationFailed ? Colors.red : Colors.green;
       case 'robustSteganographyTitle':
         return Colors.indigo;
       case 'digitallySignTitle':
@@ -7485,6 +7632,8 @@ class WatermarkPageState extends State<WatermarkPage>
         return Colors.lightBlue;
       case 'pdfSecurityTitle':
         return Colors.orange;
+      case 'forcePngTitle':
+        return Colors.blueGrey;
       default:
         return Colors.blueGrey;
     }
@@ -7493,7 +7642,9 @@ class WatermarkPageState extends State<WatermarkPage>
   String _getFeatureLabel(String key, AppLocalizations l10n) {
     switch (key) {
       case 'steganographyTitle':
-        return l10n.steganographyTitle;
+        return _steganographyVerificationFailed
+            ? l10n.steganographyVerificationFailed
+            : l10n.steganographyTitle;
       case 'robustSteganographyTitle':
         return l10n.robustSteganographyTitle;
       case 'digitallySignTitle':
@@ -7510,6 +7661,8 @@ class WatermarkPageState extends State<WatermarkPage>
         return l10n.preserveMetadata;
       case 'pdfSecurityTitle':
         return l10n.pdfSecurityTitle;
+      case 'forcePngTitle':
+        return l10n.forcePngTitle;
       default:
         return "";
     }
@@ -9117,12 +9270,17 @@ class WatermarkPageState extends State<WatermarkPage>
       WatermarkOption(
         id: 'steganography',
         label: l10n.steganographyTitle,
-        icon: Icons.verified_user_outlined,
-        enabledColor: Colors.green,
+        icon: _steganographyVerificationFailed
+            ? Icons.gpp_bad
+            : Icons.verified_user_outlined,
+        enabledColor:
+            _steganographyVerificationFailed ? Colors.red : Colors.green,
         isEnabled: _useSteganography,
         isAvailable: !_rasterizePdf,
         unavailableReason: _rasterizePdf ? l10n.unavailableRasterPdf : null,
-        subtitle: _useSteganography ? l10n.steganographyEnabledHint : null,
+        subtitle: _steganographyVerificationFailed
+            ? l10n.steganographyVerificationFailed
+            : (_useSteganography ? l10n.steganographyEnabledHint : null),
         onToggle: () {
           if (!_rasterizePdf) {
             setState(() {
@@ -9136,6 +9294,12 @@ class WatermarkPageState extends State<WatermarkPage>
                 if (_hideFileWithSteganography) {
                   _hideFileWithSteganography = false;
                   _savePreference('hideFileWithSteganography', false);
+                }
+              } else {
+                // Enforce minimum 85% JPEG quality for steganography
+                if (_jpegQuality < 85) {
+                  _jpegQuality = 85;
+                  _savePreference('jpegQuality', 85);
                 }
               }
             });
@@ -9232,27 +9396,6 @@ class WatermarkPageState extends State<WatermarkPage>
         onConfigure: _showSteganographyOptions,
       ),
 
-      // ZIP Outputs
-      WatermarkOption(
-        id: 'zip_outputs',
-        label: l10n.zipAllFiles,
-        icon: Icons.folder_zip,
-        enabledColor: Colors.amber,
-        isEnabled: _zipOutputs,
-        isAvailable: !_digitallySign, // Disabled if signing (auto-required)
-        unavailableReason: _digitallySign ? 'Required for signing' : null,
-        subtitle: _zipOutputs ? l10n.zipEnabledHint : null,
-        onToggle: () {
-          if (!_digitallySign) {
-            setState(() {
-              _zipOutputs = !_zipOutputs;
-            });
-            _savePreference('zipOutputs', _zipOutputs);
-          }
-        },
-        onConfigure: null, // No settings dialog
-      ),
-
       // Anti-AI Protection
       WatermarkOption(
         id: 'anti_ai',
@@ -9319,6 +9462,23 @@ class WatermarkPageState extends State<WatermarkPage>
         onConfigure: _showExpertOptions,
       ),
 
+      // Force PNG
+      WatermarkOption(
+        id: 'force_png',
+        label: l10n.forcePngTitle,
+        icon: Icons.image_search_outlined,
+        enabledColor: Colors.blueGrey,
+        isEnabled: _forcePng,
+        subtitle: _forcePng ? l10n.forcePngEnabledHint : null,
+        onToggle: () {
+          setState(() {
+            _forcePng = !_forcePng;
+          });
+          _savePreference('forcePng', _forcePng);
+        },
+        onConfigure: _showFontOptions,
+      ),
+
       // Image Resizing
       WatermarkOption(
         id: 'resize_image',
@@ -9335,7 +9495,7 @@ class WatermarkPageState extends State<WatermarkPage>
           });
           _savePreference('targetSize', _targetSize);
         },
-        onConfigure: _showExpertOptions,
+        onConfigure: _showFontOptions,
       ),
 
       // File Prefix (Info only)
@@ -9348,6 +9508,52 @@ class WatermarkPageState extends State<WatermarkPage>
         subtitle: _filePrefix,
         onToggle: null, // No toggle - info only
         onConfigure: null, // No configure - info only
+      ),
+
+      // Secure ZIP
+      WatermarkOption(
+        id: 'secure_zip',
+        label: l10n.secureZipTitle,
+        icon: Icons.folder_zip,
+        enabledColor: Colors.deepOrange,
+        isEnabled: _useSecureZip,
+        isAvailable: _secureZipPasswordController.text.isNotEmpty,
+        unavailableReason: l10n.secureZipPasswordRequired,
+        subtitle: _useSecureZip ? l10n.enableSecureZip : null,
+        onToggle: () {
+          setState(() {
+            _useSecureZip = !_useSecureZip;
+            if (_useSecureZip) {
+              _zipOutputs = true; // Auto-enable zip
+            }
+          });
+          _savePreference('useSecureZip', _useSecureZip);
+          if (_useSecureZip) {
+            _savePreference('zipOutputs', true);
+          }
+        },
+        onConfigure: _showExpertOptions,
+      ),
+
+      // ZIP Outputs
+      WatermarkOption(
+        id: 'zip_outputs',
+        label: l10n.zipAllFiles,
+        icon: Icons.folder_zip,
+        enabledColor: Colors.amber,
+        isEnabled: _zipOutputs,
+        isAvailable: !_digitallySign, // Disabled if signing (auto-required)
+        unavailableReason: _digitallySign ? 'Required for signing' : null,
+        subtitle: _zipOutputs ? l10n.zipEnabledHint : null,
+        onToggle: () {
+          if (!_digitallySign) {
+            setState(() {
+              _zipOutputs = !_zipOutputs;
+            });
+            _savePreference('zipOutputs', _zipOutputs);
+          }
+        },
+        onConfigure: null, // No settings dialog
       ),
     ];
   }
@@ -9614,191 +9820,191 @@ class WatermarkPageState extends State<WatermarkPage>
       _statusMessage = l10n.processingCount(paths.length);
     });
 
-    await _cleanupTempFiles();
-
-    if (!mounted) return;
-
+    bool dialogOpened = false;
     final processedFiles = <ProcessedFile>[];
     final failedFiles = <String>[];
     final processingErrors = <String, String>{};
-    bool dialogOpened = false;
-
-    String translateProgress(String msg) {
-      if (msg.startsWith('progress')) {
-        if (msg.contains(':')) {
-          final parts = msg.split(':');
-          final key = parts[0];
-          final params = parts[1].split('/');
-          if (key == 'progressWatermarkingPage' && params.length == 2) {
-            return l10n.progressWatermarkingPage(
-                int.parse(params[0]), int.parse(params[1]));
-          }
-        }
-
-        switch (msg) {
-          case 'progressValidating':
-            return l10n.progressValidating;
-          case 'progressFromCache':
-            return l10n.progressFromCache;
-          case 'progressDetectingType':
-            return l10n.progressDetectingType;
-          case 'progressStarting':
-            return l10n.progressStarting;
-          case 'progressComplete':
-            return l10n.progressComplete;
-          case 'progressReadingImage':
-            return l10n.progressReadingImage;
-          case 'progressRenderingFont':
-            return l10n.progressRenderingFont;
-          case 'progressFinalizingImage':
-            return l10n.progressFinalizingImage;
-          case 'progressVerifyingStegano':
-            return l10n.progressVerifyingStegano;
-          case 'progressSteganoVerified':
-            return l10n.progressSteganoVerified;
-          case 'progressSteganoFailed':
-            return l10n.progressSteganoFailed;
-          case 'progressRasterizing':
-            return l10n.progressRasterizing;
-          case 'progressReadingPdf':
-            return l10n.progressReadingPdf;
-          case 'progressAddingLayer':
-            return l10n.progressAddingLayer;
-          case 'progressFinalizingPdf':
-            return l10n.progressFinalizingPdf;
-          case 'progressParsingPdf':
-            return l10n.progressParsingPdf;
-          case 'progressDecodingImage':
-            return l10n.progressDecodingImage;
-          case 'progressResizingImage':
-            return l10n.progressResizingImage;
-          case 'progressApplyingCloaking':
-            return l10n.progressApplyingCloaking;
-          case 'progressApplyingWatermark':
-            return l10n.progressApplyingWatermark;
-          case 'progressEmbeddingRobust':
-            return l10n.progressEmbeddingRobust;
-          case 'progressHidingFile':
-            return l10n.progressHidingFile;
-          case 'progressEmbeddingLsb':
-            return l10n.progressEmbeddingLsb;
-          case 'progressEncodingImage':
-            return l10n.progressEncodingImage;
-          case 'progressGeneratingQr':
-            return l10n.progressGeneratingQr;
-          case 'progressEmbeddingQr':
-            return l10n.progressEmbeddingQr;
-          case 'progressQrEmbedded':
-            return l10n.progressQrEmbedded;
-        }
-      }
-      return msg;
-    }
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        dialogOpened = true;
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            _progressListener = () {
-              if (context.mounted) {
-                setDialogState(() {});
-              }
-            };
-
-            final message = _progressMessage.isEmpty
-                ? (_statusMessage.isEmpty
-                    ? l10n.processingFile
-                    : _statusMessage)
-                : translateProgress(_progressMessage);
-
-            final hasError = !_processing && failedFiles.isNotEmpty;
-
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 16),
-                  if (hasError)
-                    Icon(
-                      Icons.error_outline,
-                      size: 80,
-                      color: theme.colorScheme.error,
-                    )
-                  else
-                    Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        SizedBox(
-                          width: 80,
-                          height: 80,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 6,
-                            value: _progress > 0 ? _progress : null,
-                            backgroundColor:
-                                theme.colorScheme.surfaceContainerHighest,
-                          ),
-                        ),
-                        Text(
-                          _elapsedTime,
-                          style: theme.textTheme.titleSmall
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  const SizedBox(height: 24),
-                  Text(
-                      !_processing && failedFiles.isEmpty
-                          ? l10n.processingComplete
-                          : l10n.applyingWatermark,
-                      style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                  Text(
-                    message,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                  if (_progress > 0 && !hasError) ...[
-                    const SizedBox(height: 12),
-                    LinearProgressIndicator(
-                      value: _progress,
-                      backgroundColor:
-                          theme.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${(_progress * 100).round()}${[
-                        'fr',
-                        'de'
-                      ].contains(Localizations.localeOf(context).languageCode) ? ' %' : '%'}',
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                  const SizedBox(height: 24),
-                  TextButton(
-                    onPressed: (!_processing)
-                        ? () {
-                            _progressListener = null;
-                            Navigator.of(context, rootNavigator: true).pop();
-                          }
-                        : _cancelProcessing,
-                    child: Text((!_processing) ? l10n.close : l10n.cancel),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
 
     try {
+      await _cleanupTempFiles();
+
+      if (!mounted) return;
+
+      String translateProgress(String msg) {
+        if (msg.startsWith('progress')) {
+          if (msg.contains(':')) {
+            final parts = msg.split(':');
+            final key = parts[0];
+            final params = parts[1].split('/');
+            if (key == 'progressWatermarkingPage' && params.length == 2) {
+              return l10n.progressWatermarkingPage(
+                  int.parse(params[0]), int.parse(params[1]));
+            }
+          }
+
+          switch (msg) {
+            case 'progressValidating':
+              return l10n.progressValidating;
+            case 'progressFromCache':
+              return l10n.progressFromCache;
+            case 'progressDetectingType':
+              return l10n.progressDetectingType;
+            case 'progressStarting':
+              return l10n.progressStarting;
+            case 'progressComplete':
+              return l10n.progressComplete;
+            case 'progressReadingImage':
+              return l10n.progressReadingImage;
+            case 'progressRenderingFont':
+              return l10n.progressRenderingFont;
+            case 'progressFinalizingImage':
+              return l10n.progressFinalizingImage;
+            case 'progressVerifyingStegano':
+              return l10n.progressVerifyingStegano;
+            case 'progressSteganoVerified':
+              return l10n.progressSteganoVerified;
+            case 'progressSteganoFailed':
+              return l10n.progressSteganoFailed;
+            case 'progressRasterizing':
+              return l10n.progressRasterizing;
+            case 'progressReadingPdf':
+              return l10n.progressReadingPdf;
+            case 'progressAddingLayer':
+              return l10n.progressAddingLayer;
+            case 'progressFinalizingPdf':
+              return l10n.progressFinalizingPdf;
+            case 'progressParsingPdf':
+              return l10n.progressParsingPdf;
+            case 'progressDecodingImage':
+              return l10n.progressDecodingImage;
+            case 'progressResizingImage':
+              return l10n.progressResizingImage;
+            case 'progressApplyingCloaking':
+              return l10n.progressApplyingCloaking;
+            case 'progressApplyingWatermark':
+              return l10n.progressApplyingWatermark;
+            case 'progressEmbeddingRobust':
+              return l10n.progressEmbeddingRobust;
+            case 'progressHidingFile':
+              return l10n.progressHidingFile;
+            case 'progressEmbeddingLsb':
+              return l10n.progressEmbeddingLsb;
+            case 'progressEncodingImage':
+              return l10n.progressEncodingImage;
+            case 'progressGeneratingQr':
+              return l10n.progressGeneratingQr;
+            case 'progressEmbeddingQr':
+              return l10n.progressEmbeddingQr;
+            case 'progressQrEmbedded':
+              return l10n.progressQrEmbedded;
+          }
+        }
+        return msg;
+      }
+
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          dialogOpened = true;
+          return StatefulBuilder(
+            builder: (context, setDialogState) {
+              _progressListener = () {
+                if (context.mounted) {
+                  setDialogState(() {});
+                }
+              };
+
+              final message = _progressMessage.isEmpty
+                  ? (_statusMessage.isEmpty
+                      ? l10n.processingFile
+                      : _statusMessage)
+                  : translateProgress(_progressMessage);
+
+              final hasError = !_processing && failedFiles.isNotEmpty;
+
+              return AlertDialog(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 16),
+                    if (hasError)
+                      Icon(
+                        Icons.error_outline,
+                        size: 80,
+                        color: theme.colorScheme.error,
+                      )
+                    else
+                      Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          SizedBox(
+                            width: 80,
+                            height: 80,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 6,
+                              value: _progress > 0 ? _progress : null,
+                              backgroundColor:
+                                  theme.colorScheme.surfaceContainerHighest,
+                            ),
+                          ),
+                          Text(
+                            _elapsedTime,
+                            style: theme.textTheme.titleSmall
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    const SizedBox(height: 24),
+                    Text(
+                        !_processing && failedFiles.isEmpty
+                            ? l10n.processingComplete
+                            : l10n.applyingWatermark,
+                        style: theme.textTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    Text(
+                      message,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    if (_progress > 0 && !hasError) ...[
+                      const SizedBox(height: 12),
+                      LinearProgressIndicator(
+                        value: _progress,
+                        backgroundColor:
+                            theme.colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${(_progress * 100).round()}${[
+                          'fr',
+                          'de'
+                        ].contains(Localizations.localeOf(context).languageCode) ? ' %' : '%'}',
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                    const SizedBox(height: 24),
+                    TextButton(
+                      onPressed: (!_processing)
+                          ? () {
+                              _progressListener = null;
+                              Navigator.of(context, rootNavigator: true).pop();
+                            }
+                          : _cancelProcessing,
+                      child: Text((!_processing) ? l10n.close : l10n.cancel),
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        },
+      );
+
       for (var i = 0; i < paths.length; i++) {
         if (_cancellationToken?.isCancelled == true) {
           _addLog('Processing cancelled by user');
@@ -9856,6 +10062,7 @@ class WatermarkPageState extends State<WatermarkPage>
             font: _selectedFont,
             jpegQuality: _jpegQuality,
             targetSize: _targetSize,
+            forcePng: _forcePng,
             includeTimestamp: _includeTimestamp,
             preserveMetadata: _preserveMetadata,
             rasterizePdf: _rasterizePdf,
@@ -11748,7 +11955,7 @@ class _PushDownWrapperState extends State<_PushDownWrapper> {
         curve: Curves.easeOut,
         transform: Matrix4.translationValues(0, _isPressed ? 4.0 : 0.0, 0),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
+          color: Colors.transparent,
           borderRadius: BorderRadius.circular(16),
           boxShadow: (widget.enabled && !_isPressed)
               ? [
