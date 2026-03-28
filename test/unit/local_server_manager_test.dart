@@ -88,7 +88,8 @@ void main() {
 
       // All keys should be unique (collision extremely unlikely with 256 bits)
       expect(encryptionKeys.length, equals(10));
-      debugPrint('Generated 10 unique encryption keys, all 256 bits (32 bytes)');
+      debugPrint(
+          'Generated 10 unique encryption keys, all 256 bits (32 bytes)');
     });
 
     test('Encryption key format differs from URL token format', () {

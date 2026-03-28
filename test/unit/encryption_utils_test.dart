@@ -143,7 +143,8 @@ void main() {
       expect(decrypted, isNotNull);
       expect(decrypted!.length, equals(testData.length));
 
-      debugPrint('Encrypted 1MB in ${encryptTime}ms, decrypted in ${decryptTime}ms');
+      debugPrint(
+          'Encrypted 1MB in ${encryptTime}ms, decrypted in ${decryptTime}ms');
       debugPrint('PBKDF2 (100k iterations) overhead included in timing');
     });
 

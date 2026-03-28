@@ -237,7 +237,8 @@ class LocalServerManager {
             'identity'); // Disable compression for binary data
         request.response.contentLength = _fileSize!;
 
-        debugPrint('[LocalServer] Starting transfer: $_fileName ($_fileSize bytes)');
+        debugPrint(
+            '[LocalServer] Starting transfer: $_fileName ($_fileSize bytes)');
 
         try {
           if (_fileBytes != null) {
@@ -256,7 +257,8 @@ class LocalServerManager {
             );
           }
 
-          debugPrint('[LocalServer] Transfer complete, closing response stream');
+          debugPrint(
+              '[LocalServer] Transfer complete, closing response stream');
           await request.response.close();
           debugPrint(
               '[LocalServer] Response stream closed, waiting for client acknowledgment...');
@@ -348,7 +350,8 @@ class LocalServerManager {
             'identity'); // Disable compression for binary data
         request.response.contentLength = _fileSize!;
 
-        debugPrint('[LocalServer] Starting transfer: $_fileName ($_fileSize bytes)');
+        debugPrint(
+            '[LocalServer] Starting transfer: $_fileName ($_fileSize bytes)');
 
         try {
           if (_fileBytes != null) {
@@ -367,7 +370,8 @@ class LocalServerManager {
             );
           }
 
-          debugPrint('[LocalServer] Transfer complete, closing response stream');
+          debugPrint(
+              '[LocalServer] Transfer complete, closing response stream');
           await request.response.close();
           debugPrint(
               '[LocalServer] Response stream closed, waiting for client acknowledgment...');

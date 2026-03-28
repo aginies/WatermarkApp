@@ -121,7 +121,8 @@ class CertificateManager {
     final privateKey = keyPair.privateKey as pc.RSAPrivateKey;
 
     // Create self-signed X.509 certificate
-    final certBytes = _createSelfSignedCertificate(publicKey, privateKey);
+    final certDerBytes = _createSelfSignedCertificate(publicKey, privateKey);
+    final certPemString = _encodeCertificatePEM(certDerBytes);
     final keyBytes = _encodePrivateKeyPEM(privateKey);
 
     // Save to files
@@ -133,7 +134,7 @@ class CertificateManager {
       await certDir.create(recursive: true);
     }
 
-    await File(certPath).writeAsBytes(certBytes);
+    await File(certPath).writeAsString(certPemString);
     await File(keyPath).writeAsString(keyBytes);
 
     final prefs = await SharedPreferences.getInstance();
@@ -185,6 +186,22 @@ class CertificateManager {
       v = v >> 8;
     }
     return Uint8List.fromList(bytes.isEmpty ? [0] : bytes);
+  }
+
+  /// Encode certificate DER bytes as PEM format
+  static String _encodeCertificatePEM(Uint8List derBytes) {
+    final base64Cert = base64.encode(derBytes);
+
+    // PEM format
+    final pem = StringBuffer();
+    pem.writeln('-----BEGIN CERTIFICATE-----');
+    for (var i = 0; i < base64Cert.length; i += 64) {
+      final end = (i + 64 < base64Cert.length) ? i + 64 : base64Cert.length;
+      pem.writeln(base64Cert.substring(i, end));
+    }
+    pem.writeln('-----END CERTIFICATE-----');
+
+    return pem.toString();
   }
 
   /// Encode private key as PEM format
