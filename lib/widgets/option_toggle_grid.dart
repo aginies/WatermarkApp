@@ -231,7 +231,8 @@ class _OptionTileState extends State<_OptionTile>
       // Locked/unavailable
       iconColor = Colors.grey.shade400;
       backgroundColor = Color.alphaBlend(
-          Colors.grey.shade200.withValues(alpha: 0.1), theme.colorScheme.surface);
+          Colors.grey.shade200.withValues(alpha: 0.1),
+          theme.colorScheme.surface);
       opacity = 0.5;
     } else if (isEnabled) {
       // Enabled
@@ -330,9 +331,7 @@ class _OptionTileState extends State<_OptionTile>
                     ),
                   ),
                 // Checkmark for enabled (only if toggleable)
-                if (isEnabled &&
-                    isAvailable &&
-                    widget.option.onToggle != null)
+                if (isEnabled && isAvailable && widget.option.onToggle != null)
                   Positioned(
                     top: 4,
                     right: 4,
@@ -350,9 +349,7 @@ class _OptionTileState extends State<_OptionTile>
                     ),
                   ),
                 // Info badge for info-only options
-                if (isEnabled &&
-                    isAvailable &&
-                    widget.option.onToggle == null)
+                if (isEnabled && isAvailable && widget.option.onToggle == null)
                   Positioned(
                     top: 4,
                     right: 4,

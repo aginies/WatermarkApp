@@ -6837,9 +6837,11 @@ class WatermarkPageState extends State<WatermarkPage>
                     Text(l10n.jpegQualityValue(_jpegQuality),
                         style: theme.textTheme.titleSmall),
                     Slider(
-                      value: _jpegQuality
-                          .toDouble()
-                          .clamp((_useSteganography || _useRobustSteganography) ? 85.0 : 10.0, 100.0),
+                      value: _jpegQuality.toDouble().clamp(
+                          (_useSteganography || _useRobustSteganography)
+                              ? 85.0
+                              : 10.0,
+                          100.0),
                       min: (_useSteganography || _useRobustSteganography)
                           ? 85
                           : 10,
