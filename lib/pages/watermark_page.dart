@@ -7607,6 +7607,8 @@ class WatermarkPageState extends State<WatermarkPage>
         return Icons.info_outline;
       case 'pdfSecurityTitle':
         return Icons.lock_outline;
+      case 'imageResizingTitle':
+        return Icons.photo_size_select_large;
       case 'forcePngTitle':
         return Icons.image_search_outlined;
       default:
@@ -7633,6 +7635,8 @@ class WatermarkPageState extends State<WatermarkPage>
       case 'preserveMetadata':
         return Colors.lightBlue;
       case 'pdfSecurityTitle':
+        return Colors.orange;
+      case 'imageResizingTitle':
         return Colors.orange;
       case 'forcePngTitle':
         return Colors.blueGrey;
@@ -7663,6 +7667,8 @@ class WatermarkPageState extends State<WatermarkPage>
         return l10n.preserveMetadata;
       case 'pdfSecurityTitle':
         return l10n.pdfSecurityTitle;
+      case 'imageResizingTitle':
+        return l10n.imageResizingTitle;
       case 'forcePngTitle':
         return l10n.forcePngTitle;
       default:

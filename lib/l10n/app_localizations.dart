@@ -2390,6 +2390,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'ZIP password must be set in Expert Options to enable Secure ZIP.'**
   String get secureZipPasswordRequired;
+
+  /// No description provided for @imageResizingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Image Resizing'**
+  String get imageResizingTitle;
 }
 
 class _AppLocalizationsDelegate

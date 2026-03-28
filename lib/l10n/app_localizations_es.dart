@@ -1369,4 +1369,7 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get secureZipPasswordRequired =>
       'La contraseña del ZIP debe establecerse en las Opciones de experto para habilitar el ZIP seguro.';
+
+  @override
+  String get imageResizingTitle => 'Redimensionamiento de imagen';
 }

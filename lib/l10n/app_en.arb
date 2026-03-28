@@ -779,5 +779,6 @@
   "manualUrlLabel": "Or enter this URL in a browser:",
   "waitingForFile": "Waiting for incoming file...",
   "fileReceived": "File received from {address}",
-  "secureZipPasswordRequired": "ZIP password must be set in Expert Options to enable Secure ZIP."
+  "secureZipPasswordRequired": "ZIP password must be set in Expert Options to enable Secure ZIP.",
+  "imageResizingTitle": "Image Resizing"
 }

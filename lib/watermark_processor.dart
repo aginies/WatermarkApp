@@ -554,6 +554,9 @@ class WatermarkProcessor {
       if (antiAiLevel > 0) applied.add('antiAiProtectionTitle');
       if (qrConfig != null) applied.add('qrWatermarkTitle');
       if (forcePng) applied.add('forcePngTitle');
+      if (targetSize != null) applied.add('imageResizingTitle');
+      if (preserveMetadata) applied.add('preserveMetadata');
+
       return ProcessResult(
           outputPath: outPath,
           outputBytes: res['output']!,
@@ -1173,6 +1176,10 @@ class WatermarkProcessor {
     if (enablePdfSecurity) applied.add('pdfSecurityTitle');
     if (preserveMetadata) applied.add('preserveMetadata');
     if (qrConfig != null) applied.add('qrWatermarkTitle');
+    if (useSteganography) applied.add('steganographyTitle');
+    if (useRobustSteganography) applied.add('robustSteganographyTitle');
+    if (useAiCloaking) applied.add('aiCloakingTitle');
+    if (antiAiLevel > 0) applied.add('antiAiProtectionTitle');
 
     return ProcessResult(
         outputPath: outPath,
@@ -1256,8 +1263,10 @@ class WatermarkProcessor {
     required double fontSize,
     required WatermarkFont font,
     required int jpegQuality,
+    int? targetSize,
     bool forcePng = false,
     bool includeTimestamp = false,
+    bool preserveMetadata = false,
     String filePrefix = 'securemark-',
     double antiAiLevel = 0.0,
     bool useSteganography = false,
@@ -1282,6 +1291,18 @@ class WatermarkProcessor {
     ProgressCallback? onProgress,
     CancellationToken? cancellationToken,
   }) async {
+    final List<String> applied = [];
+    applied.add('rasterizePdfTitle');
+    if (useSteganography) applied.add('steganographyTitle');
+    if (useRobustSteganography) applied.add('robustSteganographyTitle');
+    if (digitallySign) applied.add('digitallySignTitle');
+    if (useAiCloaking) applied.add('aiCloakingTitle');
+    if (antiAiLevel > 0) applied.add('antiAiProtectionTitle');
+    if (qrConfig != null) applied.add('qrWatermarkTitle');
+    if (targetSize != null) applied.add('imageResizingTitle');
+    if (preserveMetadata) applied.add('preserveMetadata');
+    if (enablePdfSecurity) applied.add('pdfSecurityTitle');
+
     try {
       final doc = pw.Document();
       Uint8List? preview;
@@ -1493,15 +1514,6 @@ class WatermarkProcessor {
         }
       }
 
-      final List<String> applied = [];
-      applied.add('rasterizePdfTitle');
-      if (useSteganography) applied.add('steganographyTitle');
-      if (useRobustSteganography) applied.add('robustSteganographyTitle');
-      if (digitallySign) applied.add('digitallySignTitle');
-      if (useAiCloaking) applied.add('aiCloakingTitle');
-      if (antiAiLevel > 0) applied.add('antiAiProtectionTitle');
-      if (qrConfig != null) applied.add('qrWatermarkTitle');
-
       return ProcessResult(
         outputPath: outputPath,
         outputBytes: outputBytes,
@@ -1513,8 +1525,7 @@ class WatermarkProcessor {
         width: firstPageWidth,
         height: firstPageHeight,
         appliedFeatures: applied,
-      );
-    } catch (e) {
+      );    } catch (e) {
       if (e is WatermarkError) rethrow;
       throw WatermarkError(
         type: WatermarkErrorType.invalidPdfData,

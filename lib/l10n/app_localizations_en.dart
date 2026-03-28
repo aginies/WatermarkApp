@@ -1352,4 +1352,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get secureZipPasswordRequired =>
       'ZIP password must be set in Expert Options to enable Secure ZIP.';
+
+  @override
+  String get imageResizingTitle => 'Image Resizing';
 }

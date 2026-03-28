@@ -779,5 +779,6 @@
   "manualUrlLabel": "Oder geben Sie diese URL in einen Browser ein:",
   "waitingForFile": "Warten auf eingehende Datei...",
   "fileReceived": "Datei von {address} erhalten",
-  "secureZipPasswordRequired": "Das ZIP-Passwort muss in den Expertenoptionen festgelegt werden, um Secure ZIP zu aktivieren."
+  "secureZipPasswordRequired": "Das ZIP-Passwort muss in den Expertenoptionen festgelegt werden, um Secure ZIP zu aktivieren.",
+  "imageResizingTitle": "Bildgrößenänderung"
 }
