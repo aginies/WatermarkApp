@@ -7398,10 +7398,7 @@ class WatermarkPageState extends State<WatermarkPage>
                         ),
                       ),
                     ),
-                    if (!kIsWeb &&
-                        (Platform.isLinux ||
-                            Platform.isMacOS ||
-                            Platform.isWindows)) ...[
+                    if (!kIsWeb) ...[
                       const SizedBox(height: 24),
                       const Divider(),
                       const SizedBox(height: 16),
@@ -8748,6 +8745,26 @@ class WatermarkPageState extends State<WatermarkPage>
                 ),
               ),
             const SizedBox(height: 20),
+            // Output Directory Selection (if not web)
+            if (!kIsWeb) ...[
+              OutlinedButton.icon(
+                onPressed: _processing ? null : _pickOutputDirectory,
+                icon: const Icon(Icons.folder_open, size: 20),
+                label: Text(
+                  _outputDirectory != null
+                      ? l10n.outputDirectoryLabel(p.basename(_outputDirectory!))
+                      : l10n.selectOutputDirectory,
+                ),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  side: BorderSide(
+                      color: theme.colorScheme.outline.withValues(alpha: 0.5)),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             // Secondary buttons row/wrap
             Wrap(
               spacing: 12,
@@ -9005,6 +9022,23 @@ class WatermarkPageState extends State<WatermarkPage>
                         });
                       },
               ),
+              const SizedBox(height: 12),
+              if (!kIsWeb)
+                OutlinedButton.icon(
+                  onPressed: _processing ? null : _pickLogoDirectory,
+                  icon: const Icon(Icons.folder_shared_outlined, size: 18),
+                  label: Text(
+                    _logoDirectory != null
+                        ? l10n.logoDirectoryLabel(p.basename(_logoDirectory!))
+                        : l10n.selectLogoDirectory,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    minimumSize: const Size(0, 36),
+                  ),
+                ),
               const SizedBox(height: 8),
             ],
             // Graphical Visual Dashboard (Unified)
