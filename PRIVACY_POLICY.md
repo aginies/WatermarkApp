@@ -30,7 +30,7 @@ SecureMark prioritizes user privacy by processing all documents **locally on the
 
 ## 4. Data Security
 
-Since the application does not collect or transmit any data, there is no risk of your data being intercepted during transmission to our servers. Your original and watermarked files remain under your sole control on your physical device.
+Since the application does not collect or transmit any data, there is no risk of your data being intercepted. Your original and watermarked files remain under your sole control on your physical device.
 
 ## 5. Third-Party Services
 
