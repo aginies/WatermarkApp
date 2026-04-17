@@ -237,7 +237,13 @@ class WatermarkPageState extends State<WatermarkPage>
 
   Future<void> _pickOutputDirectory() async {
     try {
-      final String? directoryPath = await getDirectoryPath();
+      String? directoryPath;
+      if (!kIsWeb && Platform.isAndroid) {
+        directoryPath = await FilePicker.platform.getDirectoryPath();
+      } else {
+        directoryPath = await getDirectoryPath();
+      }
+
       if (directoryPath != null) {
         _addLog('Selected output directory: $directoryPath');
         setState(() {
@@ -252,8 +258,15 @@ class WatermarkPageState extends State<WatermarkPage>
 
   Future<void> _pickLogoDirectory() async {
     try {
-      final String? directoryPath =
-          await getDirectoryPath(initialDirectory: _logoDirectory);
+      String? directoryPath;
+      if (!kIsWeb && Platform.isAndroid) {
+        directoryPath = await FilePicker.platform.getDirectoryPath(
+          initialDirectory: _logoDirectory,
+        );
+      } else {
+        directoryPath = await getDirectoryPath(initialDirectory: _logoDirectory);
+      }
+
       if (directoryPath != null) {
         _addLog('Selected logo directory: $directoryPath');
         setState(() {
@@ -794,25 +807,34 @@ class WatermarkPageState extends State<WatermarkPage>
 
         case SettingsProfile.onlineImage:
           if (!prefs.containsKey('${pKey}useSteganography')) {
-            _useSteganography = true;
+            _useSteganography = false;
           }
           if (!prefs.containsKey('${pKey}useRobustSteganography')) {
-            _useRobustSteganography = true;
+            _useRobustSteganography = false;
           }
           if (!prefs.containsKey('${pKey}useAiCloaking')) {
-            _useAiCloaking = false;
+            _useAiCloaking = true;
+          }
+          if (!prefs.containsKey('${pKey}antiAiLevel')) {
+            _antiAiLevel = 100;
           }
           if (!prefs.containsKey('${pKey}transparency')) {
-            _transparency = 80;
+            _transparency = 50;
+          }
+          if (!prefs.containsKey('${pKey}density')) {
+            _density = 50;
+          }
+          if (!prefs.containsKey('${pKey}useRandomColor')) {
+            _useRandomColor = true;
           }
           if (!prefs.containsKey('${pKey}targetSize')) {
-            _targetSize = 1600;
+            _targetSize = 1024;
           }
           if (!prefs.containsKey('${pKey}jpegQuality')) {
-            _jpegQuality = 75;
+            _jpegQuality = 70;
           }
           if (!prefs.containsKey('${pKey}filePrefix')) {
-            _filePrefix = 'web-';
+            _filePrefix = 'image';
             _filePrefixController.text = _filePrefix;
           }
           break;
@@ -1447,35 +1469,31 @@ class WatermarkPageState extends State<WatermarkPage>
   }
 
   Widget _buildProfileSelector(ThemeData theme, AppLocalizations l10n) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final int crossAxisCount = constraints.maxWidth > 600 ? 6 : 4;
-            return GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: crossAxisCount,
-              mainAxisSpacing: 8,
-              crossAxisSpacing: 8,
-              childAspectRatio: 1.45,
-              children: SettingsProfile.values.map((profile) {
-                return _ProfileTile(
-                  profile: profile,
-                  label: _getProfileLabel(profile, l10n),
-                  icon: _getProfileIcon(profile),
-                  isSelected: _selectedProfile == profile,
-                  theme: theme,
-                  onTap: () => _applyProfile(profile),
-                  onLongPress: () => _saveCurrentConfigToProfile(profile),
-                  processing: _processing,
-                );
-              }).toList(),
-            );
-          },
-        ),
-      ],
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: SettingsProfile.values.map((profile) {
+          return Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: SizedBox(
+              width: 100,
+              height: 70,
+              child: _ProfileTile(
+                profile: profile,
+                label: _getProfileLabel(profile, l10n),
+                icon: _getProfileIcon(profile),
+                isSelected: _selectedProfile == profile,
+                theme: theme,
+                onTap: () => _applyProfile(profile),
+                onLongPress: () => _saveCurrentConfigToProfile(profile),
+                processing: _processing,
+              ),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 
@@ -1602,7 +1620,11 @@ class WatermarkPageState extends State<WatermarkPage>
     // Let the user choose a directory
     String? selectedDirectory;
     try {
-      selectedDirectory = await getDirectoryPath();
+      if (!kIsWeb && Platform.isAndroid) {
+        selectedDirectory = await FilePicker.platform.getDirectoryPath();
+      } else {
+        selectedDirectory = await getDirectoryPath();
+      }
     } catch (e) {
       _addLog('Error selecting directory: $e');
     }
